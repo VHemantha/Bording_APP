@@ -10,6 +10,11 @@ export async function loginUser({ username, password }) {
   return data
 }
 
+export async function loginWithGoogleCredential(credential) {
+  const { data } = await client.post('/auth/google/', { credential })
+  return data
+}
+
 export async function fetchMe() {
   const { data } = await client.get('/auth/me/')
   return data

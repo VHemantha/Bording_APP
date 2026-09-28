@@ -1,0 +1,82 @@
+# Nestwell on a single Linux server (Cloudzy VPS or any Ubuntu/Debian box):
+#
+#   internet ─▶ caddy :80/:443 (automatic HTTPS) ─▶ web :8000 (gunicorn: Django API + React app) ─▶ db (PostgreSQL)
+#
+# Only caddy publishes ports. web and db are reachable only on the private compose network.
+# Run everything from this directory. Setup: ./init-env.sh once, then ./deploy.sh (see DEPLOY_CLOUDZY.md).
+name: nestwell
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 10m   # without a cap, container logs slowly fill a small VPS disk
+    max-file: '3'
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nestwell
+      POSTGRES_USER: nestwell
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Missing .env - run ./init-env.sh first}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U nestwell -d nestwell']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    logging: *default-logging
+
+  web:
+    build:
+      context: ../..            # the repo root: Dockerfile builds the React app and the Django image
+      args:
+        # Public OAuth client ID, baked into the JavaScript at build time (not a secret).
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+    image: nestwell-web:latest
+    restart: unless-stopped
+    env_file: .env               # DJANGO_*, ANTHROPIC_*, GOOGLE_CLIENT_ID, ...
+    environment:
+      DB_HOST: db
+      DB_NAME: nestwell
+      DB_USER: nestwell
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_SSLMODE: disable        # the database is only reachable on the private network, so no TLS needed
+    # One server = one copy of the app, so migrating at start-up cannot race with another instance.
+    command: ['sh', '-c', 'python manage.py migrate --noinput && exec gunicorn zillow_clone.wsgi']
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s          # migrations run before gunicorn starts listening
+    logging: *default-logging
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      # A domain name -> Caddy gets and renews a free Let's Encrypt certificate by itself.
+      # ":80" -> plain HTTP on the server's IP (fine for a first smoke test only).
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data         # certificates: keep this volume or you'll re-request them (rate limits!)
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+    logging: *default-logging
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

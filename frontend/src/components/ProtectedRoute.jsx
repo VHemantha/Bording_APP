@@ -1,17 +1,25 @@
+import { useEffect } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 
 import { useAuth } from '../context/AuthContext'
+import { useAuthModal } from '../context/AuthModalContext'
+import PageLoader from './PageLoader'
 
-export default function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth()
+export default function ProtectedRoute({ children, requireAdmin = false }) {
+  const { user, loading, isAdmin } = useAuth()
+  const { openAuth } = useAuthModal()
   const location = useLocation()
 
-  if (loading) {
-    return <div className="p-8 text-center text-gray-500">Loading...</div>
-  }
+  const denied = !loading && (!user || (requireAdmin && !isAdmin))
 
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+  useEffect(() => {
+    if (!loading && !user) openAuth('login')
+  }, [loading, user, openAuth])
+
+  if (loading) return <PageLoader />
+
+  if (denied) {
+    return <Navigate to="/" state={{ from: location }} replace />
   }
 
   return children

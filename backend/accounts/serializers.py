@@ -23,9 +23,14 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email']
+        fields = ['id', 'username', 'email', 'role']
+
+    def get_role(self, obj):
+        return 'admin' if obj.is_staff else 'user'
 
 
 class FavoriteSerializer(serializers.ModelSerializer):

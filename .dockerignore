@@ -1,0 +1,29 @@
+# Keep the build context small (backend/venv alone is ~16,000 files) and keep secrets out of images.
+**/.git
+**/node_modules
+**/__pycache__
+**/*.pyc
+
+# Local-only backend files
+backend/venv
+backend/.env
+backend/db.sqlite3
+backend/staticfiles
+backend/media
+backend/frontend_dist
+
+# Local-only frontend files (frontend/.env.production IS needed: it sets VITE_API_BASE_URL)
+frontend/dist
+frontend/.env.local
+frontend/*.local
+frontend/smoke.js
+
+# Not needed inside the image
+infra
+scripts
+deploy
+.github
+*.md
+deploy-azure.ps1
+Dockerfile
+.dockerignore

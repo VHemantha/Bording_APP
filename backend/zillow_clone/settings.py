@@ -10,23 +10,56 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from datetime import timedelta
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load a local .env file (see .env.example) if python-dotenv is installed.
+try:
+    from dotenv import load_dotenv
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
+    load_dotenv(BASE_DIR / '.env')
+except ImportError:
+    pass
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-9s_2%ivf3b36m51ccr=@sx$rzo=rl^br1v0m+mw=hswkla_=l^'
+
+def _env_bool(name, default):
+    return os.environ.get(name, str(default)).strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def _env_list(name):
+    return [v.strip() for v in os.environ.get(name, '').split(',') if v.strip()]
+
+
+# Azure App Service sets WEBSITE_HOSTNAME automatically, so "running on Azure" means
+# production without anyone having to remember to flip a flag.
+AZURE_HOSTNAME = os.environ.get('WEBSITE_HOSTNAME', '')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-ALLOWED_HOSTS = ["yourdomain.com", "www.yourdomain.com", "172.86.85.113"]
+# The Docker image (used on AWS ECS) sets DJANGO_DEBUG=false; plain `runserver` defaults to on.
+DEBUG = _env_bool('DJANGO_DEBUG', not AZURE_HOSTNAME)
 
+# SECURITY WARNING: keep the secret key used in production secret!
+_INSECURE_DEV_KEY = 'django-insecure-9s_2%ivf3b36m51ccr=@sx$rzo=rl^br1v0m+mw=hswkla_=l^'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', _INSECURE_DEV_KEY)
+if not DEBUG and SECRET_KEY == _INSECURE_DEV_KEY:
+    # SimpleJWT signs tokens with SECRET_KEY, so a public dev key = forgeable logins.
+    raise ImproperlyConfigured('Set DJANGO_SECRET_KEY when DEBUG is off.')
+
+# On AWS the CloudFormation stack sets this to the load balancer DNS name (+ your domain).
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', *_env_list('DJANGO_ALLOWED_HOSTS')]
+if AZURE_HOSTNAME:
+    ALLOWED_HOSTS.append(AZURE_HOSTNAME)
+
+# Django admin (and any cookie/CSRF POST) over https needs the public origin trusted.
+CSRF_TRUSTED_ORIGINS = _env_list('DJANGO_CSRF_TRUSTED_ORIGINS')
+if AZURE_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{AZURE_HOSTNAME}')
 
 
 # Application definition
@@ -43,10 +76,13 @@ INSTALLED_APPS = [
     'django_filters',
     'properties',
     'accounts',
+    'ai_agent',
 ]
 
 MIDDLEWARE = [
+    'zillow_clone.middleware.HealthCheckMiddleware',  # first: answers ALB probes before Host validation
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -56,10 +92,31 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# In production the React app is served by this same Django app (same origin), so no
+# CORS is needed. CORS_EXTRA_ORIGINS is only for hosting the frontend somewhere else.
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    *_env_list('CORS_EXTRA_ORIGINS'),
 ]
+if DEBUG:
+    # Vite silently moves to 5174, 5175, ... when 5173 is busy, so accept any local dev port.
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r'^http://(localhost|127\.0\.0\.1):\d+$',
+    ]
+
+# --- AI agent (LangChain + LangGraph, Claude as the foundation model) ---
+# Leave ANTHROPIC_API_KEY unset and the AI endpoints return a clean 503; the rest
+# of the site works normally.
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+ANTHROPIC_MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-5')
+# Only needed for identity-linked / workspace-scoped API keys.
+ANTHROPIC_WORKSPACE_ID = os.environ.get('ANTHROPIC_WORKSPACE_ID', '')
+
+# --- Google Sign-In (Google Identity Services) ---
+# Set to the OAuth Web client ID; unset -> the "Continue with Google" button is
+# shown disabled and POST /api/auth/google/ returns 503.
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -71,6 +128,10 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
     ),
+    # The AI endpoints are public and each call spends Anthropic credits.
+    'DEFAULT_THROTTLE_RATES': {
+        'ai': os.environ.get('AI_THROTTLE_RATE', '20/min'),
+    },
 }
 
 SIMPLE_JWT = {
@@ -101,16 +162,27 @@ WSGI_APPLICATION = 'zillow_clone.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "myproject",
-        "USER": "myprojectuser",
-        "PASSWORD": "strong-password-here",
-        "HOST": "localhost",
-        "PORT": "5432",
+if os.environ.get('DB_HOST'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME', 'postgres'),
+            'USER': os.environ['DB_USER'],
+            'PASSWORD': os.environ['DB_PASSWORD'],
+            'HOST': os.environ['DB_HOST'],
+            'PORT': os.environ.get('DB_PORT', '5432'),
+            'CONN_MAX_AGE': 60,
+            'OPTIONS': {'sslmode': os.environ.get('DB_SSLMODE', 'require')},
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
@@ -146,9 +218,51 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_ROOT = BASE_DIR / "staticfiles"
-MEDIA_ROOT = BASE_DIR / "media"
-CSRF_TRUSTED_ORIGINS = ["https://yourdomain.com", "https://www.yourdomain.com"]
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {
+        # Hashed, compressed filenames need `collectstatic`, which production runs.
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'
+        if DEBUG
+        else 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
+
+# The built React app (the Dockerfile / deploy-azure.ps1 copies frontend/dist here). When present,
+# WhiteNoise serves its files (/assets/*, /favicon.svg, ...) from the site root and
+# zillow_clone.views.spa_index serves index.html for every client-side route.
+FRONTEND_DIST = BASE_DIR / 'frontend_dist'
+if FRONTEND_DIST.is_dir():
+    WHITENOISE_ROOT = FRONTEND_DIST
+
+# --- Security headers (behind a TLS-terminating front end: AWS ALB / Azure App Service) ---
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# Secure cookies are skipped only when DJANGO_SECURE_COOKIES=false, which the AWS stack sets
+# while it has no HTTPS certificate yet (a secure cookie is never sent over plain http, so
+# the Django admin login would loop). The React app itself authenticates with JWTs, not cookies.
+_SECURE_COOKIES = _env_bool('DJANGO_SECURE_COOKIES', not DEBUG)
+SESSION_COOKIE_SECURE = _SECURE_COOKIES
+CSRF_COOKIE_SECURE = _SECURE_COOKIES
+# Google Identity Services signs in through a popup that postMessages back to this
+# page; Django's default COOP of "same-origin" severs that channel.
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
+# Django's default ("same-origin") sends no Referer to other sites, and OpenStreetMap's
+# tile servers refuse requests without one, which would blank the map.
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# Send app + Django request errors to stdout so they reach CloudWatch Logs (ECS awslogs) /
+# `az webapp log tail` (Django's default production logging only tries to email admins).
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {'console': {'class': 'logging.StreamHandler'}},
+    'root': {'handlers': ['console'], 'level': 'WARNING'},
+    'loggers': {
+        'django': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+    },
+}
 
 
 # Email

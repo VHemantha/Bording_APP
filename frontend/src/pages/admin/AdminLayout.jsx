@@ -1,0 +1,84 @@
+import { LayoutDashboard, List, LogOut, Plus, Sparkles, Wand2 } from 'lucide-react'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+
+import { useAuth } from '../../context/AuthContext'
+
+const NAV = [
+  { to: '/admin', end: true, label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/admin/listings', label: 'Listings', icon: List },
+  { to: '/admin/listings/new', label: 'Add listing', icon: Plus },
+  { to: '/admin/import', label: 'AI import', icon: Wand2 },
+]
+
+export default function AdminLayout() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  return (
+    <div className="flex min-h-screen bg-slate-100">
+      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col justify-between bg-brand-900 p-5 text-white lg:flex">
+        <div>
+          <Link to="/" className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
+              <Sparkles size={18} />
+            </span>
+            <span className="font-display text-lg font-semibold">Nestwell</span>
+          </Link>
+          <p className="mt-1 text-xs text-white/50">Admin console</p>
+
+          <nav className="mt-8 space-y-1">
+            {NAV.map(({ to, end, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                className={({ isActive }) =>
+                  `flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                    isActive ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10'
+                  }`
+                }
+              >
+                <Icon size={17} /> {label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+
+        <div className="space-y-2 text-sm">
+          <p className="truncate text-white/60">{user?.email || user?.username}</p>
+          <button
+            onClick={() => {
+              logout()
+              navigate('/')
+            }}
+            className="flex items-center gap-2 rounded-xl px-3 py-2 text-white/70 transition hover:bg-white/10"
+          >
+            <LogOut size={16} /> Sign out
+          </button>
+        </div>
+      </aside>
+
+      <div className="flex-1 lg:ml-60">
+        {/* Mobile top bar */}
+        <div className="flex items-center gap-3 overflow-x-auto border-b border-slate-200 bg-brand-900 px-4 py-3 text-sm text-white lg:hidden">
+          {NAV.map(({ to, end, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `whitespace-nowrap rounded-full px-3 py-1.5 ${isActive ? 'bg-white/15' : 'text-white/70'}`
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
+        </div>
+
+        <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  )
+}

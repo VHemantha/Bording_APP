@@ -15,10 +15,18 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
+
+from .views import spa_index
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # NOT under admin/: the React app owns /admin/* (dashboard, /admin/listings/new, ...)
+    # and both are served from one origin in production.
+    path('django-admin/', admin.site.urls),
     path('api/', include('properties.urls')),
     path('api/', include('accounts.urls')),
+    path('api/', include('ai_agent.urls')),
+    # Everything else belongs to the React router. Excluding these prefixes keeps
+    # unknown API/static/asset URLs returning a real 404 instead of the HTML shell.
+    re_path(r'^(?!api/|django-admin/|static/|assets/).*$', spa_index),
 ]

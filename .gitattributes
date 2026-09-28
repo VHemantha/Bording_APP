@@ -1,0 +1,2 @@
+# The Linux container can't run a script with Windows (CRLF) line endings.
+*.sh text eol=lf

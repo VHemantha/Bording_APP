@@ -1,0 +1,653 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Nestwell on AWS - one Docker image (Django API + built React app) on ECS Fargate behind an
+  Application Load Balancer, PostgreSQL on RDS, secrets in Secrets Manager, and a GitHub Actions
+  deploy role (OIDC, no long-lived AWS keys). See DEPLOY_AWS.md.
+
+# ---------------------------------------------------------------------------------------
+# Parameters
+# ---------------------------------------------------------------------------------------
+Parameters:
+  GitHubRepo:
+    Type: String
+    Description: GitHub repository allowed to deploy, as owner/repo (e.g. VHemantha/Bording_APP).
+    AllowedPattern: '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'
+    ConstraintDescription: Must look like owner/repo.
+  GitHubBranch:
+    Type: String
+    Default: main
+    Description: Only workflow runs on this branch may assume the deploy role.
+  CreateGitHubOidcProvider:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: >-
+      An AWS account can have only ONE GitHub OIDC provider. Set 'false' if your account already
+      has token.actions.githubusercontent.com (IAM -> Identity providers).
+
+  ImageUri:
+    Type: String
+    Default: ''
+    Description: >-
+      Image the service runs. Leave empty on the first deploy. After that the CD pipeline owns the
+      image; scripts/aws-infra.sh passes the live value for you so infra updates never roll it back.
+  DesiredCount:
+    Type: Number
+    Default: 0
+    MinValue: 0
+    Description: >-
+      Number of running tasks. 0 on the first deploy (there is no image to run yet); the first CD run
+      raises it to 1. scripts/aws-infra.sh passes the live value on later updates.
+  TaskCpu:
+    Type: String
+    Default: '512'
+    AllowedValues: ['256', '512', '1024', '2048']
+    Description: Fargate CPU units (1024 = 1 vCPU).
+  TaskMemory:
+    Type: String
+    Default: '2048'
+    AllowedValues: ['1024', '2048', '3072', '4096']
+    Description: Fargate memory in MiB. LangChain is memory-hungry; 1024 is the practical minimum. Must be valid for TaskCpu (512 CPU allows 1024-4096).
+
+  DbEngineVersion:
+    Type: String
+    Default: '17.11'
+    Description: >-
+      PostgreSQL version for a NEW database. Minor upgrades are applied automatically afterwards.
+      If create fails with "Cannot find version", list valid ones:
+      aws rds describe-db-engine-versions --engine postgres --query "DBEngineVersions[].EngineVersion"
+  DbInstanceClass:
+    Type: String
+    Default: db.t4g.micro
+  DbStorageGb:
+    Type: Number
+    Default: 20
+    MinValue: 20
+    MaxValue: 100
+  DbMultiAz:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: A standby in a second AZ. Roughly doubles the database cost; recommended for real production.
+  DbDeletionProtection:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: Set 'true' for production. While true, the stack (and the database) cannot be deleted.
+
+  DomainName:
+    Type: String
+    Default: ''
+    Description: Optional custom domain, e.g. www.example.com. Empty = plain http on the load balancer's own address.
+  HostedZoneId:
+    Type: String
+    Default: ''
+    Description: >-
+      Optional Route 53 hosted zone that owns DomainName. With DomainName + HostedZoneId the stack issues a free
+      ACM certificate, validates it, turns on HTTPS and creates the DNS record for you.
+  CertificateArn:
+    Type: String
+    Default: ''
+    Description: >-
+      Optional. Bring your own ACM certificate (same region) if your DNS is NOT in Route 53. Needs DomainName; you
+      then point DNS at the load balancer yourself.
+
+  AnthropicSecretArn:
+    Type: String
+    Default: ''
+    Description: >-
+      Optional. ARN of a Secrets Manager secret whose plain-text value is your Anthropic API key
+      (created in DEPLOY_AWS.md step 4). Empty = AI features return a clean 503.
+  AnthropicModel:
+    Type: String
+    Default: claude-sonnet-5
+  GoogleClientId:
+    Type: String
+    Default: ''
+    Description: Optional Google OAuth Web client ID (backend verification). Public, not a secret.
+
+Rules:
+  CertificateNeedsDomain:
+    RuleCondition: !Not [!Equals [!Ref CertificateArn, '']]
+    Assertions:
+      - Assert: !Not [!Equals [!Ref DomainName, '']]
+        AssertDescription: CertificateArn requires DomainName.
+
+Conditions:
+  HasImageUri: !Not [!Equals [!Ref ImageUri, '']]
+  CreateOidcProvider: !Equals [!Ref CreateGitHubOidcProvider, 'true']
+  HasDomain: !Not [!Equals [!Ref DomainName, '']]
+  HasHostedZone: !Not [!Equals [!Ref HostedZoneId, '']]
+  HasCertificateArn: !Not [!Equals [!Ref CertificateArn, '']]
+  CreateDnsRecord: !And [!Condition HasDomain, !Condition HasHostedZone]
+  CreateCertificate:
+    !And [!Condition HasDomain, !Condition HasHostedZone, !Not [!Condition HasCertificateArn]]
+  UseHttps: !Or [!Condition CreateCertificate, !Condition HasCertificateArn]
+  HasAnthropicSecret: !Not [!Equals [!Ref AnthropicSecretArn, '']]
+  HasGoogleClientId: !Not [!Equals [!Ref GoogleClientId, '']]
+
+Resources:
+  # -------------------------------------------------------------------------------------
+  # Network: 2 public subnets (load balancer + tasks), 2 isolated private subnets (database).
+  # Tasks get public IPs so they can reach ECR and the Anthropic API without a ~$32/month NAT
+  # gateway; their security group still only accepts traffic from the load balancer.
+  # -------------------------------------------------------------------------------------
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{Key: Name, Value: !Sub '${AWS::StackName}-vpc'}]
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: 10.0.0.0/24
+      MapPublicIpOnLaunch: true
+      Tags: [{Key: Name, Value: !Sub '${AWS::StackName}-public-a'}]
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags: [{Key: Name, Value: !Sub '${AWS::StackName}-public-b'}]
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: 10.0.10.0/24
+      Tags: [{Key: Name, Value: !Sub '${AWS::StackName}-private-a'}]
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: 10.0.11.0/24
+      Tags: [{Key: Name, Value: !Sub '${AWS::StackName}-private-b'}]
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+  PublicSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref PublicRouteTable
+  # The private subnets keep the VPC's default route table, which only has the local route,
+  # so the database has no path to or from the internet.
+
+  # -------------------------------------------------------------------------------------
+  # Security groups: internet -> ALB -> tasks -> database
+  # -------------------------------------------------------------------------------------
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Public HTTP/HTTPS into the load balancer
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0}
+        - {IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0}
+
+  TaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: App tasks - only the load balancer may connect
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: PostgreSQL - only the app tasks may connect
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref TaskSecurityGroup
+
+  # -------------------------------------------------------------------------------------
+  # Database. The password is generated into Secrets Manager, so it never appears in this
+  # template, your shell, or the CloudFormation console. It deliberately does NOT rotate:
+  # ECS injects secrets only when a task starts, so a rotated password would leave running
+  # tasks holding a stale one. (RDS's own "managed master password" rotates every 7 days.)
+  # -------------------------------------------------------------------------------------
+  DatabaseSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: Nestwell database credentials
+      GenerateSecretString:
+        SecretStringTemplate: '{"username":"nestwell"}'
+        GenerateStringKey: password
+        PasswordLength: 32
+        ExcludePunctuation: true
+
+  DatabaseSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Private subnets for the Nestwell database
+      SubnetIds: [!Ref PrivateSubnetA, !Ref PrivateSubnetB]
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      Engine: postgres
+      EngineVersion: !Ref DbEngineVersion
+      AutoMinorVersionUpgrade: true
+      DBInstanceClass: !Ref DbInstanceClass
+      AllocatedStorage: !Ref DbStorageGb
+      MaxAllocatedStorage: 100
+      StorageType: gp3
+      StorageEncrypted: true
+      DBName: nestwell
+      MasterUsername: !Sub '{{resolve:secretsmanager:${DatabaseSecret}:SecretString:username}}'
+      MasterUserPassword: !Sub '{{resolve:secretsmanager:${DatabaseSecret}:SecretString:password}}'
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+      VPCSecurityGroups: [!Ref DatabaseSecurityGroup]
+      PubliclyAccessible: false
+      MultiAZ: !Ref DbMultiAz
+      BackupRetentionPeriod: 7
+      DeletionProtection: !Ref DbDeletionProtection
+      CopyTagsToSnapshot: true
+
+  # Django's SECRET_KEY (it also signs login tokens). Generated here, never seen by a human.
+  AppSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: Nestwell application secrets
+      GenerateSecretString:
+        SecretStringTemplate: '{}'
+        GenerateStringKey: DJANGO_SECRET_KEY
+        PasswordLength: 64
+        ExcludePunctuation: true
+
+  # -------------------------------------------------------------------------------------
+  # Container registry, logs, cluster
+  # -------------------------------------------------------------------------------------
+  Repository:
+    Type: AWS::ECR::Repository
+    Properties:
+      EmptyOnDelete: true
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules":[{"rulePriority":1,"description":"Keep the newest 15 images","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":15},"action":{"type":"expire"}}]}
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${AWS::StackName}'
+      RetentionInDays: 30
+
+  Cluster:
+    Type: AWS::ECS::Cluster
+
+  # -------------------------------------------------------------------------------------
+  # Load balancer (+ optional HTTPS certificate and DNS record)
+  # -------------------------------------------------------------------------------------
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      Scheme: internet-facing
+      Subnets: [!Ref PublicSubnetA, !Ref PublicSubnetB]
+      SecurityGroups: [!Ref LoadBalancerSecurityGroup]
+      LoadBalancerAttributes:
+        # AI requests can take several seconds; match gunicorn's 120s timeout so slow-but-healthy
+        # requests are not cut off with a 504 at the default 60s.
+        - {Key: idle_timeout.timeout_seconds, Value: '120'}
+        - {Key: routing.http.drop_invalid_header_fields.enabled, Value: 'true'}
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref Vpc
+      TargetType: ip
+      Protocol: HTTP
+      Port: 8000
+      HealthCheckPath: /healthz
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher: {HttpCode: '200'}
+      TargetGroupAttributes:
+        - {Key: deregistration_delay.timeout_seconds, Value: '30'}
+
+  HttpListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - !If
+          - UseHttps
+          - Type: redirect
+            RedirectConfig: {Protocol: HTTPS, Port: '443', StatusCode: HTTP_301}
+          - Type: forward
+            TargetGroupArn: !Ref TargetGroup
+
+  HttpsListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: UseHttps
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
+      Certificates:
+        - CertificateArn: !If [CreateCertificate, !Ref Certificate, !Ref CertificateArn]
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: CreateCertificate
+    Properties:
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZoneId
+
+  DnsRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateDnsRecord
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LoadBalancer.DNSName
+        HostedZoneId: !GetAtt LoadBalancer.CanonicalHostedZoneID
+
+  # -------------------------------------------------------------------------------------
+  # IAM for the running app
+  # -------------------------------------------------------------------------------------
+  ExecutionRole:
+    # Used by ECS itself (not your code) to pull the image, write logs and fetch the secrets.
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ecs-tasks.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+      Policies:
+        - PolicyName: read-app-secrets
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref DatabaseSecret
+                  - !Ref AppSecret
+                  - !If [HasAnthropicSecret, !Ref AnthropicSecretArn, !Ref 'AWS::NoValue']
+
+  TaskRole:
+    # What the application code itself may do in AWS: nothing, except allow `ecs execute-command`.
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ecs-tasks.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ecs-exec
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssmmessages:CreateControlChannel
+                  - ssmmessages:CreateDataChannel
+                  - ssmmessages:OpenControlChannel
+                  - ssmmessages:OpenDataChannel
+                Resource: '*'
+
+  # -------------------------------------------------------------------------------------
+  # ECS task + service. This defines the CONFIGURATION (env vars, secrets, sizing); the CD
+  # pipeline (scripts/ecs-deploy.sh) clones the live task definition with a new image tag.
+  # -------------------------------------------------------------------------------------
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub '${AWS::StackName}-web'
+      RequiresCompatibilities: [FARGATE]
+      NetworkMode: awsvpc
+      Cpu: !Ref TaskCpu
+      Memory: !Ref TaskMemory
+      ExecutionRoleArn: !GetAtt ExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: X86_64
+      ContainerDefinitions:
+        - Name: web
+          Image: !If [HasImageUri, !Ref ImageUri, !Sub '${Repository.RepositoryUri}:bootstrap']
+          Essential: true
+          StopTimeout: 30
+          PortMappings:
+            - ContainerPort: 8000
+              Protocol: tcp
+          LinuxParameters:
+            InitProcessEnabled: true
+          Environment:
+            - Name: DJANGO_ALLOWED_HOSTS
+              Value: !If [HasDomain, !Sub '${LoadBalancer.DNSName},${DomainName}', !GetAtt LoadBalancer.DNSName]
+            - Name: DJANGO_CSRF_TRUSTED_ORIGINS
+              Value: !If [UseHttps, !Sub 'https://${DomainName}', !Sub 'http://${LoadBalancer.DNSName}']
+            - Name: DJANGO_SECURE_COOKIES
+              Value: !If [UseHttps, 'true', 'false']
+            - Name: DB_HOST
+              Value: !GetAtt Database.Endpoint.Address
+            - Name: DB_PORT
+              Value: !GetAtt Database.Endpoint.Port
+            - Name: DB_NAME
+              Value: nestwell
+            - Name: ANTHROPIC_MODEL
+              Value: !Ref AnthropicModel
+            - !If
+              - HasGoogleClientId
+              - {Name: GOOGLE_CLIENT_ID, Value: !Ref GoogleClientId}
+              - !Ref 'AWS::NoValue'
+          Secrets:
+            - Name: DJANGO_SECRET_KEY
+              ValueFrom: !Sub '${AppSecret}:DJANGO_SECRET_KEY::'
+            - Name: DB_USER
+              ValueFrom: !Sub '${DatabaseSecret}:username::'
+            - Name: DB_PASSWORD
+              ValueFrom: !Sub '${DatabaseSecret}:password::'
+            - !If
+              - HasAnthropicSecret
+              - {Name: ANTHROPIC_API_KEY, ValueFrom: !Ref AnthropicSecretArn}
+              - !Ref 'AWS::NoValue'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: web
+
+  Service:
+    Type: AWS::ECS::Service
+    Properties:
+      # A service can only register with a target group that is already attached to a listener.
+      # DependsOn cannot name a conditional resource (HttpsListener may not exist), so this tag
+      # refers to whichever listener forwards traffic, which makes CloudFormation create it first.
+      Tags:
+        - Key: forwarding-listener
+          Value: !If [UseHttps, !Ref HttpsListener, !Ref HttpListener]
+      Cluster: !Ref Cluster
+      LaunchType: FARGATE
+      TaskDefinition: !Ref TaskDefinition
+      DesiredCount: !Ref DesiredCount
+      EnableExecuteCommand: true
+      HealthCheckGracePeriodSeconds: 90
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+        # A deploy whose new tasks never turn healthy is rolled back automatically.
+        DeploymentCircuitBreaker: {Enable: true, Rollback: true}
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: [!Ref PublicSubnetA, !Ref PublicSubnetB]
+          SecurityGroups: [!Ref TaskSecurityGroup]
+      LoadBalancers:
+        - ContainerName: web
+          ContainerPort: 8000
+          TargetGroupArn: !Ref TargetGroup
+
+  # -------------------------------------------------------------------------------------
+  # GitHub Actions -> AWS with short-lived OIDC credentials (no access keys stored in GitHub)
+  # -------------------------------------------------------------------------------------
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CreateOidcProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList: [sts.amazonaws.com]
+
+  DeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Assumed by GitHub Actions to build, push and roll out Nestwell
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !If
+                - CreateOidcProvider
+                - !Ref GitHubOidcProvider
+                - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com'
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                'token.actions.githubusercontent.com:aud': sts.amazonaws.com
+                # Only this repository, only this branch. Pull requests from forks cannot deploy.
+                'token.actions.githubusercontent.com:sub': !Sub 'repo:${GitHubRepo}:ref:refs/heads/${GitHubBranch}'
+      Policies:
+        - PolicyName: deploy-nestwell
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: EcrLogin
+                Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: '*'
+              - Sid: EcrPush
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+                  - ecr:PutImage
+                Resource: !GetAtt Repository.Arn
+              - Sid: ReadStackOutputs
+                Effect: Allow
+                Action: cloudformation:DescribeStacks
+                Resource: !Ref 'AWS::StackId'
+              - Sid: TaskDefinitions
+                # These two do not support resource-level permissions.
+                Effect: Allow
+                Action:
+                  - ecs:DescribeTaskDefinition
+                  - ecs:RegisterTaskDefinition
+                Resource: '*'
+              - Sid: RollOutService
+                Effect: Allow
+                Action:
+                  - ecs:DescribeServices
+                  - ecs:UpdateService
+                Resource: !Ref Service
+              - Sid: RunMigrationTask
+                Effect: Allow
+                Action: ecs:RunTask
+                Resource: !Sub 'arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/${AWS::StackName}-web:*'
+                Condition:
+                  ArnEquals:
+                    'ecs:cluster': !GetAtt Cluster.Arn
+              - Sid: WatchMigrationTask
+                Effect: Allow
+                Action: ecs:DescribeTasks
+                Resource: !Sub 'arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:task/${Cluster}/*'
+              - Sid: HandTaskRolesToEcs
+                Effect: Allow
+                Action: iam:PassRole
+                Resource: [!GetAtt ExecutionRole.Arn, !GetAtt TaskRole.Arn]
+                Condition:
+                  StringEquals:
+                    'iam:PassedToService': ecs-tasks.amazonaws.com
+              - Sid: ReadMigrationLogs
+                Effect: Allow
+                Action: logs:GetLogEvents
+                Resource: !GetAtt LogGroup.Arn
+
+Outputs:
+  AppUrl:
+    Description: Where the site is served
+    Value: !If [UseHttps, !Sub 'https://${DomainName}', !Sub 'http://${LoadBalancer.DNSName}']
+  LoadBalancerDns:
+    Description: Point your DNS (CNAME / alias) here if you manage DNS outside Route 53
+    Value: !GetAtt LoadBalancer.DNSName
+  DeployRoleArn:
+    Description: Save as the GitHub repository variable AWS_ROLE_ARN
+    Value: !GetAtt DeployRole.Arn
+  RepositoryUri:
+    Value: !GetAtt Repository.RepositoryUri
+  ClusterName:
+    Value: !Ref Cluster
+  ServiceName:
+    Value: !GetAtt Service.Name
+  LogGroupName:
+    Value: !Ref LogGroup
+  DatabaseEndpoint:
+    Value: !GetAtt Database.Endpoint.Address

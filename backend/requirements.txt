@@ -7,3 +7,19 @@ djangorestframework_simplejwt==5.5.1
 PyJWT==2.13.0
 sqlparse==0.6.0
 tzdata==2026.3
+
+# --- Auth: Google Sign-In verification ---
+google-auth==2.35.0
+
+# --- Config ---
+python-dotenv==1.0.1
+
+# --- Production (AWS ECS / Azure App Service) ---
+gunicorn==26.2.0
+whitenoise==6.12.0
+psycopg[binary]==3.3.6
+
+# --- AI agent: LangChain + LangGraph with Claude (Anthropic) ---
+langchain==0.3.27
+langchain-anthropic==0.3.15
+langgraph==0.3.34

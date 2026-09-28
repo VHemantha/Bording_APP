@@ -1,6 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
-import { fetchMe, loginUser, registerUser } from '../api/auth'
+import {
+  fetchMe,
+  loginUser,
+  loginWithGoogleCredential,
+  registerUser,
+} from '../api/auth'
 
 const AuthContext = createContext(null)
 
@@ -23,10 +28,20 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false))
   }, [])
 
-  async function login(credentials) {
-    const { access, refresh } = await loginUser(credentials)
+  function storeTokens({ access, refresh }) {
     localStorage.setItem('access_token', access)
-    localStorage.setItem('refresh_token', refresh)
+    if (refresh) localStorage.setItem('refresh_token', refresh)
+  }
+
+  async function login(credentials) {
+    storeTokens(await loginUser(credentials))
+    const me = await fetchMe()
+    setUser(me)
+    return me
+  }
+
+  async function loginWithGoogle(credential) {
+    storeTokens(await loginWithGoogleCredential(credential))
     const me = await fetchMe()
     setUser(me)
     return me
@@ -44,7 +59,16 @@ export function AuthProvider({ children }) {
   }
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout }),
+    () => ({
+      user,
+      loading,
+      role: user?.role ?? null,
+      isAdmin: user?.role === 'admin',
+      login,
+      loginWithGoogle,
+      register,
+      logout,
+    }),
     [user, loading]
   )
 
