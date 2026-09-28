@@ -95,7 +95,10 @@ usermod -aG docker "$DEPLOY_USER"
 
 KEY_FILE="/home/$DEPLOY_USER/.ssh/authorized_keys"
 install -d -m 700 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "/home/$DEPLOY_USER/.ssh"
-touch "$KEY_FILE"
+# Some servers lock authorized_keys files with the immutable flag (chattr +i), which makes even root's
+# touch/chmod fail with "Operation not permitted". Unlock ours before editing; harmless if it isn't locked.
+chattr -i "$KEY_FILE" 2>/dev/null || true
+[ -e "$KEY_FILE" ] || touch "$KEY_FILE"
 add_key() { grep -qxF "$1" "$KEY_FILE" || printf '%s\n' "$1" >>"$KEY_FILE"; }   # idempotent
 if [ -n "${DEPLOY_SSH_KEY:-}" ]; then
   add_key "$DEPLOY_SSH_KEY"
@@ -109,7 +112,8 @@ chown "$DEPLOY_USER:$DEPLOY_USER" "$KEY_FILE"
 chmod 600 "$KEY_FILE"
 
 mkdir -p "$APP_DIR"
-chown "$DEPLOY_USER:$DEPLOY_USER" "$APP_DIR"
+# -R: if you already cloned the repo here as root, git would refuse to work for the deploy user ("dubious ownership")
+chown -R "$DEPLOY_USER:$DEPLOY_USER" "$APP_DIR"
 
 echo "==> 5/6 Firewall and fail2ban"
 SSH_PORT=$(sshd -T 2>/dev/null | awk '$1 == "port" {print $2; exit}')
