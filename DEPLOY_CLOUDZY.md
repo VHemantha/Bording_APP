@@ -19,8 +19,18 @@ server (`deploy/cloudzy/.env`, readable only by you), never in the repo.
 **Cost:** just the VPS. Pick one with **2 GB RAM minimum, 4 GB comfortable** (the AI libraries are memory-hungry and
 building the image needs headroom), plus your Anthropic usage. Check Cloudzy's current plans and prices on their site.
 
-> **Two shells are used below.** Blocks marked **PowerShell (your PC)** run on your Windows machine (Windows 10/11 already
-> has `ssh` and `scp`). Blocks marked **Server (bash)** run inside your SSH session on the VPS.
+> **Two machines are used below, and every command runs on exactly one of them.** Blocks marked
+> **PowerShell (your PC)** run on your Windows machine (Windows 10/11 already has `ssh` and `scp`). Blocks marked
+> **Server (bash)** run inside your SSH session on the VPS. Read the prompt before you press Enter:
+>
+> | Prompt looks like | You are on | Commands for it |
+> | --- | --- | --- |
+> | `PS C:\Users\...>` (PowerShell) or `you@PC MINGW64 ...$` (Git Bash) | **your PC** | blocks marked *PC* |
+> | `root@vps-...:~#` or `deploy@vps-...:~$` | **the server** | blocks marked *Server* |
+>
+> Keep **two terminal windows/tabs open** (in VS Code: the `+` button in the terminal panel): one for the PC, one connected
+> to the server. If you type a *PC* command in the server window (or the other way round) you'll get "command not found",
+> "No such file", or Windows-style paths like `C:/Program Files/Git/...`.
 
 ---
 
