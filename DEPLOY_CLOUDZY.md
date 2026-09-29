@@ -97,7 +97,11 @@ ssh root@SERVER_IP
 DEPLOY_SSH_KEY='ssh-ed25519 AAAA...your-key... nestwell-cloudzy' bash setup-server.sh
 ```
 
-It refuses to start if the key isn't a valid public key (so a typo can't lock you out). Then it updates the system and
+First it runs a **preflight check** and refuses to continue if the server doesn't look brand-new: SSH keys in root's
+`authorized_keys` that you didn't add, a locked key file, or login accounts other than yours. A fresh VPS has none of
+those. If it stops, read the message: unless *you* chose an SSH key when creating the server, don't override it —
+see "Server isn't fresh" in Troubleshooting. It also refuses if the key isn't a valid public key (so a typo can't
+lock you out). Then it updates the system and
 enables automatic security updates, installs Docker, adds a 2 GB swap file, creates a non-root **`deploy`** user (with
 your key, docker and passwordless `sudo`), turns on the firewall (SSH, 80, 443 only) and fail2ban, and finally
 **disables SSH password logins and root SSH login**. It is safe to re-run.
@@ -297,6 +301,8 @@ docker compose start web
 | --- | --- |
 | `ssh deploy@SERVER_IP` says *Permission denied (publickey)* | The server has a different key than your PC. In the still-open root session run `cat /home/deploy/.ssh/authorized_keys` and compare it with `Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub` on your PC; re-run the script with the correct `DEPLOY_SSH_KEY`. Wrong key file? `ssh -i $env:USERPROFILE\.ssh\id_ed25519 deploy@SERVER_IP`. |
 | Locked out of SSH entirely | Use the **console / VNC** in the Cloudzy dashboard and log in as root with the root password (console logins aren't affected by the SSH settings), then fix `/home/deploy/.ssh/authorized_keys`, or delete `/etc/ssh/sshd_config.d/00-nestwell.conf` and run `systemctl reload ssh`. |
+| Setup stops with **`STOP: this server does not look fresh`** | The server already has SSH keys, locked key files or extra user accounts that you didn't create. Treat it as possibly not yours alone: **reinstall the OS from the Cloudzy dashboard** (a rebuild/reinstall option on the server's page), log in with the new root password, and immediately run `cat /root/.ssh/authorized_keys; awk -F: '$3>=1000' /etc/passwd`. A clean install prints nothing. If the key **comes back on a clean reinstall**, it's in the image or the provider's tooling: send Cloudzy support the key's comment and ask whose it is before you put any real data on the server. Only if you know the keys are yours, re-run with `ALLOW_EXISTING_KEYS=1` in front of the command. |
+| `touch: cannot touch ...authorized_keys: Operation not permitted` | The file is locked (immutable flag, see `lsattr <file>`). Something other than this guide set that, which is the same red flag as above. |
 | `Set DEPLOY_SSH_KEY to your public key` / `not a valid SSH public key` | Pass your key as in step 4: one line, in single quotes, starting `ssh-ed25519`, copied from `Get-Content ...id_ed25519.pub` on your **PC**. A key generated on the server itself is useless for logging in from your PC. |
 | `setup-server.sh: line 2: $'\r': command not found` | The file got Windows line endings. In the repo, `.gitattributes` prevents it; fix on the server with `sed -i 's/\r$//' setup-server.sh` and re-run. Same for the other `.sh` files. |
 | Build is *Killed* / `exit code 137` | Out of memory while building. Check `free -h` (swap should show 2 GB); retry `./deploy.sh`; if it keeps dying, resize the VPS to 4 GB. |

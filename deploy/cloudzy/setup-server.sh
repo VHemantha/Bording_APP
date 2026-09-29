@@ -18,6 +18,9 @@
 #      deploy user and sudo works, so it can never lock you out. (Admin access afterwards: log in as
 #      deploy, then `sudo -i`.)
 #
+# Refuses to run on a server that already has unexpected SSH keys, locked key files or extra accounts (see the
+# preflight below); ALLOW_EXISTING_KEYS=1 overrides that when you know they are yours.
+#
 # Env overrides: DEPLOY_USER (default deploy), APP_DIR (default /opt/nestwell),
 #                COPY_ROOT_KEYS=1 (also copy root's existing authorized_keys - only if you trust every one of them)
 set -euo pipefail
@@ -33,6 +36,33 @@ case "${ID:-}" in
   ubuntu | debian) ;;
   *) echo "Unsupported OS '${ID:-unknown}': this script supports Ubuntu and Debian." >&2; exit 1 ;;
 esac
+
+# Preflight: is this server really fresh? A brand-new VPS has no SSH keys you didn't put there, no locked key
+# files, and no extra user accounts. If any of that is present, someone else may already have access.
+FOUND=""
+if [ -s /root/.ssh/authorized_keys ]; then
+  FOUND="${FOUND}
+  - root already has SSH key(s) installed (fingerprint, comment):
+$(ssh-keygen -l -f /root/.ssh/authorized_keys 2>/dev/null | sed 's/^/      /')"
+fi
+if lsattr /root/.ssh/authorized_keys 2>/dev/null | awk '{print $1}' | grep -q '[ia]'; then
+  FOUND="${FOUND}
+  - /root/.ssh/authorized_keys is LOCKED (immutable/append-only), so you cannot change or remove keys in it"
+fi
+EXTRA_USERS=$(awk -F: -v d="$DEPLOY_USER" '$3 >= 1000 && $3 < 60000 && $1 != d {printf "%s ", $1}' /etc/passwd)
+if [ -n "$EXTRA_USERS" ]; then
+  FOUND="${FOUND}
+  - other login accounts already exist: ${EXTRA_USERS}"
+fi
+if [ -n "$FOUND" ] && [ -z "${ALLOW_EXISTING_KEYS:-}" ]; then
+  echo "STOP: this server does not look fresh:${FOUND}" >&2
+  echo >&2
+  echo "If you did not put these there yourself, someone else may have access to this machine. Do not deploy real" >&2
+  echo "data or API keys to it: reinstall the OS from your provider's dashboard and start again, and ask the provider" >&2
+  echo "whose keys these are. If they ARE yours (e.g. you chose an SSH key when creating the server), re-run with" >&2
+  echo "ALLOW_EXISTING_KEYS=1 in front of the command." >&2
+  exit 1
+fi
 
 # Validate the key BEFORE changing anything, so a typo can't end in a half-configured server.
 if [ -n "${DEPLOY_SSH_KEY:-}" ]; then
