@@ -1,8 +1,23 @@
 # SITE_ADDRESS comes from .env via docker-compose.yml: your domain (automatic HTTPS) or ":80" (plain HTTP).
+{
+	servers {
+		# Behind Cloudflare every request arrives from a Cloudflare edge IP. Trust CF-Connecting-IP
+		# (the real visitor) only when the request really comes from Cloudflare, so {client_ip} is
+		# the visitor either way and can't be spoofed by hitting the server directly.
+		# Ranges from https://www.cloudflare.com/ips/ - update if Cloudflare changes them.
+		trusted_proxies static 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+		client_ip_headers CF-Connecting-IP
+	}
+}
+
 {$SITE_ADDRESS::80} {
 	encode zstd gzip
-	# Caddy adds X-Forwarded-For / X-Forwarded-Proto, which Django uses for the client IP (AI rate
-	# limit) and to know the request was HTTPS. AI calls can take several seconds; Caddy sets no
-	# upstream timeout, so gunicorn's own 120 s limit is the only one.
-	reverse_proxy web:8000
+	# Django uses X-Forwarded-For for the client IP (AI rate limit) and X-Forwarded-Proto to know
+	# the request was HTTPS. Send just the real visitor IP (see trusted_proxies above) rather than
+	# Caddy's default of appending the direct peer, which behind Cloudflare is a Cloudflare IP.
+	# AI calls can take several seconds; Caddy sets no upstream timeout, so gunicorn's own 120 s
+	# limit is the only one.
+	reverse_proxy web:8000 {
+		header_up X-Forwarded-For {client_ip}
+	}
 }
