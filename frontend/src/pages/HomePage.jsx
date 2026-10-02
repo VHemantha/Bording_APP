@@ -43,7 +43,7 @@ export default function HomePage() {
         {/* Darkens only the left, where the white text sits, so the photo stays bright. */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
 
-        <div className="mx-auto flex min-h-[80vh] max-w-7xl flex-col justify-center px-4 py-16">
+        <div className="mx-auto flex min-h-[69vh] max-w-7xl flex-col justify-center px-4 py-16">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
@@ -56,7 +56,7 @@ export default function HomePage() {
               <h1
                 className={`font-display font-semibold text-white drop-shadow-md ${
                   lang === 'en'
-                    ? 'text-4xl leading-[1.05] sm:text-6xl lg:text-7xl'
+                    ? 'text-4xl leading-[1.25] sm:text-6xl lg:text-[4.25rem]'
                     : 'text-3xl leading-[1.3] sm:text-5xl lg:text-6xl'
                 }`}
               >
@@ -71,20 +71,20 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12 }}
-            className="mt-10 flex h-16 w-full max-w-[46rem] items-center rounded-2xl border border-slate-300 bg-white pl-5 pr-2 shadow-lift transition focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/25 sm:h-[5.5rem] sm:pl-7 sm:pr-4"
+            className="mt-10 flex h-16 w-full max-w-[37.5rem] items-center rounded-xl border border-slate-300 bg-white pl-5 pr-2 shadow-lift transition focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/25 sm:h-[5.5rem] sm:pl-6 sm:pr-3"
           >
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('hero.placeholder')}
               aria-label={t('hero.placeholder')}
-              className="h-full min-w-0 flex-1 bg-transparent text-lg text-slate-900 outline-none placeholder:text-slate-400 sm:text-2xl"
+              className="h-full min-w-0 flex-1 bg-transparent text-lg text-slate-900 outline-none placeholder:text-slate-400 sm:text-xl"
             />
             <button
               aria-label={t('hero.search')}
               className="shrink-0 rounded-xl p-3 text-brand-900 transition hover:bg-slate-100"
             >
-              <Search className="h-6 w-6 sm:h-8 sm:w-8" strokeWidth={2.75} />
+              <Search className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2.75} />
             </button>
           </motion.form>
         </div>
