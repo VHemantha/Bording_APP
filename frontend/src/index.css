@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Fraunces", "Manrope", ui-serif, Georgia, serif;
+  /* The Noto fonts cover Sinhala and Tamil, which Manrope and Fraunces have no glyphs for. */
+  --font-sans: "Manrope", "Noto Sans Sinhala", "Noto Sans Tamil", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Fraunces", "Manrope", "Noto Sans Sinhala", "Noto Sans Tamil", ui-serif, Georgia, serif;
 
   /* Brand: deep ocean indigo */
   --color-brand-50: #eef3ff;
@@ -87,6 +88,74 @@ body {
 
 .animate-floaty {
   animation: floaty 5s ease-in-out infinite;
+}
+
+/* City tiles (home page): white box with a slim animated colour bar; on hover the moving
+   gradient floods the whole tile and it lifts. */
+@keyframes city-gradient {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.city-tile {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 6rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #fff;
+  color: var(--color-brand-900);
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.city-tile::before,
+.city-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(115deg, var(--color-brand-600), #06b6d4, var(--color-leaf-500), var(--color-accent-500), var(--color-brand-600));
+  background-size: 300% 300%;
+  /* "alternate" sweeps back and forth, so the loop has no visible jump. */
+  animation: city-gradient 5s ease-in-out infinite alternate;
+}
+
+.city-tile::before {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.city-tile::after {
+  top: auto;
+  height: 3px;
+}
+
+.city-tile:hover,
+.city-tile:focus-visible {
+  color: #fff;
+  border-color: transparent;
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+  outline: none;
+}
+
+.city-tile:hover::before,
+.city-tile:focus-visible::before {
+  opacity: 1;
+}
+
+.city-tile:active {
+  transform: translateY(-1px);
 }
 
 /* Hide scrollbars on horizontal scrollers but keep function */

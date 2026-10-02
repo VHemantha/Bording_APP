@@ -5,9 +5,9 @@ import { useState } from 'react'
 import { aiErrorMessage, searchWithAI } from '../api/ai'
 
 const SUGGESTIONS = [
-  '3 bed house in Austin under $600k',
-  'Pet-friendly rentals in Seattle',
-  'Condos in Denver with 2+ baths',
+  '3 bed house in Colombo under $600k',
+  'Pet-friendly rentals in Kandy',
+  'Condos in Galle with 2+ baths',
 ]
 
 /**

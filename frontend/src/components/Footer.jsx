@@ -1,13 +1,17 @@
 import { Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
+import { useLanguage } from '../context/LanguageContext'
+
 const COLUMNS = [
-  { title: 'Explore', links: [['Buy', '/search?status=for_sale'], ['Rent', '/search?status=for_rent'], ['Browse all', '/search']] },
-  { title: 'Company', links: [['About', '/'], ['Careers', '/'], ['Press', '/']] },
-  { title: 'Support', links: [['Help center', '/'], ['Contact', '/'], ['Privacy', '/']] },
+  { title: 'footer.explore', links: [['nav.buy', '/search?status=for_sale'], ['nav.rent', '/search?status=for_rent'], ['nav.browse', '/search']] },
+  { title: 'footer.company', links: [['footer.about', '/'], ['footer.careers', '/'], ['footer.press', '/']] },
+  { title: 'footer.support', links: [['footer.help', '/'], ['footer.contact', '/'], ['footer.privacy', '/']] },
 ]
 
 export default function Footer() {
+  const { t } = useLanguage()
+
   return (
     <footer className="mt-20 border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-14">
@@ -19,32 +23,29 @@ export default function Footer() {
               </span>
               <span className="font-display text-xl font-semibold text-brand-900">Nestwell</span>
             </div>
-            <p className="mt-3 max-w-xs text-sm text-slate-500">
-              A calmer way to find your next home — with an AI assistant that actually
-              understands what you're looking for.
-            </p>
+            <p className="mt-3 max-w-xs text-sm text-slate-500">{t('footer.tagline')}</p>
             <form
               className="mt-5 flex max-w-sm items-center gap-2 rounded-full border border-slate-200 p-1.5"
               onSubmit={(e) => e.preventDefault()}
             >
               <input
                 type="email"
-                placeholder="Get new listings by email"
+                placeholder={t('footer.emailPlaceholder')}
                 className="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none"
               />
               <button className="rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white">
-                Subscribe
+                {t('footer.subscribe')}
               </button>
             </form>
           </div>
 
           {COLUMNS.map((col) => (
             <div key={col.title}>
-              <p className="text-sm font-semibold text-brand-900">{col.title}</p>
+              <p className="text-sm font-semibold text-brand-900">{t(col.title)}</p>
               <ul className="mt-3 space-y-2 text-sm text-slate-500">
                 {col.links.map(([label, to]) => (
                   <li key={label}>
-                    <Link to={to} className="transition hover:text-brand-700">{label}</Link>
+                    <Link to={to} className="transition hover:text-brand-700">{t(label)}</Link>
                   </li>
                 ))}
               </ul>
@@ -52,7 +53,7 @@ export default function Footer() {
           ))}
         </div>
         <p className="mt-12 border-t border-slate-100 pt-6 text-xs text-slate-400">
-          © {new Date().getFullYear()} Nestwell. Listings shown are sample data for demonstration.
+          © {new Date().getFullYear()} Nestwell. {t('footer.copyright')}
         </p>
       </div>
     </footer>

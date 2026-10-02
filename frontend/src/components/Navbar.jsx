@@ -4,16 +4,19 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
+import { useLanguage } from '../context/LanguageContext'
+import LanguageSwitcher from './LanguageSwitcher'
 
 const LINKS = [
-  { to: '/search?status=for_sale', label: 'Buy' },
-  { to: '/search?status=for_rent', label: 'Rent' },
-  { to: '/search', label: 'Browse all' },
+  { to: '/search?status=for_sale', label: 'nav.buy' },
+  { to: '/search?status=for_rent', label: 'nav.rent' },
+  { to: '/search', label: 'nav.browse' },
 ]
 
 export default function Navbar() {
   const { user, isAdmin, logout } = useAuth()
   const { openAuth } = useAuthModal()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -24,68 +27,57 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-4">
+    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/95 backdrop-blur-md">
+      {/* Links left, logo centered, account right. Below md: logo left, menu button right. */}
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-4 md:grid md:h-20 md:grid-cols-[1fr_auto_1fr]">
+        <nav className="hidden items-center gap-8 font-medium text-slate-800 md:flex">
+          {LINKS.map((l) => (
+            <NavLink key={l.label} to={l.to} className="transition hover:text-brand-600">
+              {t(l.label)}
+            </NavLink>
+          ))}
+        </nav>
+
         <Link to="/" className="flex shrink-0 items-center gap-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
             <Sparkles size={18} />
           </span>
-          <span className="font-display text-xl font-semibold text-brand-900">Nestwell</span>
+          <span className="font-display text-2xl font-semibold text-brand-900">Nestwell</span>
         </Link>
 
-        <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex">
-          {LINKS.map((l) => (
-            <NavLink
-              key={l.label}
-              to={l.to}
-              className={({ isActive }) =>
-                `transition hover:text-brand-700 ${isActive ? 'text-brand-700' : ''}`
-              }
-            >
-              {l.label}
-            </NavLink>
-          ))}
+        <div className="hidden items-center justify-end gap-5 font-medium text-slate-800 md:flex">
           {user && (
-            <NavLink to="/saved" className="flex items-center gap-1.5 transition hover:text-brand-700">
-              <Heart size={15} /> Saved
+            <NavLink to="/saved" className="flex items-center gap-1.5 transition hover:text-brand-600">
+              <Heart size={16} /> {t('nav.saved')}
             </NavLink>
           )}
           {isAdmin && (
-            <NavLink to="/admin" className="flex items-center gap-1.5 transition hover:text-brand-700">
-              <LayoutDashboard size={15} /> Admin
+            <NavLink to="/admin" className="flex items-center gap-1.5 transition hover:text-brand-600">
+              <LayoutDashboard size={16} /> {t('nav.admin')}
             </NavLink>
           )}
-        </nav>
-
-        <div className="hidden shrink-0 items-center gap-2 md:flex">
+          <LanguageSwitcher />
           {user ? (
             <>
-              <span className="text-sm text-slate-500">Hi, {user.username.split('@')[0]}</span>
+              <span className="text-sm font-normal text-slate-500">
+                {t('nav.hi', { name: user.username.split('@')[0] })}
+              </span>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-600 transition hover:bg-slate-50"
               >
-                <LogOut size={15} /> Log out
+                <LogOut size={15} /> {t('nav.logOut')}
               </button>
             </>
           ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => openAuth('login')}
-                className="rounded-full px-3.5 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-              >
-                Sign in
-              </button>
-              <button
-                type="button"
-                onClick={() => openAuth('register')}
-                className="rounded-full bg-brand-600 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-brand-700"
-              >
-                Sign up
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => openAuth('login')}
+              className="rounded-xl bg-brand-600 px-6 py-2.5 font-bold text-white transition hover:bg-brand-700"
+            >
+              {t('nav.signIn')}
+            </button>
           )}
         </div>
 
@@ -93,7 +85,7 @@ export default function Navbar() {
           type="button"
           className="rounded-lg p-2 text-slate-600 md:hidden"
           onClick={() => setMobileOpen((v) => !v)}
-          aria-label="Menu"
+          aria-label={t('nav.menu')}
         >
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -104,43 +96,34 @@ export default function Navbar() {
           <div className="flex flex-col gap-3 text-sm font-medium text-slate-700">
             {LINKS.map((l) => (
               <Link key={l.label} to={l.to} onClick={() => setMobileOpen(false)}>
-                {l.label}
+                {t(l.label)}
               </Link>
             ))}
-            {user && <Link to="/saved" onClick={() => setMobileOpen(false)}>Saved homes</Link>}
-            {isAdmin && <Link to="/admin" onClick={() => setMobileOpen(false)}>Admin dashboard</Link>}
+            {user && <Link to="/saved" onClick={() => setMobileOpen(false)}>{t('nav.savedHomes')}</Link>}
+            {isAdmin && <Link to="/admin" onClick={() => setMobileOpen(false)}>{t('nav.adminDashboard')}</Link>}
+            <div className="mt-2">
+              <LanguageSwitcher inline />
+            </div>
             <div className="mt-2 flex gap-2">
               {user ? (
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="rounded-full border border-slate-200 px-4 py-2"
+                  className="rounded-xl border border-slate-200 px-4 py-2"
                 >
-                  Log out
+                  {t('nav.logOut')}
                 </button>
               ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileOpen(false)
-                      openAuth('login')
-                    }}
-                    className="rounded-full border border-slate-200 px-4 py-2"
-                  >
-                    Sign in
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileOpen(false)
-                      openAuth('register')
-                    }}
-                    className="rounded-full bg-brand-600 px-4 py-2 font-semibold text-white"
-                  >
-                    Sign up
-                  </button>
-                </>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false)
+                    openAuth('login')
+                  }}
+                  className="rounded-xl bg-brand-600 px-5 py-2 font-bold text-white"
+                >
+                  {t('nav.signIn')}
+                </button>
               )}
             </div>
           </div>
