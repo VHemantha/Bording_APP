@@ -4,9 +4,15 @@ from django.db import models
 class Property(models.Model):
     class HomeType(models.TextChoices):
         HOUSE = 'house', 'House'
-        CONDO = 'condo', 'Condo'
-        TOWNHOUSE = 'townhouse', 'Townhouse'
         APARTMENT = 'apartment', 'Apartment'
+        ANNEX = 'annex', 'Annex'
+        LAND = 'land', 'Land'
+        UPPER_FLOOR_HOUSE = 'upper_floor_house', 'Upper floor house'
+
+    class Stories(models.IntegerChoices):
+        SINGLE = 1, 'Single story'
+        TWO = 2, 'Two story'
+        THREE = 3, 'Three story'
 
     class Status(models.TextChoices):
         FOR_SALE = 'for_sale', 'For Sale'
@@ -25,6 +31,11 @@ class Property(models.Model):
     sqft = models.PositiveIntegerField()
     home_type = models.CharField(max_length=20, choices=HomeType.choices, default=HomeType.HOUSE)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.FOR_SALE)
+    # Key money: the advance payment a landlord asks for up front. 0 = none asked.
+    key_money = models.PositiveIntegerField(default=0)
+    parking_slots = models.PositiveSmallIntegerField(default=0)
+    # Blank for listings where it doesn't apply (land).
+    stories = models.PositiveSmallIntegerField(choices=Stories.choices, null=True, blank=True)
 
     description = models.TextField(blank=True)
     year_built = models.PositiveSmallIntegerField(null=True, blank=True)

@@ -10,7 +10,7 @@ import PageLoader from '../components/PageLoader'
 import PhotoGallery from '../components/PhotoGallery'
 import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
-import { formatBaths, formatPrice, HOME_TYPE_LABELS, statusLabel } from '../utils/format'
+import { formatBaths, formatPrice, HOME_TYPE_LABELS, statusLabel, STORIES_LABELS } from '../utils/format'
 
 export default function PropertyDetailPage() {
   const { id } = useParams()
@@ -121,6 +121,9 @@ export default function PropertyDetailPage() {
 
           <div className="mt-6 grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
             <Info label="Home type" value={HOME_TYPE_LABELS[property.home_type]} />
+            <Info label="Key money" value={property.key_money ? formatPrice(property.key_money) : 'None'} />
+            <Info label="Parking slots" value={property.parking_slots} />
+            <Info label="Stories" value={STORIES_LABELS[property.stories] || '—'} />
             <Info label="Year built" value={property.year_built || '—'} />
             <Info label="Status" value={statusLabel(property.status)} />
             <Info label="Listed" value={property.listed_date} />

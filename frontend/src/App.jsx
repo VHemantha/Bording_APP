@@ -1,4 +1,5 @@
-import { Outlet, Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Outlet, Route, Routes, useLocation } from 'react-router-dom'
 
 import AssistantWidget from './components/AssistantWidget'
 import AuthModal from './components/AuthModal'
@@ -17,13 +18,24 @@ import SavedHomesPage from './pages/SavedHomesPage'
 import SearchResultsPage from './pages/SearchResultsPage'
 
 function PublicLayout() {
+  const { pathname } = useLocation()
+
+  // A new page starts at the top instead of inheriting the previous page's scroll position.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+
+  // The search page fills the screen exactly (fixed map, scrolling list), so it has no footer:
+  // one below it would let the whole window scroll and drag the map along.
+  const fullScreen = pathname === '/search'
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <div className="flex-1">
         <Outlet />
       </div>
-      <Footer />
+      {!fullScreen && <Footer />}
       <AssistantWidget />
     </div>
   )

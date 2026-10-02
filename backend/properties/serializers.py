@@ -15,7 +15,8 @@ class PropertyListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'home_type', 'status', 'primary_image_url',
+            'sqft', 'home_type', 'status', 'key_money', 'parking_slots',
+            'stories', 'primary_image_url',
         ]
 
 
@@ -27,7 +28,8 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'home_type', 'status', 'description',
+            'sqft', 'home_type', 'status', 'key_money', 'parking_slots',
+            'stories', 'description',
             'year_built', 'primary_image_url', 'listed_date', 'images',
         ]
 
@@ -46,7 +48,8 @@ class PropertyWriteSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'home_type', 'status', 'description',
+            'sqft', 'home_type', 'status', 'key_money', 'parking_slots',
+            'stories', 'description',
             'year_built', 'primary_image_url', 'listed_date', 'images',
         ]
 

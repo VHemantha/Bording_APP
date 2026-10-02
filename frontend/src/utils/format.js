@@ -24,9 +24,17 @@ export function statusLabel(status) {
   return status === 'for_rent' ? 'For Rent' : 'For Sale'
 }
 
+// Keys match Property.HomeType / Property.Stories on the backend.
 export const HOME_TYPE_LABELS = {
   house: 'House',
-  condo: 'Condo',
-  townhouse: 'Townhouse',
   apartment: 'Apartment',
+  annex: 'Annex',
+  land: 'Land',
+  upper_floor_house: 'Upper floor house',
+}
+
+export const STORIES_LABELS = {
+  1: 'Single story',
+  2: 'Two story',
+  3: 'Three story',
 }

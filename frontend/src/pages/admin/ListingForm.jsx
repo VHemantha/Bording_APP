@@ -1,7 +1,8 @@
 import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
-const HOME_TYPES = ['house', 'condo', 'townhouse', 'apartment']
+import { HOME_TYPE_LABELS, STORIES_LABELS } from '../../utils/format'
+
 const STATUSES = [
   ['for_sale', 'For sale'],
   ['for_rent', 'For rent'],
@@ -20,6 +21,9 @@ const EMPTY = {
   sqft: '',
   home_type: 'house',
   status: 'for_sale',
+  key_money: 0,
+  parking_slots: 0,
+  stories: '',
   description: '',
   year_built: '',
   primary_image_url: '',
@@ -61,6 +65,9 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
       beds: num(values.beds),
       baths: num(values.baths),
       sqft: num(values.sqft),
+      key_money: num(values.key_money) ?? 0,
+      parking_slots: num(values.parking_slots) ?? 0,
+      stories: num(values.stories),
       year_built: num(values.year_built),
       images: values.images.map((s) => s.trim()).filter(Boolean),
     }
@@ -90,8 +97,11 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
           <Text label="Bedrooms" type="number" value={values.beds} onChange={(v) => set('beds', v)} required />
           <Text label="Bathrooms" type="number" step="0.5" value={values.baths} onChange={(v) => set('baths', v)} required />
           <Text label="Square feet" type="number" value={values.sqft} onChange={(v) => set('sqft', v)} required />
-          <Select label="Home type" value={values.home_type} onChange={(v) => set('home_type', v)} options={HOME_TYPES.map((t) => [t, t])} />
+          <Select label="Home type" value={values.home_type} onChange={(v) => set('home_type', v)} options={Object.entries(HOME_TYPE_LABELS)} />
           <Select label="Status" value={values.status} onChange={(v) => set('status', v)} options={STATUSES} />
+          <Text label="Key money (USD)" type="number" value={values.key_money} onChange={(v) => set('key_money', v)} />
+          <Text label="Parking slots" type="number" value={values.parking_slots} onChange={(v) => set('parking_slots', v)} />
+          <Select label="Stories" value={values.stories ?? ''} onChange={(v) => set('stories', v)} options={[['', 'Not applicable'], ...Object.entries(STORIES_LABELS)]} />
           <Text label="Year built" type="number" value={values.year_built} onChange={(v) => set('year_built', v)} />
           <Text label="Listed date" type="date" value={values.listed_date} onChange={(v) => set('listed_date', v)} required />
         </Grid>

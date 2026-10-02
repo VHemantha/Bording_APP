@@ -35,6 +35,8 @@ services:
       args:
         # Public OAuth client ID, baked into the JavaScript at build time (not a secret).
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+        # Google Maps browser key for the search page's map (blank = OpenStreetMap).
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY:-}
     image: nestwell-web:latest
     restart: unless-stopped
     env_file: .env               # DJANGO_*, ANTHROPIC_*, GOOGLE_CLIENT_ID, ...

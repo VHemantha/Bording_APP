@@ -71,7 +71,7 @@ def make_search_properties_tool(filters_sink: list):
         search: Optional[str] = None,
     ) -> str:
         """Search live property listings. `status` is 'for_sale' or 'for_rent',
-        `home_type` is one of house/condo/townhouse/apartment. Returns a short
+        `home_type` is one of house/apartment/annex/land/upper_floor_house. Returns a short
         text summary of matching homes (not the full data).
         """
         filters = {

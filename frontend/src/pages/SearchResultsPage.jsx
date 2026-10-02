@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Sparkles, X } from 'lucide-react'
+import { ChevronDown, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
@@ -7,19 +7,45 @@ import { addFavorite, fetchFavorites, removeFavorite } from '../api/auth'
 import { fetchProperties } from '../api/properties'
 import AiSearchBar from '../components/AiSearchBar'
 import FilterBar from '../components/FilterBar'
-import MapView from '../components/MapView'
+import GoogleMapView from '../components/GoogleMapView'
 import PropertyCard, { PropertyCardSkeleton } from '../components/PropertyCard'
 import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
 import { filtersToSearchParams } from '../utils/searchParams'
 
-const DEFAULT_FILTERS = {
-  status: 'for_sale',
-  min_price: '',
-  max_price: '',
-  min_beds: '',
-  min_baths: '',
-  home_type: '',
+// Every filter the toolbar edits; each is a query-string parameter the API understands.
+const FILTER_KEYS = [
+  'status',
+  'min_price',
+  'max_price',
+  'max_key_money',
+  'min_beds',
+  'min_baths',
+  'home_type',
+  'min_parking',
+  'min_sqft',
+  'max_sqft',
+  'stories',
+]
+const DEFAULT_STATUS = 'for_rent'
+
+const SORTS = {
+  recommended: { label: 'Recommended' },
+  price_asc: { label: 'Price (low to high)', compare: (a, b) => a.price - b.price },
+  price_desc: { label: 'Price (high to low)', compare: (a, b) => b.price - a.price },
+  sqft_desc: { label: 'Square feet', compare: (a, b) => b.sqft - a.sqft },
+  key_money_asc: { label: 'Key money (low to high)', compare: (a, b) => a.key_money - b.key_money },
+}
+
+const SAVED_KEY = 'nestwell.savedSearches'
+
+function readSavedSearches() {
+  try {
+    const list = JSON.parse(localStorage.getItem(SAVED_KEY))
+    return Array.isArray(list) ? list : []
+  } catch {
+    return []
+  }
 }
 
 export default function SearchResultsPage() {
@@ -33,18 +59,18 @@ export default function SearchResultsPage() {
   const [favoriteIds, setFavoriteIds] = useState(new Set())
   const [highlightedId, setHighlightedId] = useState(null)
   const [aiReply, setAiReply] = useState(null)
+  const [aiOpen, setAiOpen] = useState(false)
+  const [sort, setSort] = useState('recommended')
+  const [savedSearches, setSavedSearches] = useState(readSavedSearches)
 
-  const filters = useMemo(
-    () => ({
-      status: searchParams.get('status') || DEFAULT_FILTERS.status,
-      min_price: searchParams.get('min_price') || '',
-      max_price: searchParams.get('max_price') || '',
-      min_beds: searchParams.get('min_beds') || '',
-      min_baths: searchParams.get('min_baths') || '',
-      home_type: searchParams.get('home_type') || '',
-    }),
-    [searchParams]
-  )
+  const filters = useMemo(() => {
+    const values = {}
+    FILTER_KEYS.forEach((key) => {
+      values[key] = searchParams.get(key) || ''
+    })
+    values.status ||= DEFAULT_STATUS
+    return values
+  }, [searchParams])
   const search = searchParams.get('search') || ''
   const city = searchParams.get('city') || ''
 
@@ -83,11 +109,38 @@ export default function SearchResultsPage() {
     setSearchParams(params)
   }
 
+  function updateSearch(text) {
+    const params = new URLSearchParams(searchParams)
+    // Typed text replaces a city chosen from the home page's tiles.
+    params.delete('city')
+    if (text) params.set('search', text)
+    else params.delete('search')
+    setSearchParams(params)
+  }
+
   function applyAiFilters(aiFilters, meta) {
     const params = filtersToSearchParams(aiFilters)
     if (!params.get('status')) params.set('status', filters.status)
     setSearchParams(params)
     setAiReply(meta?.reply || null)
+  }
+
+  // Saved searches are kept in this browser only (there is no account-side storage for them).
+  const searchKey = useMemo(() => {
+    const params = new URLSearchParams(searchParams)
+    params.sort()
+    return params.toString()
+  }, [searchParams])
+  const isSaved = savedSearches.includes(searchKey)
+
+  function toggleSaved() {
+    const next = isSaved ? savedSearches.filter((s) => s !== searchKey) : [...savedSearches, searchKey]
+    setSavedSearches(next)
+    try {
+      localStorage.setItem(SAVED_KEY, JSON.stringify(next))
+    } catch {
+      // Storage unavailable (private mode): the button still reflects the choice for this visit.
+    }
   }
 
   const handleToggleFavorite = useCallback(
@@ -118,12 +171,35 @@ export default function SearchResultsPage() {
     [user, favoriteIds, openAuth]
   )
 
+  const sorted = useMemo(() => {
+    const { compare } = SORTS[sort]
+    return compare ? [...properties].sort(compare) : properties
+  }, [properties, sort])
+
+  const renting = filters.status === 'for_rent'
+  const place = city || search || 'Sri Lanka'
+  const noun = renting ? 'rental' : 'home'
+
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col">
-      <div className="border-b border-slate-200 bg-white px-4 py-3">
-        <AiSearchBar variant="inline" onApply={applyAiFilters} />
-      </div>
-      <FilterBar filters={filters} onChange={updateFilters} />
+    // Fills the screen below the navbar (4rem tall, 5rem from md up). Only the listings
+    // column scrolls, so the map stays put.
+    <div className="flex h-[calc(100vh-4rem)] flex-col bg-white md:h-[calc(100vh-5rem)]">
+      <FilterBar
+        filters={filters}
+        onChange={updateFilters}
+        searchText={city || search}
+        onSearch={updateSearch}
+        saved={isSaved}
+        onToggleSaved={toggleSaved}
+        aiOpen={aiOpen}
+        onToggleAi={() => setAiOpen((v) => !v)}
+      />
+
+      {aiOpen && (
+        <div className="border-b border-slate-200 bg-white px-4 py-3">
+          <AiSearchBar variant="inline" onApply={applyAiFilters} />
+        </div>
+      )}
 
       <AnimatePresence>
         {aiReply && (
@@ -142,25 +218,57 @@ export default function SearchResultsPage() {
         )}
       </AnimatePresence>
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="w-full overflow-y-auto p-4 md:w-1/2">
-          {loading && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {Array.from({ length: 6 }).map((_, i) => <PropertyCardSkeleton key={i} />)}
-            </div>
-          )}
-          {error && <p className="text-red-600">{error}</p>}
-          {!loading && !error && properties.length === 0 && (
-            <div className="mt-16 text-center">
-              <p className="font-display text-lg font-semibold text-brand-900">No homes match yet</p>
-              <p className="mt-1 text-sm text-slate-500">Try widening your price range or removing a filter.</p>
-            </div>
-          )}
-          {!loading && !error && properties.length > 0 && (
-            <>
-              <p className="mb-3 text-sm text-slate-500">{properties.length} results</p>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {properties.map((property, i) => (
+      <div className="flex min-h-0 flex-1">
+        {/* "isolate" keeps the map library's own stacking layers below the toolbar dropdowns. */}
+        <div className="isolate hidden md:block md:w-2/5">
+          <GoogleMapView
+            properties={properties}
+            highlightedId={highlightedId}
+            onMarkerHover={setHighlightedId}
+          />
+        </div>
+
+        <div className="min-w-0 flex-1 overflow-y-auto px-4 py-6 lg:px-7">
+          <h1 className="text-2xl font-extrabold text-brand-900 sm:text-3xl">
+            {place} {renting ? 'Rental Listings' : 'Homes For Sale'}
+          </h1>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-lg font-bold text-brand-900">
+              {loading
+                ? 'Searching…'
+                : `${properties.length.toLocaleString()} ${noun}${properties.length === 1 ? '' : 's'} available`}
+            </p>
+            <label className="relative flex items-center text-lg font-bold text-brand-600">
+              Sort:&nbsp;
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                className="cursor-pointer appearance-none bg-transparent pr-7 font-bold outline-none [field-sizing:content]"
+              >
+                {Object.entries(SORTS).map(([value, { label }]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+              <ChevronDown size={20} strokeWidth={2.75} className="pointer-events-none absolute right-0" />
+            </label>
+          </div>
+
+          <div className="mt-5">
+            {loading && (
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                {Array.from({ length: 6 }).map((_, i) => <PropertyCardSkeleton key={i} />)}
+              </div>
+            )}
+            {error && <p className="text-red-600">{error}</p>}
+            {!loading && !error && properties.length === 0 && (
+              <div className="mt-16 text-center">
+                <p className="text-lg font-bold text-brand-900">No {noun}s match yet</p>
+                <p className="mt-1 text-sm text-slate-500">Try widening your price range or removing a filter.</p>
+              </div>
+            )}
+            {!loading && !error && properties.length > 0 && (
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                {sorted.map((property, i) => (
                   <PropertyCard
                     key={property.id}
                     property={property}
@@ -172,15 +280,8 @@ export default function SearchResultsPage() {
                   />
                 ))}
               </div>
-            </>
-          )}
-        </div>
-        <div className="hidden md:block md:w-1/2">
-          <MapView
-            properties={properties}
-            highlightedId={highlightedId}
-            onMarkerHover={setHighlightedId}
-          />
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -5,19 +5,38 @@ from django.core.management.base import BaseCommand
 
 from properties.models import Property, PropertyImage
 
+# Same city names as the home page's city grid (frontend/src/i18n/translations.js), so every
+# tile there finds listings. `state` is the two-letter province code; `zips` are postal codes.
+# Coastal cities are centred slightly inland so the randomised pins stay on land.
 CITIES = [
-    {'city': 'Austin', 'state': 'TX', 'lat': 30.2672, 'lng': -97.7431, 'zips': ['78701', '78704', '78745', '78749']},
-    {'city': 'Seattle', 'state': 'WA', 'lat': 47.6062, 'lng': -122.3321, 'zips': ['98101', '98107', '98115', '98122']},
-    {'city': 'Denver', 'state': 'CO', 'lat': 39.7392, 'lng': -104.9903, 'zips': ['80202', '80206', '80210', '80218']},
-    {'city': 'Raleigh', 'state': 'NC', 'lat': 35.7796, 'lng': -78.6382, 'zips': ['27601', '27605', '27609', '27612']},
+    {'city': 'Colombo', 'state': 'WP', 'lat': 6.9271, 'lng': 79.8780, 'zips': ['00100', '00300', '00500', '00700']},
+    {'city': 'Kandy', 'state': 'CP', 'lat': 7.2906, 'lng': 80.6337, 'zips': ['20000']},
+    {'city': 'Galle', 'state': 'SP', 'lat': 6.0735, 'lng': 80.2210, 'zips': ['80000']},
+    {'city': 'Jaffna', 'state': 'NP', 'lat': 9.6615, 'lng': 80.0255, 'zips': ['40000']},
+    {'city': 'Negombo', 'state': 'WP', 'lat': 7.2083, 'lng': 79.8558, 'zips': ['11500']},
+    {'city': 'Anuradhapura', 'state': 'NC', 'lat': 8.3114, 'lng': 80.4037, 'zips': ['50000']},
+    {'city': 'Trincomalee', 'state': 'EP', 'lat': 8.5874, 'lng': 81.1952, 'zips': ['31000']},
+    {'city': 'Batticaloa', 'state': 'EP', 'lat': 7.7310, 'lng': 81.6547, 'zips': ['30000']},
+    {'city': 'Matara', 'state': 'SP', 'lat': 5.9749, 'lng': 80.5550, 'zips': ['81000']},
+    {'city': 'Kurunegala', 'state': 'NW', 'lat': 7.4863, 'lng': 80.3647, 'zips': ['60000']},
+    {'city': 'Ratnapura', 'state': 'SG', 'lat': 6.6828, 'lng': 80.3992, 'zips': ['70000']},
+    {'city': 'Badulla', 'state': 'UP', 'lat': 6.9934, 'lng': 81.0550, 'zips': ['90000']},
+    {'city': 'Nuwara Eliya', 'state': 'CP', 'lat': 6.9497, 'lng': 80.7891, 'zips': ['22200']},
+    {'city': 'Gampaha', 'state': 'WP', 'lat': 7.0840, 'lng': 79.9939, 'zips': ['11000']},
+    {'city': 'Kalutara', 'state': 'WP', 'lat': 6.5854, 'lng': 79.9807, 'zips': ['12000']},
+    {'city': 'Moratuwa', 'state': 'WP', 'lat': 6.7730, 'lng': 79.9016, 'zips': ['10400']},
+    {'city': 'Dehiwala-Mount Lavinia', 'state': 'WP', 'lat': 6.8409, 'lng': 79.8850, 'zips': ['10350', '10370']},
+    {'city': 'Sri Jayawardenepura Kotte', 'state': 'WP', 'lat': 6.8868, 'lng': 79.9187, 'zips': ['10100']},
+    {'city': 'Vavuniya', 'state': 'NP', 'lat': 8.7514, 'lng': 80.4971, 'zips': ['43000']},
+    {'city': 'Hambantota', 'state': 'SP', 'lat': 6.1441, 'lng': 81.1185, 'zips': ['82000']},
 ]
 
 STREET_NAMES = [
-    'Maple', 'Oak', 'Cedar', 'Elm', 'Birch', 'Willow', 'Pine', 'Sunset',
-    'Highland', 'Lakeview', 'Meadow', 'River', 'Hillcrest', 'Magnolia',
-    'Spruce', 'Aspen', 'Canyon', 'Prairie', 'Orchard', 'Ridge',
+    'Temple', 'Lake', 'Station', 'Hill', 'Park', 'Church', 'Beach', 'Garden',
+    'Flower', 'Palm', 'Jasmine', 'Lotus', 'River', 'School', 'Market', 'Main',
+    'Cinnamon', 'Coconut Grove', 'Araliya', 'Sea View',
 ]
-STREET_TYPES = ['St', 'Ave', 'Dr', 'Ln', 'Ct', 'Blvd', 'Way', 'Rd']
+STREET_TYPES = ['Rd', 'Mawatha', 'Lane', 'Place', 'Avenue', 'Gardens']
 
 HOME_TYPES = [c[0] for c in Property.HomeType.choices]
 STATUSES = [c[0] for c in Property.Status.choices]
@@ -51,19 +70,26 @@ class Command(BaseCommand):
         for i in range(count):
             city_info = random.choice(CITIES)
             home_type = random.choice(HOME_TYPES)
-            status = random.choices(STATUSES, weights=[0.8, 0.2])[0]
+            status = random.choices(STATUSES, weights=[0.4, 0.6])[0]
 
             beds = random.randint(1, 5)
             baths = random.choice([1, 1.5, 2, 2.5, 3, 3.5])
             sqft = random.randint(600, 4200)
+            stories = random.choice([1, 1, 2, 2, 3])
+            parking_slots = random.choice([0, 1, 1, 2, 3])
+            if home_type == Property.HomeType.LAND:
+                # Bare land: nothing built on it yet.
+                beds, baths, stories = 0, 0, None
 
             base_price_per_sqft = random.uniform(180, 420)
             price = int(sqft * base_price_per_sqft)
             if status == Property.Status.FOR_RENT:
                 price = int(price / 180)  # rough monthly rent estimate
+            # Rentals usually ask for some months of rent up front; sales don't.
+            key_money = price * random.choice([0, 3, 6, 12]) if status == Property.Status.FOR_RENT else 0
 
-            lat = city_info['lat'] + random.uniform(-0.08, 0.08)
-            lng = city_info['lng'] + random.uniform(-0.08, 0.08)
+            lat = city_info['lat'] + random.uniform(-0.018, 0.018)
+            lng = city_info['lng'] + random.uniform(-0.018, 0.018)
 
             street_number = random.randint(100, 9999)
             street_name = random.choice(STREET_NAMES)
@@ -88,6 +114,9 @@ class Command(BaseCommand):
                 sqft=sqft,
                 home_type=home_type,
                 status=status,
+                key_money=key_money,
+                parking_slots=parking_slots,
+                stories=stories,
                 description=random.choice(DESCRIPTIONS),
                 year_built=random.randint(1950, 2024),
                 primary_image_url=primary_image_url,

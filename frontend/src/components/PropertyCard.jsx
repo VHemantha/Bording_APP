@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion'
-import { Bath, BedDouble, Heart, Ruler } from 'lucide-react'
+import { Heart } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-import { formatBaths, formatPrice, HOME_TYPE_LABELS, statusLabel } from '../utils/format'
+import { formatBaths, formatPrice, HOME_TYPE_LABELS, statusLabel, STORIES_LABELS } from '../utils/format'
 
 export default function PropertyCard({
   property,
@@ -18,6 +18,19 @@ export default function PropertyCard({
     onToggleFavorite?.(property)
   }
 
+  // Land has no rooms, so those chips are left out rather than showing "0 bd".
+  const chips = [
+    property.beds > 0 && [property.beds, 'bd'],
+    property.baths > 0 && [formatBaths(property.baths), 'ba'],
+    [property.sqft.toLocaleString(), 'sqft'],
+  ].filter(Boolean)
+
+  const extras = [
+    property.key_money > 0 ? `Key money ${formatPrice(property.key_money)}` : 'No key money',
+    property.parking_slots > 0 && `${property.parking_slots} parking`,
+    STORIES_LABELS[property.stories],
+  ].filter(Boolean)
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 18 }}
@@ -29,59 +42,65 @@ export default function PropertyCard({
         to={`/property/${property.id}`}
         onMouseEnter={() => onHover?.(property.id)}
         onMouseLeave={() => onHover?.(null)}
-        className={`group block overflow-hidden rounded-2xl border bg-white shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
-          highlighted ? 'border-brand-400 ring-2 ring-brand-200' : 'border-slate-200/80'
+        className={`group block overflow-hidden rounded-xl bg-white shadow-soft transition duration-300 hover:shadow-lift ${
+          highlighted ? 'ring-2 ring-brand-500' : 'ring-1 ring-slate-200'
         }`}
       >
         <div className="relative overflow-hidden">
           <img
             src={property.primary_image_url}
             alt={property.address}
-            className="h-52 w-full object-cover transition duration-500 group-hover:scale-105"
+            className="h-56 w-full object-cover transition duration-500 group-hover:scale-105"
             loading="lazy"
           />
-          <span
-            className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-semibold text-white shadow ${
-              property.status === 'for_rent' ? 'bg-brand-600' : 'bg-leaf-600'
-            }`}
-          >
-            {statusLabel(property.status)}
-          </span>
+          <div className="absolute left-3 top-3 flex gap-1.5">
+            <span className="rounded-full bg-brand-600 px-3 py-1 text-sm font-bold text-white shadow">
+              {HOME_TYPE_LABELS[property.home_type] ?? property.home_type}
+            </span>
+            <span className="rounded-full bg-brand-900/80 px-3 py-1 text-sm font-bold text-white shadow">
+              {statusLabel(property.status)}
+            </span>
+          </div>
           {onToggleFavorite && (
             <button
               type="button"
               onClick={handleFavoriteClick}
               aria-label={isFavorited ? 'Remove from saved' : 'Save home'}
-              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-slate-600 shadow transition hover:scale-110"
+              className="absolute right-3 top-3 transition hover:scale-110"
             >
               <Heart
-                size={17}
-                className={isFavorited ? 'fill-accent-500 text-accent-500' : ''}
+                size={34}
+                strokeWidth={2.25}
+                className={`drop-shadow-md ${
+                  isFavorited ? 'fill-accent-500 text-white' : 'fill-black/30 text-white'
+                }`}
               />
             </button>
           )}
         </div>
 
         <div className="p-4">
-          <p className="text-lg font-bold text-brand-900">
+          <p className="text-2xl font-extrabold text-brand-900">
             {formatPrice(property.price, property.status)}
           </p>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
-            <span className="inline-flex items-center gap-1">
-              <BedDouble size={15} /> {property.beds} bd
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Bath size={15} /> {formatBaths(property.baths)} ba
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Ruler size={15} /> {property.sqft.toLocaleString()} sqft
-            </span>
-          </div>
-          <p className="mt-2 truncate text-sm text-slate-500">
-            {property.address}, {property.city}, {property.state} {property.zip_code}
+          <p className="mt-1 truncate text-slate-600">
+            {property.address} <span className="text-slate-300">|</span> {property.city}, {property.state}
           </p>
-          <p className="mt-1 text-xs font-medium uppercase tracking-wide text-brand-400">
-            {HOME_TYPE_LABELS[property.home_type] ?? property.home_type}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {chips.map(([value, unit]) => (
+              <span
+                key={unit}
+                className="flex-1 whitespace-nowrap rounded-full border border-slate-300 px-3 py-1.5 text-center text-sm text-slate-600"
+              >
+                <span className="text-base font-bold text-brand-900">{value}</span> {unit}
+              </span>
+            ))}
+          </div>
+          <p className="mt-3 truncate text-sm text-slate-600">
+            <span className="font-bold text-brand-900">{extras[0]}</span>
+            {extras.slice(1).map((text) => (
+              <span key={text}> &bull; {text}</span>
+            ))}
           </p>
         </div>
       </Link>
@@ -91,12 +110,12 @@ export default function PropertyCard({
 
 export function PropertyCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-soft">
-      <div className="skeleton h-52 w-full" />
+    <div className="overflow-hidden rounded-xl bg-white shadow-soft ring-1 ring-slate-200">
+      <div className="skeleton h-56 w-full" />
       <div className="space-y-2 p-4">
-        <div className="skeleton h-5 w-24 rounded" />
-        <div className="skeleton h-4 w-40 rounded" />
+        <div className="skeleton h-7 w-32 rounded" />
         <div className="skeleton h-4 w-52 rounded" />
+        <div className="skeleton h-9 w-full rounded-full" />
       </div>
     </div>
   )

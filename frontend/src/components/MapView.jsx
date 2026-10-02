@@ -45,10 +45,10 @@ function FitBounds({ properties }) {
 export default function MapView({ properties, highlightedId, onMarkerHover }) {
   const center = properties.length
     ? [properties[0].latitude, properties[0].longitude]
-    : [39.8283, -98.5795]
+    : [7.8731, 80.7718] // centre of Sri Lanka
 
   return (
-    <MapContainer center={center} zoom={11} className="w-full h-full">
+    <MapContainer center={center} zoom={properties.length ? 11 : 8} className="w-full h-full">
       <TileLayer
         attribution='&copy; OpenStreetMap contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

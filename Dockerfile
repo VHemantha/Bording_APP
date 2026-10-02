@@ -18,6 +18,10 @@ COPY frontend/ ./
 # ID, not a secret. VITE_API_BASE_URL=/api comes from frontend/.env.production.
 ARG VITE_GOOGLE_CLIENT_ID=""
 ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+# Google Maps browser key for the search page's map. Also public (every visitor's browser
+# sees it), so restrict it to your domain in Google Cloud. Blank = OpenStreetMap is used.
+ARG VITE_GOOGLE_MAPS_API_KEY=""
+ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
 RUN npm run build
 
 
