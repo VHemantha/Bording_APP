@@ -43,7 +43,7 @@ export default function HomePage() {
         {/* Darkens only the left, where the white text sits, so the photo stays bright. */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
 
-        <div className="mx-auto flex min-h-[28rem] max-w-7xl flex-col justify-center px-4 py-16 sm:min-h-[34rem] lg:min-h-[38rem]">
+        <div className="mx-auto flex min-h-[80vh] max-w-7xl flex-col justify-center px-4 py-16">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
