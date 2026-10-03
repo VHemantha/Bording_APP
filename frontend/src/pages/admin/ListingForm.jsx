@@ -22,6 +22,9 @@ const EMPTY = {
   key_money: 0,
   parking_slots: 0,
   stories: '',
+  furnishing: 'unfurnished',
+  contact_name: '',
+  contact_phone: '',
   description: '',
   year_built: '',
   primary_image_url: '',
@@ -83,8 +86,8 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
         <Grid>
           <Text label={t('admin.street')} value={values.address} onChange={(v) => set('address', v)} required span2 />
           <Text label={t('admin.city')} value={values.city} onChange={(v) => set('city', v)} required />
-          <Text label={t('admin.state')} value={values.state} onChange={(v) => set('state', v.toUpperCase().slice(0, 2))} required />
-          <Text label={t('admin.zip')} value={values.zip_code} onChange={(v) => set('zip_code', v)} required />
+          <Text label={t('admin.state')} value={values.state} onChange={(v) => set('state', v.toUpperCase().slice(0, 2))} />
+          <Text label={t('admin.zip')} value={values.zip_code} onChange={(v) => set('zip_code', v)} />
           <Text label={t('admin.latitude')} type="number" step="any" value={values.latitude} onChange={(v) => set('latitude', v)} required />
           <Text label={t('admin.longitude')} type="number" step="any" value={values.longitude} onChange={(v) => set('longitude', v)} required />
         </Grid>
@@ -101,6 +104,9 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
           <Text label={t('admin.keyMoneyUsd')} type="number" value={values.key_money} onChange={(v) => set('key_money', v)} />
           <Text label={t('filter.parking')} type="number" value={values.parking_slots} onChange={(v) => set('parking_slots', v)} />
           <Select label={t('detail.stories')} value={values.stories ?? ''} onChange={(v) => set('stories', v)} options={[['', t('admin.notApplicable')], ...Object.keys(STORIES_LABELS).map((key) => [key, t(`stories.${key}`)])]} />
+          <Select label={t('filter.furnishing')} value={values.furnishing} onChange={(v) => set('furnishing', v)} options={['furnished', 'unfurnished'].map((key) => [key, t(`furnishing.${key}`)])} />
+          <Text label={t('post.contactName')} value={values.contact_name} onChange={(v) => set('contact_name', v)} />
+          <Text label={t('post.contactPhone')} value={values.contact_phone} onChange={(v) => set('contact_phone', v)} />
           <Text label={t('detail.yearBuilt')} type="number" value={values.year_built} onChange={(v) => set('year_built', v)} />
           <Text label={t('admin.listedDate')} type="date" value={values.listed_date} onChange={(v) => set('listed_date', v)} required />
         </Grid>

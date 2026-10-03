@@ -28,6 +28,7 @@ const FILTER_KEYS = [
   'min_sqft',
   'max_sqft',
   'stories',
+  'furnishing',
 ]
 const DEFAULT_STATUS = 'for_rent'
 

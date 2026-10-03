@@ -1,4 +1,4 @@
-import { Heart, LayoutDashboard, LogOut, Menu, Sparkles, X } from 'lucide-react'
+import { Heart, LayoutDashboard, ListChecks, LogOut, Menu, Plus, Sparkles, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 
@@ -20,6 +20,12 @@ export default function Navbar() {
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  function postListing() {
+    setMobileOpen(false)
+    if (user) navigate('/post')
+    else openAuth('login')
+  }
+
   function handleLogout() {
     logout()
     setMobileOpen(false)
@@ -30,22 +36,12 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/95 backdrop-blur-md">
       {/* Links left, logo centered, account right. Below md: logo left, menu button right. */}
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-4 md:grid md:h-20 md:grid-cols-[1fr_auto_1fr]">
-        <nav className="hidden items-center gap-8 font-medium text-slate-800 md:flex">
+        <nav className="hidden items-center gap-6 whitespace-nowrap font-medium text-slate-800 md:flex lg:gap-8">
           {LINKS.map((l) => (
             <NavLink key={l.label} to={l.to} className="transition hover:text-brand-600">
               {t(l.label)}
             </NavLink>
           ))}
-        </nav>
-
-        <Link to="/" className="flex shrink-0 items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
-            <Sparkles size={18} />
-          </span>
-          <span className="font-display text-2xl font-semibold text-brand-900">Nestwell</span>
-        </Link>
-
-        <div className="hidden items-center justify-end gap-5 font-medium text-slate-800 md:flex">
           {user && (
             <NavLink to="/saved" className="flex items-center gap-1.5 transition hover:text-brand-600">
               <Heart size={16} /> {t('nav.saved')}
@@ -56,10 +52,28 @@ export default function Navbar() {
               <LayoutDashboard size={16} /> {t('nav.admin')}
             </NavLink>
           )}
+        </nav>
+
+        <Link to="/" className="flex shrink-0 items-center gap-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
+            <Sparkles size={18} />
+          </span>
+          <span className="font-display text-2xl font-semibold text-brand-900">Nestwell</span>
+        </Link>
+
+        <div className="hidden items-center justify-end gap-4 whitespace-nowrap font-medium text-slate-800 md:flex xl:gap-5">
+          <button type="button" onClick={postListing} className="flex items-center gap-1.5 transition hover:text-brand-600">
+            <Plus size={17} /> {t('nav.postListing')}
+          </button>
+          {user && (
+            <NavLink to="/my-listings" className="flex items-center gap-1.5 transition hover:text-brand-600">
+              <ListChecks size={16} /> {t('nav.myListings')}
+            </NavLink>
+          )}
           <LanguageSwitcher />
           {user ? (
             <>
-              <span className="text-sm font-normal text-slate-500">
+              <span className="hidden text-sm font-normal text-slate-500 2xl:inline">
                 {t('nav.hi', { name: user.username.split('@')[0] })}
               </span>
               <button
@@ -99,6 +113,8 @@ export default function Navbar() {
                 {t(l.label)}
               </Link>
             ))}
+            <button type="button" onClick={postListing} className="text-left">{t('nav.postListing')}</button>
+            {user && <Link to="/my-listings" onClick={() => setMobileOpen(false)}>{t('nav.myListings')}</Link>}
             {user && <Link to="/saved" onClick={() => setMobileOpen(false)}>{t('nav.savedHomes')}</Link>}
             {isAdmin && <Link to="/admin" onClick={() => setMobileOpen(false)}>{t('nav.adminDashboard')}</Link>}
             <div className="mt-2">

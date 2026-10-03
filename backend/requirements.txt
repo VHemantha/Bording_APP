@@ -11,6 +11,9 @@ tzdata==2026.3
 # --- Auth: Google Sign-In verification ---
 google-auth==2.35.0
 
+# --- Listing photo uploads (validated and re-encoded) ---
+pillow==12.3.0
+
 # --- Config ---
 python-dotenv==1.0.1
 

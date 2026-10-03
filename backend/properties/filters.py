@@ -25,6 +25,7 @@ class PropertyFilter(django_filters.FilterSet):
     min_sqft = django_filters.NumberFilter(field_name='sqft', lookup_expr='gte')
     max_sqft = django_filters.NumberFilter(field_name='sqft', lookup_expr='lte')
     stories = NumberInFilter(field_name='stories', lookup_expr='in')
+    furnishing = CharInFilter(field_name='furnishing', lookup_expr='in')
     status = django_filters.CharFilter(field_name='status', lookup_expr='exact')
 
     min_lat = django_filters.NumberFilter(field_name='latitude', lookup_expr='gte')
@@ -39,7 +40,7 @@ class PropertyFilter(django_filters.FilterSet):
         fields = [
             'city', 'zip_code', 'min_price', 'max_price', 'min_beds',
             'min_baths', 'home_type', 'max_key_money', 'min_parking', 'min_sqft',
-            'max_sqft', 'stories', 'status', 'min_lat', 'max_lat', 'min_lng', 'max_lng',
+            'max_sqft', 'stories', 'furnishing', 'status', 'min_lat', 'max_lat', 'min_lng', 'max_lng',
         ]
 
     def filter_search(self, queryset, name, value):

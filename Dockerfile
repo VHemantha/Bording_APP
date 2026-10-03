@@ -51,7 +51,9 @@ COPY --from=frontend /frontend/dist ./frontend_dist
 # only for this one command; the real SECRET_KEY is injected at runtime by ECS.
 RUN DJANGO_SECRET_KEY=build-time-only python manage.py collectstatic --noinput
 
-RUN useradd --system --no-create-home --uid 10001 app && chown -R app /app
+# /app/media holds uploaded listing photos; docker-compose mounts a named volume there, which
+# Docker initialises from this directory, so it inherits the app user's ownership.
+RUN useradd --system --no-create-home --uid 10001 app && mkdir -p /app/media && chown -R app /app
 USER app
 
 EXPOSE 8000

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Heart } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
+import { mediaUrl } from '../api/client'
 import { useLanguage } from '../context/LanguageContext'
 import { cityName } from '../i18n/translations'
 import { formatBaths, formatPrice } from '../utils/format'
@@ -35,6 +36,7 @@ export default function PropertyCard({
       : t('card.noKeyMoney'),
     property.parking_slots > 0 && t('card.parking', { count: property.parking_slots }),
     property.stories && t(`stories.${property.stories}`),
+    property.furnishing && t(`furnishing.${property.furnishing}`),
   ].filter(Boolean)
 
   return (
@@ -54,7 +56,7 @@ export default function PropertyCard({
       >
         <div className="relative overflow-hidden">
           <img
-            src={property.primary_image_url}
+            src={mediaUrl(property.primary_image_url)}
             alt={property.address}
             className="h-56 w-full object-cover transition duration-500 group-hover:scale-105"
             loading="lazy"

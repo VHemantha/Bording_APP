@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { fetchProperties } from '../../api/properties'
+import { mediaUrl } from '../../api/client'
 import { useLanguage } from '../../context/LanguageContext'
 import { formatPrice } from '../../utils/format'
 
@@ -47,10 +48,10 @@ export default function AdminDashboardPage() {
         <ul className="divide-y divide-slate-100">
           {(properties ?? []).slice(0, 6).map((p) => (
             <li key={p.id} className="flex items-center gap-4 px-5 py-3">
-              <img src={p.primary_image_url} alt="" className="h-12 w-16 rounded-lg object-cover" />
+              <img src={mediaUrl(p.primary_image_url)} alt="" className="h-12 w-16 rounded-lg object-cover" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-brand-900">{p.address}</p>
-                <p className="text-xs text-slate-500">{p.city}, {p.state}</p>
+                <p className="text-xs text-slate-500">{[p.city, p.state].filter(Boolean).join(", ")}</p>
               </div>
               <span className="text-sm font-semibold text-brand-900">{formatPrice(p.price, p.status, t('unit.perMonth'))}</span>
               <Link to={`/admin/listings/${p.id}/edit`} className="text-sm font-medium text-brand-600 hover:underline">

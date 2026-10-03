@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Property, PropertyImage
+from .models import Inquiry, Property, PropertyImage
 
 
 class PropertyImageInline(admin.TabularInline):
@@ -10,7 +10,13 @@ class PropertyImageInline(admin.TabularInline):
 
 @admin.register(Property)
 class PropertyAdmin(admin.ModelAdmin):
-    list_display = ['address', 'city', 'state', 'price', 'beds', 'baths', 'status']
-    list_filter = ['city', 'state', 'home_type', 'status']
+    list_display = ['address', 'city', 'price', 'beds', 'baths', 'status', 'furnishing', 'owner']
+    list_filter = ['city', 'home_type', 'status', 'furnishing']
     search_fields = ['address', 'city', 'zip_code']
     inlines = [PropertyImageInline]
+
+
+@admin.register(Inquiry)
+class InquiryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'property', 'email', 'phone', 'created_at']
+    search_fields = ['name', 'email', 'phone', 'message']

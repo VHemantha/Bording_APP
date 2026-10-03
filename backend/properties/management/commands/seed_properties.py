@@ -37,6 +37,7 @@ STREET_NAMES = [
     'Cinnamon', 'Coconut Grove', 'Araliya', 'Sea View',
 ]
 STREET_TYPES = ['Rd', 'Mawatha', 'Lane', 'Place', 'Avenue', 'Gardens']
+CONTACT_NAMES = ['Nimal Perera', 'Kamala Silva', 'Ruwan Fernando', 'Fathima Rizwan', 'Suresh Kumar', 'Dilani Jayawardena']
 
 HOME_TYPES = [c[0] for c in Property.HomeType.choices]
 STATUSES = [c[0] for c in Property.Status.choices]
@@ -117,6 +118,9 @@ class Command(BaseCommand):
                 key_money=key_money,
                 parking_slots=parking_slots,
                 stories=stories,
+                furnishing=random.choice(['furnished', 'unfurnished']),
+                contact_name=random.choice(CONTACT_NAMES),
+                contact_phone=f'+94 7{random.randint(0, 8)} {random.randint(100, 999)} {random.randint(1000, 9999)}',
                 description=random.choice(DESCRIPTIONS),
                 year_built=random.randint(1950, 2024),
                 primary_image_url=primary_image_url,

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 
+import { mediaUrl } from '../api/client'
+
 export default function PhotoGallery({ images, altText }) {
   const [activeIndex, setActiveIndex] = useState(0)
 
@@ -13,7 +15,7 @@ export default function PhotoGallery({ images, altText }) {
     <div>
       <div className="h-96 w-full overflow-hidden rounded-2xl bg-slate-100 shadow-soft">
         <img
-          src={images[activeIndex].image_url}
+          src={mediaUrl(images[activeIndex].image_url)}
           alt={altText}
           className="h-full w-full object-cover"
         />
@@ -29,7 +31,7 @@ export default function PhotoGallery({ images, altText }) {
                 idx === activeIndex ? 'border-brand-500' : 'border-transparent opacity-70 hover:opacity-100'
               }`}
             >
-              <img src={img.image_url} alt="" className="h-full w-full object-cover" />
+              <img src={mediaUrl(img.image_url)} alt="" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>

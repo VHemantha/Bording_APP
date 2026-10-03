@@ -131,6 +131,10 @@ REST_FRAMEWORK = {
     # The AI endpoints are public and each call spends Anthropic credits.
     'DEFAULT_THROTTLE_RATES': {
         'ai': os.environ.get('AI_THROTTLE_RATE', '20/min'),
+        # "Contact owner" messages from visitors who aren't signed in (per IP).
+        'inquiry': os.environ.get('INQUIRY_THROTTLE_RATE', '10/hour'),
+        # Listing photo uploads (per signed-in user).
+        'upload': os.environ.get('UPLOAD_THROTTLE_RATE', '120/hour'),
     },
 }
 
@@ -220,6 +224,12 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Photos users upload with their listings (see properties/media.py). Served by Django at
+# /media/ (zillow_clone/urls.py). In Docker this directory is a named volume, so uploads
+# survive rebuilds; on the Cloudzy server backup.sh archives it with the database.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = Path(os.environ.get('DJANGO_MEDIA_ROOT', BASE_DIR / 'media'))
 STORAGES = {
     'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
     'staticfiles': {

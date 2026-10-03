@@ -14,8 +14,10 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path, re_path
+from django.views.static import serve
 
 from .views import spa_index
 
@@ -26,7 +28,11 @@ urlpatterns = [
     path('api/', include('properties.urls')),
     path('api/', include('accounts.urls')),
     path('api/', include('ai_agent.urls')),
+    # Listing photos users uploaded. Uploads are re-encoded JPEGs (properties/media.py), and
+    # serve() refuses paths outside MEDIA_ROOT. Fine at this site's scale; a CDN or object
+    # storage would take over if traffic grew.
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     # Everything else belongs to the React router. Excluding these prefixes keeps
     # unknown API/static/asset URLs returning a real 404 instead of the HTML shell.
-    re_path(r'^(?!api/|django-admin/|static/|assets/).*$', spa_index),
+    re_path(r'^(?!api/|django-admin/|static/|assets/|media/).*$', spa_index),
 ]

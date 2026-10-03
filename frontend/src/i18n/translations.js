@@ -3,6 +3,7 @@
 // `en` first. "{name}"-style placeholders are filled in by t(key, { name }).
 
 import { pageTranslations } from './pages'
+import { postingTranslations } from './posting'
 
 export const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -11,27 +12,28 @@ export const LANGUAGES = [
 ]
 
 // `name` is what the search API is queried with, so it stays in English in every language.
+// lat/lng is the city centre, used to centre the map when someone posts a listing there.
 export const CITIES = [
-  { name: 'Colombo', si: 'කොළඹ', ta: 'கொழும்பு' },
-  { name: 'Kandy', si: 'මහනුවර', ta: 'கண்டி' },
-  { name: 'Galle', si: 'ගාල්ල', ta: 'காலி' },
-  { name: 'Jaffna', si: 'යාපනය', ta: 'யாழ்ப்பாணம்' },
-  { name: 'Negombo', si: 'මීගමුව', ta: 'நீர்கொழும்பு' },
-  { name: 'Anuradhapura', si: 'අනුරාධපුරය', ta: 'அனுராதபுரம்' },
-  { name: 'Trincomalee', si: 'ත්‍රිකුණාමලය', ta: 'திருகோணமலை' },
-  { name: 'Batticaloa', si: 'මඩකලපුව', ta: 'மட்டக்களப்பு' },
-  { name: 'Matara', si: 'මාතර', ta: 'மாத்தறை' },
-  { name: 'Kurunegala', si: 'කුරුණෑගල', ta: 'குருநாகல்' },
-  { name: 'Ratnapura', si: 'රත්නපුර', ta: 'இரத்தினபுரி' },
-  { name: 'Badulla', si: 'බදුල්ල', ta: 'பதுளை' },
-  { name: 'Nuwara Eliya', si: 'නුවරඑළිය', ta: 'நுவரெலியா' },
-  { name: 'Gampaha', si: 'ගම්පහ', ta: 'கம்பஹா' },
-  { name: 'Kalutara', si: 'කළුතර', ta: 'களுத்துறை' },
-  { name: 'Moratuwa', si: 'මොරටුව', ta: 'மொறட்டுவை' },
-  { name: 'Dehiwala-Mount Lavinia', si: 'දෙහිවල-ගල්කිස්ස', ta: 'தெஹிவளை-கல்கிசை' },
-  { name: 'Sri Jayawardenepura Kotte', si: 'ශ්‍රී ජයවර්ධනපුර කෝට්ටේ', ta: 'ஸ்ரீ ஜயவர்தனபுர கோட்டை' },
-  { name: 'Vavuniya', si: 'වවුනියාව', ta: 'வவுனியா' },
-  { name: 'Hambantota', si: 'හම්බන්තොට', ta: 'அம்பாந்தோட்டை' },
+  { name: 'Colombo', lat: 6.9271, lng: 79.8612, si: 'කොළඹ', ta: 'கொழும்பு' },
+  { name: 'Kandy', lat: 7.2906, lng: 80.6337, si: 'මහනුවර', ta: 'கண்டி' },
+  { name: 'Galle', lat: 6.0535, lng: 80.221, si: 'ගාල්ල', ta: 'காலி' },
+  { name: 'Jaffna', lat: 9.6615, lng: 80.0255, si: 'යාපනය', ta: 'யாழ்ப்பாணம்' },
+  { name: 'Negombo', lat: 7.2083, lng: 79.8358, si: 'මීගමුව', ta: 'நீர்கொழும்பு' },
+  { name: 'Anuradhapura', lat: 8.3114, lng: 80.4037, si: 'අනුරාධපුරය', ta: 'அனுராதபுரம்' },
+  { name: 'Trincomalee', lat: 8.5874, lng: 81.2152, si: 'ත්‍රිකුණාමලය', ta: 'திருகோணமலை' },
+  { name: 'Batticaloa', lat: 7.731, lng: 81.6747, si: 'මඩකලපුව', ta: 'மட்டக்களப்பு' },
+  { name: 'Matara', lat: 5.9549, lng: 80.555, si: 'මාතර', ta: 'மாத்தறை' },
+  { name: 'Kurunegala', lat: 7.4863, lng: 80.3647, si: 'කුරුණෑගල', ta: 'குருநாகல்' },
+  { name: 'Ratnapura', lat: 6.6828, lng: 80.3992, si: 'රත්නපුර', ta: 'இரத்தினபுரி' },
+  { name: 'Badulla', lat: 6.9934, lng: 81.055, si: 'බදුල්ල', ta: 'பதுளை' },
+  { name: 'Nuwara Eliya', lat: 6.9497, lng: 80.7891, si: 'නුවරඑළිය', ta: 'நுவரெலியா' },
+  { name: 'Gampaha', lat: 7.084, lng: 79.9939, si: 'ගම්පහ', ta: 'கம்பஹா' },
+  { name: 'Kalutara', lat: 6.5854, lng: 79.9607, si: 'කළුතර', ta: 'களுத்துறை' },
+  { name: 'Moratuwa', lat: 6.773, lng: 79.8816, si: 'මොරටුව', ta: 'மொறட்டுவை' },
+  { name: 'Dehiwala-Mount Lavinia', lat: 6.8409, lng: 79.865, si: 'දෙහිවල-ගල්කිස්ස', ta: 'தெஹிவளை-கல்கிசை' },
+  { name: 'Sri Jayawardenepura Kotte', lat: 6.8868, lng: 79.9187, si: 'ශ්‍රී ජයවර්ධනපුර කෝට්ටේ', ta: 'ஸ்ரீ ஜயவர்தனபுர கோட்டை' },
+  { name: 'Vavuniya', lat: 8.7514, lng: 80.4971, si: 'වවුනියාව', ta: 'வவுனியா' },
+  { name: 'Hambantota', lat: 6.1241, lng: 81.1185, si: 'හම්බන්තොට', ta: 'அம்பாந்தோட்டை' },
 ]
 
 const landingTranslations = {
@@ -246,9 +248,9 @@ const landingTranslations = {
 }
 
 export const translations = {
-  en: { ...landingTranslations.en, ...pageTranslations.en },
-  si: { ...landingTranslations.si, ...pageTranslations.si },
-  ta: { ...landingTranslations.ta, ...pageTranslations.ta },
+  en: { ...landingTranslations.en, ...pageTranslations.en, ...postingTranslations.en },
+  si: { ...landingTranslations.si, ...pageTranslations.si, ...postingTranslations.si },
+  ta: { ...landingTranslations.ta, ...pageTranslations.ta, ...postingTranslations.ta },
 }
 
 /** A city's name in the given language; unknown places (typed searches) are returned as-is. */

@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router-dom'
 
 import { addFavorite, fetchFavorites, removeFavorite } from '../api/auth'
 import { fetchProperty } from '../api/properties'
+import ContactOwnerCard from '../components/ContactOwnerCard'
 import MapView from '../components/MapView'
 import PageLoader from '../components/PageLoader'
 import PhotoGallery from '../components/PhotoGallery'
@@ -104,7 +105,9 @@ export default function PropertyDetailPage() {
                 <span className="inline-flex items-center gap-1.5"><Ruler size={17} /> {property.sqft.toLocaleString()} {t('unit.sqft')}</span>
               </div>
               <p className="mt-2 text-slate-500">
-                {property.address}, {cityName(property.city, lang)}, {property.state} {property.zip_code}
+                {[property.address, cityName(property.city, lang), `${property.state} ${property.zip_code}`.trim()]
+                  .filter(Boolean)
+                  .join(', ')}
               </p>
             </div>
             <button
@@ -119,11 +122,14 @@ export default function PropertyDetailPage() {
 
           <hr className="my-6 border-slate-200" />
 
-          <h2 className="font-display text-xl font-semibold text-brand-900">{t('detail.about')}</h2>
-          <p className="mt-2 leading-relaxed text-slate-700">{property.description}</p>
+          <h2 className="font-display text-xl font-semibold text-brand-900">
+            {property.contact_name ? t('post.ownerDescription') : t('detail.about')}
+          </h2>
+          <p className="mt-2 whitespace-pre-wrap leading-relaxed text-slate-700">{property.description}</p>
 
           <div className="mt-6 grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
             <Info label={t('detail.homeType')} value={t(`type.${property.home_type}`)} />
+            <Info label={t('filter.furnishing')} value={t(`furnishing.${property.furnishing}`)} />
             <Info label={t('filter.keyMoney')} value={property.key_money ? formatPrice(property.key_money) : t('common.none')} />
             <Info label={t('filter.parking')} value={property.parking_slots} />
             <Info label={t('detail.stories')} value={property.stories ? t(`stories.${property.stories}`) : '—'} />
@@ -133,8 +139,11 @@ export default function PropertyDetailPage() {
           </div>
         </div>
 
-        <div className="h-72 overflow-hidden rounded-2xl border border-slate-200 lg:h-full">
-          <MapView properties={[property]} />
+        <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+          <ContactOwnerCard property={property} />
+          <div className="isolate h-72 overflow-hidden rounded-2xl border border-slate-200">
+            <MapView properties={[property]} />
+          </div>
         </div>
       </div>
     </motion.div>

@@ -13,6 +13,8 @@ import AdminListingFormPage from './pages/admin/AdminListingFormPage'
 import AdminListingsPage from './pages/admin/AdminListingsPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
+import MyListingsPage from './pages/MyListingsPage'
+import PostListingPage from './pages/PostListingPage'
 import PropertyDetailPage from './pages/PropertyDetailPage'
 import SavedHomesPage from './pages/SavedHomesPage'
 import SearchResultsPage from './pages/SearchResultsPage'
@@ -51,6 +53,30 @@ function App() {
           <Route path="/property/:id" element={<PropertyDetailPage />} />
           <Route path="/login" element={<LoginPage mode="login" />} />
           <Route path="/register" element={<LoginPage mode="register" />} />
+          <Route
+            path="/post"
+            element={
+              <ProtectedRoute>
+                <PostListingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/post/:id/edit"
+            element={
+              <ProtectedRoute>
+                <PostListingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-listings"
+            element={
+              <ProtectedRoute>
+                <MyListingsPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/saved"
             element={

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { deleteProperty, fetchProperties } from '../../api/properties'
+import { mediaUrl } from '../../api/client'
 import { useLanguage } from '../../context/LanguageContext'
 import { formatPrice } from '../../utils/format'
 
@@ -79,10 +80,10 @@ export default function AdminListingsPage() {
               <tr key={p.id} className="hover:bg-slate-50">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <img src={p.primary_image_url} alt="" className="h-10 w-14 rounded-md object-cover" />
+                    <img src={mediaUrl(p.primary_image_url)} alt="" className="h-10 w-14 rounded-md object-cover" />
                     <div>
                       <p className="font-medium text-brand-900">{p.address}</p>
-                      <p className="text-xs text-slate-500">{p.city}, {p.state}</p>
+                      <p className="text-xs text-slate-500">{[p.city, p.state].filter(Boolean).join(", ")}</p>
                     </div>
                   </div>
                 </td>

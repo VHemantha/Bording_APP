@@ -38,7 +38,8 @@ export default function FilterBar({
   const moreCount =
     (filters.min_parking ? 1 : 0) +
     (filters.min_sqft || filters.max_sqft ? 1 : 0) +
-    (filters.stories ? 1 : 0)
+    (filters.stories ? 1 : 0) +
+    (filters.furnishing ? 1 : 0)
 
   return (
     <div className="relative z-30 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
@@ -385,6 +386,7 @@ function MorePanel({ filters, onChange, close }) {
   const [minSqft, setMinSqft] = useState(filters.min_sqft)
   const [maxSqft, setMaxSqft] = useState(filters.max_sqft)
   const [stories, setStories] = useState(csv(filters.stories))
+  const [furnishing, setFurnishing] = useState(csv(filters.furnishing))
   const { t } = useLanguage()
 
   function apply(values) {
@@ -397,7 +399,7 @@ function MorePanel({ filters, onChange, close }) {
       className="w-[23rem] max-w-[calc(100vw-2rem)] space-y-4 p-4"
       onSubmit={(e) => {
         e.preventDefault()
-        apply({ min_parking: parking, min_sqft: minSqft, max_sqft: maxSqft, stories: stories.join(',') })
+        apply({ min_parking: parking, min_sqft: minSqft, max_sqft: maxSqft, stories: stories.join(','), furnishing: furnishing.join(',') })
       }}
     >
       <MinPicker label={t('filter.parking')} value={parking} onChange={setParking} />
@@ -417,10 +419,18 @@ function MorePanel({ filters, onChange, close }) {
           onToggle={(value) => setStories((list) => toggleIn(list, value))}
         />
       </div>
+      <div>
+        <p className="mb-2 font-bold">{t('filter.furnishing')}</p>
+        <CheckList
+          options={['furnished', 'unfurnished'].map((key) => [key, t(`furnishing.${key}`)])}
+          selected={furnishing}
+          onToggle={(value) => setFurnishing((list) => toggleIn(list, value))}
+        />
+      </div>
       <PanelFooter
-        onReset={() => apply({ min_parking: '', min_sqft: '', max_sqft: '', stories: '' })}
+        onReset={() => apply({ min_parking: '', min_sqft: '', max_sqft: '', stories: '', furnishing: '' })}
         onApply={() =>
-          apply({ min_parking: parking, min_sqft: minSqft, max_sqft: maxSqft, stories: stories.join(',') })
+          apply({ min_parking: parking, min_sqft: minSqft, max_sqft: maxSqft, stories: stories.join(','), furnishing: furnishing.join(',') })
         }
       />
     </form>

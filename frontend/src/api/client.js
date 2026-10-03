@@ -6,6 +6,15 @@ const client = axios.create({
   baseURL: API_BASE_URL,
 })
 
+// Photos uploaded to the site are stored as /media/... paths on the API server. In
+// production that's this same origin; in development the API runs on another port.
+const API_ORIGIN = new URL(API_BASE_URL, window.location.href).origin
+
+/** Turns a stored photo reference (full URL or /media/... path) into a usable src. */
+export function mediaUrl(path) {
+  return path?.startsWith('/media/') ? API_ORIGIN + path : path
+}
+
 client.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
   if (token) {
