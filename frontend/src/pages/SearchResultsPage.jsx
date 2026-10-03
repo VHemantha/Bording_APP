@@ -11,6 +11,8 @@ import GoogleMapView from '../components/GoogleMapView'
 import PropertyCard, { PropertyCardSkeleton } from '../components/PropertyCard'
 import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
+import { useLanguage } from '../context/LanguageContext'
+import { cityName } from '../i18n/translations'
 import { filtersToSearchParams } from '../utils/searchParams'
 
 // Every filter the toolbar edits; each is a query-string parameter the API understands.
@@ -29,12 +31,13 @@ const FILTER_KEYS = [
 ]
 const DEFAULT_STATUS = 'for_rent'
 
+// Labels come from the translations: t(`sort.${key}`).
 const SORTS = {
-  recommended: { label: 'Recommended' },
-  price_asc: { label: 'Price (low to high)', compare: (a, b) => a.price - b.price },
-  price_desc: { label: 'Price (high to low)', compare: (a, b) => b.price - a.price },
-  sqft_desc: { label: 'Square feet', compare: (a, b) => b.sqft - a.sqft },
-  key_money_asc: { label: 'Key money (low to high)', compare: (a, b) => a.key_money - b.key_money },
+  recommended: null,
+  price_asc: (a, b) => a.price - b.price,
+  price_desc: (a, b) => b.price - a.price,
+  sqft_desc: (a, b) => b.sqft - a.sqft,
+  key_money_asc: (a, b) => a.key_money - b.key_money,
 }
 
 const SAVED_KEY = 'nestwell.savedSearches'
@@ -52,6 +55,7 @@ export default function SearchResultsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
   const { openAuth } = useAuthModal()
+  const { lang, t } = useLanguage()
 
   const [properties, setProperties] = useState([])
   const [loading, setLoading] = useState(true)
@@ -86,7 +90,7 @@ export default function SearchResultsPage() {
 
     fetchProperties(params)
       .then(setProperties)
-      .catch(() => setError('Unable to load properties right now.'))
+      .catch(() => setError('search.loadError'))
       .finally(() => setLoading(false))
   }, [filters, search, city])
 
@@ -172,13 +176,13 @@ export default function SearchResultsPage() {
   )
 
   const sorted = useMemo(() => {
-    const { compare } = SORTS[sort]
+    const compare = SORTS[sort]
     return compare ? [...properties].sort(compare) : properties
   }, [properties, sort])
 
   const renting = filters.status === 'for_rent'
-  const place = city || search || 'Sri Lanka'
-  const noun = renting ? 'rental' : 'home'
+  const place = cityName(city || search, lang) || t('search.sriLanka')
+  const countKey = `search.${renting ? 'rentals' : 'homes'}${properties.length === 1 ? 'One' : 'Other'}`
 
   return (
     // Fills the screen below the navbar (4rem tall, 5rem from md up). Only the listings
@@ -211,7 +215,7 @@ export default function SearchResultsPage() {
           >
             <Sparkles size={16} className="mt-0.5 shrink-0" />
             <p className="flex-1">{aiReply}</p>
-            <button onClick={() => setAiReply(null)} aria-label="Dismiss">
+            <button onClick={() => setAiReply(null)} aria-label={t('search.dismiss')}>
               <X size={15} />
             </button>
           </motion.div>
@@ -230,23 +234,21 @@ export default function SearchResultsPage() {
 
         <div className="min-w-0 flex-1 overflow-y-auto px-4 py-6 lg:px-7">
           <h1 className="text-2xl font-extrabold text-brand-900 sm:text-3xl">
-            {place} {renting ? 'Rental Listings' : 'Homes For Sale'}
+            {t(renting ? 'search.headingRent' : 'search.headingSale', { place })}
           </h1>
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <p className="text-lg font-bold text-brand-900">
-              {loading
-                ? 'Searching…'
-                : `${properties.length.toLocaleString()} ${noun}${properties.length === 1 ? '' : 's'} available`}
+              {loading ? t('search.searching') : t(countKey, { count: properties.length.toLocaleString() })}
             </p>
             <label className="relative flex items-center text-lg font-bold text-brand-600">
-              Sort:&nbsp;
+              {t('search.sort')}:&nbsp;
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
                 className="cursor-pointer appearance-none bg-transparent pr-7 font-bold outline-none [field-sizing:content]"
               >
-                {Object.entries(SORTS).map(([value, { label }]) => (
-                  <option key={value} value={value}>{label}</option>
+                {Object.keys(SORTS).map((value) => (
+                  <option key={value} value={value}>{t(`sort.${value}`)}</option>
                 ))}
               </select>
               <ChevronDown size={20} strokeWidth={2.75} className="pointer-events-none absolute right-0" />
@@ -259,11 +261,11 @@ export default function SearchResultsPage() {
                 {Array.from({ length: 6 }).map((_, i) => <PropertyCardSkeleton key={i} />)}
               </div>
             )}
-            {error && <p className="text-red-600">{error}</p>}
+            {error && <p className="text-red-600">{t(error)}</p>}
             {!loading && !error && properties.length === 0 && (
               <div className="mt-16 text-center">
-                <p className="text-lg font-bold text-brand-900">No {noun}s match yet</p>
-                <p className="mt-1 text-sm text-slate-500">Try widening your price range or removing a filter.</p>
+                <p className="text-lg font-bold text-brand-900">{t('search.emptyTitle')}</p>
+                <p className="mt-1 text-sm text-slate-500">{t('search.emptyBody')}</p>
               </div>
             )}
             {!loading && !error && properties.length > 0 && (

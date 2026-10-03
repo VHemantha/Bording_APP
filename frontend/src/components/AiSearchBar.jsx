@@ -3,12 +3,9 @@ import { Loader2, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
 import { aiErrorMessage, searchWithAI } from '../api/ai'
+import { useLanguage } from '../context/LanguageContext'
 
-const SUGGESTIONS = [
-  '3 bed house in Colombo under $600k',
-  'Pet-friendly rentals in Kandy',
-  'Condos in Galle with 2+ baths',
-]
+const SUGGESTIONS = ['ai.suggestion1', 'ai.suggestion2', 'ai.suggestion3']
 
 /**
  * Natural-language search box. On success it calls `onApply(filters, meta)` where
@@ -19,6 +16,7 @@ export default function AiSearchBar({ onApply, variant = 'hero', className = '' 
   const [query, setQuery] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const { t } = useLanguage()
 
   async function run(q) {
     const text = (q ?? query).trim()
@@ -29,7 +27,7 @@ export default function AiSearchBar({ onApply, variant = 'hero', className = '' 
       const data = await searchWithAI(text)
       onApply(data.filters || {}, { reply: data.reply, count: data.count, query: text })
     } catch (err) {
-      setError(aiErrorMessage(err))
+      setError(aiErrorMessage(err, t))
     } finally {
       setBusy(false)
     }
@@ -54,7 +52,7 @@ export default function AiSearchBar({ onApply, variant = 'hero', className = '' 
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Describe your ideal home in plain English"
+          placeholder={t('ai.placeholder')}
           className="min-w-0 flex-1 bg-transparent px-1 py-2 text-sm text-slate-800 outline-none sm:text-base"
         />
         <button
@@ -63,23 +61,23 @@ export default function AiSearchBar({ onApply, variant = 'hero', className = '' 
           className="flex shrink-0 items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
         >
           {busy ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-          {busy ? 'Thinking' : 'Ask AI'}
+          {busy ? t('ai.thinking') : t('filter.askAi')}
         </button>
       </form>
 
       {hero && (
         <div className="mt-3 flex flex-wrap justify-center gap-2">
-          {SUGGESTIONS.map((s) => (
+          {SUGGESTIONS.map((key) => (
             <button
-              key={s}
+              key={key}
               type="button"
               onClick={() => {
-                setQuery(s)
-                run(s)
+                setQuery(t(key))
+                run(t(key))
               }}
               className="rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur transition hover:bg-white/20"
             >
-              {s}
+              {t(key)}
             </button>
           ))}
         </div>

@@ -5,12 +5,14 @@ import { useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
+import { useLanguage } from '../context/LanguageContext'
 import GoogleButton from './GoogleButton'
 
 export default function AuthModal() {
   const { open, mode, closeAuth, setMode } = useAuthModal()
   const { login, register, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -55,8 +57,8 @@ export default function AuthModal() {
         data
           ? Object.values(data).flat().join(' ')
           : mode === 'register'
-            ? 'Could not create your account.'
-            : 'Incorrect email or password.'
+            ? t('auth.errCreate')
+            : t('auth.errLogin')
       )
     } finally {
       setBusy(false)
@@ -69,7 +71,7 @@ export default function AuthModal() {
     try {
       finish(await loginWithGoogle(credential))
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Google sign-in failed.')
+      setError(err?.response?.data?.detail || t('auth.errGoogle'))
     } finally {
       setBusy(false)
     }
@@ -97,19 +99,19 @@ export default function AuthModal() {
             <button
               type="button"
               onClick={closeAuth}
-              aria-label="Close"
+              aria-label={t('common.close')}
               className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             >
               <X size={20} />
             </button>
 
             <h2 className="font-display text-2xl font-semibold text-brand-900">
-              {isRegister ? 'Create your account' : 'Welcome back'}
+              {isRegister ? t('auth.createTitle') : t('auth.welcomeBack')}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
               {isRegister
-                ? 'Save homes, get updates, and use the AI search assistant.'
-                : 'Sign in to pick up where you left off.'}
+                ? t('auth.createSub')
+                : t('auth.signInSub')}
             </p>
 
             <div className="mt-6">
@@ -117,19 +119,19 @@ export default function AuthModal() {
             </div>
 
             <div className="my-5 flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-slate-400">
-              <span className="h-px flex-1 bg-slate-200" /> or <span className="h-px flex-1 bg-slate-200" />
+              <span className="h-px flex-1 bg-slate-200" /> {t('common.or')} <span className="h-px flex-1 bg-slate-200" />
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <Field
-                label={isRegister ? 'Email' : 'Email or username'}
+                label={isRegister ? t('auth.email') : t('auth.emailOrUsername')}
                 type={isRegister ? 'email' : 'text'}
                 value={email}
                 onChange={setEmail}
                 autoComplete={isRegister ? 'email' : 'username'}
               />
               <Field
-                label="Password"
+                label={t('auth.password')}
                 type="password"
                 value={password}
                 onChange={setPassword}
@@ -146,24 +148,23 @@ export default function AuthModal() {
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
               >
                 {busy && <Loader2 size={16} className="animate-spin" />}
-                {isRegister ? 'Create account' : 'Sign in'}
+                {isRegister ? t('auth.createAccount') : t('nav.signIn')}
               </button>
             </form>
 
             <p className="mt-5 text-center text-sm text-slate-500">
-              {isRegister ? 'Already have an account?' : 'New to Nestwell?'}{' '}
+              {isRegister ? t('auth.haveAccount') : t('auth.newHere')}{' '}
               <button
                 type="button"
                 onClick={() => setMode(isRegister ? 'login' : 'register')}
                 className="font-semibold text-brand-600 hover:underline"
               >
-                {isRegister ? 'Sign in' : 'Create an account'}
+                {isRegister ? t('nav.signIn') : t('auth.createAnAccount')}
               </button>
             </p>
 
             <p className="mt-4 text-center text-[11px] leading-relaxed text-slate-400">
-              By continuing you agree to the Nestwell Terms of Use and acknowledge the
-              Privacy Policy.
+              {t('auth.terms')}
             </p>
           </motion.div>
         </motion.div>

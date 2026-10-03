@@ -4,13 +4,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { aiErrorMessage, sendAssistantMessage } from '../api/ai'
+import { useLanguage } from '../context/LanguageContext'
 import { filtersToSearchParams } from '../utils/searchParams'
 
-const GREETING = {
-  role: 'assistant',
-  content:
-    "Hi, I'm Aria 👋 Ask me to find homes (\"2 bed condo in Denver under $400k\") or how to use Nestwell.",
-}
+// Shown first; its text comes from the translations so it follows the chosen language.
+const GREETING = { role: 'assistant', greeting: true }
 
 export default function AssistantWidget() {
   const [open, setOpen] = useState(false)
@@ -19,6 +17,7 @@ export default function AssistantWidget() {
   const [busy, setBusy] = useState(false)
   const [pendingFilters, setPendingFilters] = useState(null)
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -41,7 +40,7 @@ export default function AssistantWidget() {
         setPendingFilters(data.filters)
       }
     } catch (err) {
-      setMessages((m) => [...m, { role: 'assistant', content: aiErrorMessage(err), error: true }])
+      setMessages((m) => [...m, { role: 'assistant', content: aiErrorMessage(err, t), error: true }])
     } finally {
       setBusy(false)
     }
@@ -61,7 +60,7 @@ export default function AssistantWidget() {
         className="fixed bottom-5 right-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-lift"
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
-        aria-label="Open assistant"
+        aria-label={t('assistant.open')}
       >
         {open ? <X size={22} /> : <MessageCircle size={24} />}
       </motion.button>
@@ -80,8 +79,8 @@ export default function AssistantWidget() {
                 <Sparkles size={16} />
               </span>
               <div>
-                <p className="text-sm font-semibold">Aria &middot; Nestwell guide</p>
-                <p className="text-[11px] text-white/60">AI-powered help &amp; search</p>
+                <p className="text-sm font-semibold">{t('assistant.title')}</p>
+                <p className="text-[11px] text-white/60">{t('assistant.subtitle')}</p>
               </div>
             </div>
 
@@ -97,13 +96,13 @@ export default function AssistantWidget() {
                           : 'bg-slate-100 text-slate-700'
                     }`}
                   >
-                    {m.content}
+                    {m.greeting ? t('assistant.greeting') : m.content}
                   </span>
                 </div>
               ))}
               {busy && (
                 <div className="flex items-center gap-2 text-sm text-slate-400">
-                  <Loader2 size={14} className="animate-spin" /> Aria is thinking...
+                  <Loader2 size={14} className="animate-spin" /> {t('assistant.thinking')}
                 </div>
               )}
               {pendingFilters && !busy && (
@@ -112,7 +111,7 @@ export default function AssistantWidget() {
                   onClick={goToResults}
                   className="flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-100"
                 >
-                  Show me these homes <ArrowRight size={15} />
+                  {t('assistant.showHomes')} <ArrowRight size={15} />
                 </button>
               )}
             </div>
@@ -121,14 +120,14 @@ export default function AssistantWidget() {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask Aria anything..."
+                placeholder={t('assistant.placeholder')}
                 className="min-w-0 flex-1 rounded-full bg-slate-100 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-200"
               />
               <button
                 type="submit"
                 disabled={busy}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white transition hover:bg-brand-700 disabled:opacity-60"
-                aria-label="Send"
+                aria-label={t('assistant.send')}
               >
                 <Send size={16} />
               </button>

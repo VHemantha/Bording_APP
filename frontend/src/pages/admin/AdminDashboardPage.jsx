@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { fetchProperties } from '../../api/properties'
+import { useLanguage } from '../../context/LanguageContext'
 import { formatPrice } from '../../utils/format'
 
 export default function AdminDashboardPage() {
   const [properties, setProperties] = useState(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     fetchProperties().then(setProperties).catch(() => setProperties([]))
@@ -18,29 +20,29 @@ export default function AdminDashboardPage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-brand-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage every listing on Nestwell.</p>
+          <h1 className="font-display text-2xl font-semibold text-brand-900">{t('admin.dashboard')}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t('admin.dashSub')}</p>
         </div>
         <div className="flex gap-2">
           <Link to="/admin/listings/new" className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
-            <Plus size={15} /> Add listing
+            <Plus size={15} /> {t('admin.addListing')}
           </Link>
           <Link to="/admin/import" className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            <Wand2 size={15} /> AI import
+            <Wand2 size={15} /> {t('admin.aiImport')}
           </Link>
         </div>
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard icon={Home} label="Total listings" value={stats.total} />
-        <StatCard icon={KeyRound} label="For sale" value={stats.forSale} />
-        <StatCard icon={Building2} label="For rent" value={stats.forRent} />
-        <StatCard icon={Plus} label="Avg. price" value={stats.avgPrice} />
+        <StatCard icon={Home} label={t('admin.total')} value={stats.total} />
+        <StatCard icon={KeyRound} label={t('status.for_sale')} value={stats.forSale} />
+        <StatCard icon={Building2} label={t('status.for_rent')} value={stats.forRent} />
+        <StatCard icon={Plus} label={t('admin.avgPrice')} value={stats.avgPrice} />
       </div>
 
       <div className="mt-8 rounded-2xl border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="font-display text-lg font-semibold text-brand-900">Recently added</h2>
+          <h2 className="font-display text-lg font-semibold text-brand-900">{t('admin.recent')}</h2>
         </div>
         <ul className="divide-y divide-slate-100">
           {(properties ?? []).slice(0, 6).map((p) => (
@@ -50,14 +52,14 @@ export default function AdminDashboardPage() {
                 <p className="truncate text-sm font-medium text-brand-900">{p.address}</p>
                 <p className="text-xs text-slate-500">{p.city}, {p.state}</p>
               </div>
-              <span className="text-sm font-semibold text-brand-900">{formatPrice(p.price, p.status)}</span>
+              <span className="text-sm font-semibold text-brand-900">{formatPrice(p.price, p.status, t('unit.perMonth'))}</span>
               <Link to={`/admin/listings/${p.id}/edit`} className="text-sm font-medium text-brand-600 hover:underline">
-                Edit
+                {t('common.edit')}
               </Link>
             </li>
           ))}
           {properties && properties.length === 0 && (
-            <li className="px-5 py-8 text-center text-sm text-slate-500">No listings yet.</li>
+            <li className="px-5 py-8 text-center text-sm text-slate-500">{t('admin.noListings')}</li>
           )}
         </ul>
       </div>

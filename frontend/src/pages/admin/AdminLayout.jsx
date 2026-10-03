@@ -1,18 +1,21 @@
 import { LayoutDashboard, List, LogOut, Plus, Sparkles, Wand2 } from 'lucide-react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 
+import LanguageSwitcher from '../../components/LanguageSwitcher'
 import { useAuth } from '../../context/AuthContext'
+import { useLanguage } from '../../context/LanguageContext'
 
 const NAV = [
-  { to: '/admin', end: true, label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/admin/listings', label: 'Listings', icon: List },
-  { to: '/admin/listings/new', label: 'Add listing', icon: Plus },
-  { to: '/admin/import', label: 'AI import', icon: Wand2 },
+  { to: '/admin', end: true, label: 'admin.dashboard', icon: LayoutDashboard },
+  { to: '/admin/listings', label: 'admin.listings', icon: List },
+  { to: '/admin/listings/new', label: 'admin.addListing', icon: Plus },
+  { to: '/admin/import', label: 'admin.aiImport', icon: Wand2 },
 ]
 
 export default function AdminLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   return (
     <div className="flex min-h-screen bg-slate-100">
@@ -24,7 +27,7 @@ export default function AdminLayout() {
             </span>
             <span className="font-display text-lg font-semibold">Nestwell</span>
           </Link>
-          <p className="mt-1 text-xs text-white/50">Admin console</p>
+          <p className="mt-1 text-xs text-white/50">{t('admin.console')}</p>
 
           <nav className="mt-8 space-y-1">
             {NAV.map(({ to, end, label, icon: Icon }) => (
@@ -38,7 +41,7 @@ export default function AdminLayout() {
                   }`
                 }
               >
-                <Icon size={17} /> {label}
+                <Icon size={17} /> {t(label)}
               </NavLink>
             ))}
           </nav>
@@ -53,7 +56,7 @@ export default function AdminLayout() {
             }}
             className="flex items-center gap-2 rounded-xl px-3 py-2 text-white/70 transition hover:bg-white/10"
           >
-            <LogOut size={16} /> Sign out
+            <LogOut size={16} /> {t('admin.signOut')}
           </button>
         </div>
       </aside>
@@ -70,12 +73,15 @@ export default function AdminLayout() {
                 `whitespace-nowrap rounded-full px-3 py-1.5 ${isActive ? 'bg-white/15' : 'text-white/70'}`
               }
             >
-              {label}
+              {t(label)}
             </NavLink>
           ))}
         </div>
 
         <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+          <div className="mb-4 flex justify-end">
+            <LanguageSwitcher />
+          </div>
           <Outlet />
         </main>
       </div>

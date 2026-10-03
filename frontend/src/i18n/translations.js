@@ -2,6 +2,8 @@
 // `si` / `ta` falls back to English (see LanguageContext), so new strings can be added to
 // `en` first. "{name}"-style placeholders are filled in by t(key, { name }).
 
+import { pageTranslations } from './pages'
+
 export const LANGUAGES = [
   { code: 'en', label: 'English' },
   { code: 'si', label: 'සිංහල' },
@@ -32,7 +34,7 @@ export const CITIES = [
   { name: 'Hambantota', si: 'හම්බන්තොට', ta: 'அம்பாந்தோட்டை' },
 ]
 
-export const translations = {
+const landingTranslations = {
   en: {
     'nav.buy': 'Buy',
     'nav.rent': 'Rent',
@@ -241,4 +243,16 @@ export const translations = {
     'footer.privacy': 'தனியுரிமை',
     'footer.copyright': 'காட்டப்படும் பட்டியல்கள் செயல்விளக்கத்திற்கான மாதிரித் தரவு.',
   },
+}
+
+export const translations = {
+  en: { ...landingTranslations.en, ...pageTranslations.en },
+  si: { ...landingTranslations.si, ...pageTranslations.si },
+  ta: { ...landingTranslations.ta, ...pageTranslations.ta },
+}
+
+/** A city's name in the given language; unknown places (typed searches) are returned as-is. */
+export function cityName(name, lang) {
+  const city = CITIES.find((c) => c.name.toLowerCase() === name.toLowerCase())
+  return city?.[lang] || name
 }

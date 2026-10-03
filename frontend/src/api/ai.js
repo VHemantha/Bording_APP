@@ -18,13 +18,14 @@ export async function extractListing(text) {
   return data
 }
 
-/** Normalises the various shapes an AI endpoint error can take into a string. */
-export function aiErrorMessage(err) {
+/** Normalises the various shapes an AI endpoint error can take into a string.
+ *  `t` is the translator from useLanguage(); messages sent by the server are passed through. */
+export function aiErrorMessage(err, t) {
   const data = err?.response?.data
   if (data?.error) return data.error
   if (data?.detail) return data.detail
   if (err?.response?.status === 503) {
-    return 'The AI service is not configured yet. Add an Anthropic API key on the server to enable it.'
+    return t('ai.errNotConfigured')
   }
-  return 'Something went wrong reaching the AI service. Please try again.'
+  return t('ai.errGeneric')
 }

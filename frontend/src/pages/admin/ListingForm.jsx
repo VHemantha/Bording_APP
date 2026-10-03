@@ -1,12 +1,10 @@
 import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
+import { useLanguage } from '../../context/LanguageContext'
 import { HOME_TYPE_LABELS, STORIES_LABELS } from '../../utils/format'
 
-const STATUSES = [
-  ['for_sale', 'For sale'],
-  ['for_rent', 'For rent'],
-]
+const STATUSES = ['for_sale', 'for_rent']
 
 const EMPTY = {
   address: '',
@@ -37,7 +35,8 @@ export function blankListing() {
 
 /** Controlled listing form shared by the manual "Add listing" flow and the
  *  AI-import review screen. Calls `onSubmit(payload)` with server-ready values. */
-export default function ListingForm({ initial, onSubmit, submitting, submitLabel = 'Publish listing' }) {
+export default function ListingForm({ initial, onSubmit, submitting, submitLabel }) {
+  const { t } = useLanguage()
   const [values, setValues] = useState({ ...EMPTY, ...initial })
   const [formError, setFormError] = useState(null)
 
@@ -72,7 +71,7 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
       images: values.images.map((s) => s.trim()).filter(Boolean),
     }
     if (payload.latitude === null || payload.longitude === null) {
-      setFormError('Latitude and longitude are required — the map needs a pin.')
+      setFormError(t('admin.latLngRequired'))
       return
     }
     onSubmit(payload)
@@ -80,34 +79,34 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Section title="Location">
+      <Section title={t('admin.location')}>
         <Grid>
-          <Text label="Street address" value={values.address} onChange={(v) => set('address', v)} required span2 />
-          <Text label="City" value={values.city} onChange={(v) => set('city', v)} required />
-          <Text label="State" value={values.state} onChange={(v) => set('state', v.toUpperCase().slice(0, 2))} required />
-          <Text label="ZIP code" value={values.zip_code} onChange={(v) => set('zip_code', v)} required />
-          <Text label="Latitude" type="number" step="any" value={values.latitude} onChange={(v) => set('latitude', v)} required />
-          <Text label="Longitude" type="number" step="any" value={values.longitude} onChange={(v) => set('longitude', v)} required />
+          <Text label={t('admin.street')} value={values.address} onChange={(v) => set('address', v)} required span2 />
+          <Text label={t('admin.city')} value={values.city} onChange={(v) => set('city', v)} required />
+          <Text label={t('admin.state')} value={values.state} onChange={(v) => set('state', v.toUpperCase().slice(0, 2))} required />
+          <Text label={t('admin.zip')} value={values.zip_code} onChange={(v) => set('zip_code', v)} required />
+          <Text label={t('admin.latitude')} type="number" step="any" value={values.latitude} onChange={(v) => set('latitude', v)} required />
+          <Text label={t('admin.longitude')} type="number" step="any" value={values.longitude} onChange={(v) => set('longitude', v)} required />
         </Grid>
       </Section>
 
-      <Section title="Details">
+      <Section title={t('admin.details')}>
         <Grid>
-          <Text label="Price (USD)" type="number" value={values.price} onChange={(v) => set('price', v)} required />
-          <Text label="Bedrooms" type="number" value={values.beds} onChange={(v) => set('beds', v)} required />
-          <Text label="Bathrooms" type="number" step="0.5" value={values.baths} onChange={(v) => set('baths', v)} required />
-          <Text label="Square feet" type="number" value={values.sqft} onChange={(v) => set('sqft', v)} required />
-          <Select label="Home type" value={values.home_type} onChange={(v) => set('home_type', v)} options={Object.entries(HOME_TYPE_LABELS)} />
-          <Select label="Status" value={values.status} onChange={(v) => set('status', v)} options={STATUSES} />
-          <Text label="Key money (USD)" type="number" value={values.key_money} onChange={(v) => set('key_money', v)} />
-          <Text label="Parking slots" type="number" value={values.parking_slots} onChange={(v) => set('parking_slots', v)} />
-          <Select label="Stories" value={values.stories ?? ''} onChange={(v) => set('stories', v)} options={[['', 'Not applicable'], ...Object.entries(STORIES_LABELS)]} />
-          <Text label="Year built" type="number" value={values.year_built} onChange={(v) => set('year_built', v)} />
-          <Text label="Listed date" type="date" value={values.listed_date} onChange={(v) => set('listed_date', v)} required />
+          <Text label={t('admin.priceUsd')} type="number" value={values.price} onChange={(v) => set('price', v)} required />
+          <Text label={t('filter.bedrooms')} type="number" value={values.beds} onChange={(v) => set('beds', v)} required />
+          <Text label={t('filter.bathrooms')} type="number" step="0.5" value={values.baths} onChange={(v) => set('baths', v)} required />
+          <Text label={t('filter.sqft')} type="number" value={values.sqft} onChange={(v) => set('sqft', v)} required />
+          <Select label={t('detail.homeType')} value={values.home_type} onChange={(v) => set('home_type', v)} options={Object.keys(HOME_TYPE_LABELS).map((key) => [key, t(`type.${key}`)])} />
+          <Select label={t('detail.status')} value={values.status} onChange={(v) => set('status', v)} options={STATUSES.map((key) => [key, t(`status.${key}`)])} />
+          <Text label={t('admin.keyMoneyUsd')} type="number" value={values.key_money} onChange={(v) => set('key_money', v)} />
+          <Text label={t('filter.parking')} type="number" value={values.parking_slots} onChange={(v) => set('parking_slots', v)} />
+          <Select label={t('detail.stories')} value={values.stories ?? ''} onChange={(v) => set('stories', v)} options={[['', t('admin.notApplicable')], ...Object.keys(STORIES_LABELS).map((key) => [key, t(`stories.${key}`)])]} />
+          <Text label={t('detail.yearBuilt')} type="number" value={values.year_built} onChange={(v) => set('year_built', v)} />
+          <Text label={t('admin.listedDate')} type="date" value={values.listed_date} onChange={(v) => set('listed_date', v)} required />
         </Grid>
       </Section>
 
-      <Section title="Description">
+      <Section title={t('admin.description')}>
         <textarea
           value={values.description}
           onChange={(e) => set('description', e.target.value)}
@@ -116,8 +115,8 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
         />
       </Section>
 
-      <Section title="Photos">
-        <Text label="Primary image URL" value={values.primary_image_url} onChange={(v) => set('primary_image_url', v)} required />
+      <Section title={t('admin.photos')}>
+        <Text label={t('admin.primaryImage')} value={values.primary_image_url} onChange={(v) => set('primary_image_url', v)} required />
         <div className="mt-3 space-y-2">
           {values.images.map((url, i) => (
             <div key={i} className="flex gap-2">
@@ -141,7 +140,7 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
             onClick={() => set('images', [...values.images, ''])}
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
           >
-            <Plus size={15} /> Add gallery photo
+            <Plus size={15} /> {t('admin.addPhoto')}
           </button>
         </div>
       </Section>
@@ -153,7 +152,7 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
         disabled={submitting}
         className="rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
       >
-        {submitting ? 'Saving…' : submitLabel}
+        {submitting ? t('admin.saving') : (submitLabel ?? t('admin.publish'))}
       </button>
     </form>
   )

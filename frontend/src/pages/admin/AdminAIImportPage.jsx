@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { aiErrorMessage, extractListing } from '../../api/ai'
+import { useLanguage } from '../../context/LanguageContext'
 
 const SAMPLE = `Charming 3 bed / 2 bath bungalow in East Austin (78702). 1,540 sqft, built 1994.
 Updated kitchen with quartz counters, big backyard, detached garage. Asking $529,000.
@@ -13,6 +14,7 @@ export default function AdminAIImportPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   async function run() {
     if (text.trim().length < 20 || busy) return
@@ -22,7 +24,7 @@ export default function AdminAIImportPage() {
       const { listing, warnings } = await extractListing(text)
       navigate('/admin/listings/new', { state: { draft: normalise(listing), warnings } })
     } catch (err) {
-      setError(aiErrorMessage(err))
+      setError(aiErrorMessage(err, t))
     } finally {
       setBusy(false)
     }
@@ -30,18 +32,16 @@ export default function AdminAIImportPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-semibold text-brand-900">AI import</h1>
+      <h1 className="font-display text-2xl font-semibold text-brand-900">{t('admin.aiImport')}</h1>
       <p className="mt-1 max-w-2xl text-sm text-slate-500">
-        Paste an owner's email, an existing listing, or rough notes. The LangGraph agent
-        (powered by Claude) extracts a structured draft, which opens in the listing form
-        for you to review and publish. Nothing is saved until you hit publish.
+        {t('admin.importBody')}
       </p>
 
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={10}
-        placeholder="Paste listing text here…"
+        placeholder={t('admin.importPlaceholder')}
         className="mt-5 w-full rounded-2xl border border-slate-200 bg-white p-4 text-sm outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
       />
 
@@ -52,13 +52,13 @@ export default function AdminAIImportPage() {
           className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
         >
           {busy ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
-          {busy ? 'Extracting…' : 'Extract with AI'}
+          {busy ? t('admin.extracting') : t('admin.extract')}
         </button>
         <button
           onClick={() => setText(SAMPLE)}
           className="text-sm font-medium text-brand-600 hover:underline"
         >
-          Use sample text
+          {t('admin.useSample')}
         </button>
       </div>
 

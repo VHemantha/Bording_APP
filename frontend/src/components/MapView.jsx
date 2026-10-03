@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import { Link } from 'react-router-dom'
 
+import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
 
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
@@ -43,6 +44,7 @@ function FitBounds({ properties }) {
 }
 
 export default function MapView({ properties, highlightedId, onMarkerHover }) {
+  const { t } = useLanguage()
   const center = properties.length
     ? [properties[0].latitude, properties[0].longitude]
     : [7.8731, 80.7718] // centre of Sri Lanka
@@ -66,11 +68,11 @@ export default function MapView({ properties, highlightedId, onMarkerHover }) {
         >
           <Popup>
             <div className="text-sm">
-              <p className="font-bold">{formatPrice(p.price, p.status)}</p>
-              <p>{p.beds} bd | {p.baths} ba | {p.sqft.toLocaleString()} sqft</p>
+              <p className="font-bold">{formatPrice(p.price, p.status, t('unit.perMonth'))}</p>
+              <p>{p.beds} {t('unit.bd')} | {p.baths} {t('unit.ba')} | {p.sqft.toLocaleString()} {t('unit.sqft')}</p>
               <p className="text-gray-500">{p.address}</p>
               <Link to={`/property/${p.id}`} className="text-blue-600 underline">
-                View details
+                {t('map.viewDetails')}
               </Link>
             </div>
           </Popup>

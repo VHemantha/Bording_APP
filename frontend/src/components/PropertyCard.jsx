@@ -2,7 +2,9 @@ import { motion } from 'framer-motion'
 import { Heart } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-import { formatBaths, formatPrice, HOME_TYPE_LABELS, statusLabel, STORIES_LABELS } from '../utils/format'
+import { useLanguage } from '../context/LanguageContext'
+import { cityName } from '../i18n/translations'
+import { formatBaths, formatPrice } from '../utils/format'
 
 export default function PropertyCard({
   property,
@@ -12,6 +14,8 @@ export default function PropertyCard({
   highlighted = false,
   index = 0,
 }) {
+  const { lang, t } = useLanguage()
+
   function handleFavoriteClick(e) {
     e.preventDefault()
     e.stopPropagation()
@@ -20,15 +24,17 @@ export default function PropertyCard({
 
   // Land has no rooms, so those chips are left out rather than showing "0 bd".
   const chips = [
-    property.beds > 0 && [property.beds, 'bd'],
-    property.baths > 0 && [formatBaths(property.baths), 'ba'],
-    [property.sqft.toLocaleString(), 'sqft'],
+    property.beds > 0 && [property.beds, t('unit.bd')],
+    property.baths > 0 && [formatBaths(property.baths), t('unit.ba')],
+    [property.sqft.toLocaleString(), t('unit.sqft')],
   ].filter(Boolean)
 
   const extras = [
-    property.key_money > 0 ? `Key money ${formatPrice(property.key_money)}` : 'No key money',
-    property.parking_slots > 0 && `${property.parking_slots} parking`,
-    STORIES_LABELS[property.stories],
+    property.key_money > 0
+      ? t('card.keyMoney', { amount: formatPrice(property.key_money) })
+      : t('card.noKeyMoney'),
+    property.parking_slots > 0 && t('card.parking', { count: property.parking_slots }),
+    property.stories && t(`stories.${property.stories}`),
   ].filter(Boolean)
 
   return (
@@ -55,17 +61,17 @@ export default function PropertyCard({
           />
           <div className="absolute left-3 top-3 flex gap-1.5">
             <span className="rounded-full bg-brand-600 px-3 py-1 text-sm font-bold text-white shadow">
-              {HOME_TYPE_LABELS[property.home_type] ?? property.home_type}
+              {t(`type.${property.home_type}`)}
             </span>
             <span className="rounded-full bg-brand-900/80 px-3 py-1 text-sm font-bold text-white shadow">
-              {statusLabel(property.status)}
+              {t(`status.${property.status}`)}
             </span>
           </div>
           {onToggleFavorite && (
             <button
               type="button"
               onClick={handleFavoriteClick}
-              aria-label={isFavorited ? 'Remove from saved' : 'Save home'}
+              aria-label={isFavorited ? t('card.unsave') : t('card.save')}
               className="absolute right-3 top-3 transition hover:scale-110"
             >
               <Heart
@@ -81,16 +87,16 @@ export default function PropertyCard({
 
         <div className="p-4">
           <p className="text-2xl font-extrabold text-brand-900">
-            {formatPrice(property.price, property.status)}
+            {formatPrice(property.price, property.status, t('unit.perMonth'))}
           </p>
           <p className="mt-1 truncate text-slate-600">
-            {property.address} <span className="text-slate-300">|</span> {property.city}, {property.state}
+            {property.address} <span className="text-slate-300">|</span> {cityName(property.city, lang)}, {property.state}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {chips.map(([value, unit]) => (
               <span
                 key={unit}
-                className="flex-1 whitespace-nowrap rounded-full border border-slate-300 px-3 py-1.5 text-center text-sm text-slate-600"
+                className="flex-auto whitespace-nowrap rounded-full border border-slate-300 px-3 py-1.5 text-center text-sm text-slate-600"
               >
                 <span className="text-base font-bold text-brand-900">{value}</span> {unit}
               </span>

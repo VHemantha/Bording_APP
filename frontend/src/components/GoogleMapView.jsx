@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { useLanguage } from '../context/LanguageContext'
 import { formatCompactPrice, formatPrice } from '../utils/format'
 import MapView from './MapView'
 
@@ -52,6 +53,7 @@ export default function GoogleMapView({ properties, highlightedId, onMarkerHover
   const markersRef = useRef(new Map())
   const hoverRef = useRef(onMarkerHover)
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   useEffect(() => {
     hoverRef.current = onMarkerHover
@@ -122,13 +124,13 @@ export default function GoogleMapView({ properties, highlightedId, onMarkerHover
         const node = document.createElement('div')
         node.style.cssText = 'font: 14px Manrope, sans-serif; min-width: 170px'
         const price = document.createElement('strong')
-        price.textContent = formatPrice(p.price, p.status)
+        price.textContent = formatPrice(p.price, p.status, t('unit.perMonth'))
         const address = document.createElement('div')
         address.textContent = `${p.address}, ${p.city}`
         address.style.cssText = 'color: #475569; margin: 2px 0 6px'
         const link = document.createElement('a')
         link.href = `/property/${p.id}`
-        link.textContent = 'View details'
+        link.textContent = t('map.viewDetails')
         link.style.cssText = 'color: #2a3fd4; font-weight: 700'
         link.addEventListener('click', (e) => {
           e.preventDefault()
@@ -152,7 +154,7 @@ export default function GoogleMapView({ properties, highlightedId, onMarkerHover
         if (map.getZoom() > 15) map.setZoom(15)
       })
     }
-  }, [maps, failed, properties, navigate])
+  }, [maps, failed, properties, navigate, t])
 
   // Emphasise the marker of the card being hovered.
   useEffect(() => {

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { useLanguage } from '../context/LanguageContext'
+
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 /**
@@ -10,6 +12,7 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 export default function GoogleButton({ onCredential, onError }) {
   const containerRef = useRef(null)
   const [ready, setReady] = useState(false)
+  const { lang, t } = useLanguage()
 
   useEffect(() => {
     if (!CLIENT_ID) return
@@ -28,7 +31,7 @@ export default function GoogleButton({ onCredential, onError }) {
           client_id: CLIENT_ID,
           callback: (response) => {
             if (response?.credential) onCredential(response.credential)
-            else onError?.('Google did not return a credential.')
+            else onError?.(t('auth.googleNoCredential'))
           },
         })
         gsi.renderButton(containerRef.current, {
@@ -37,10 +40,11 @@ export default function GoogleButton({ onCredential, onError }) {
           width: 320,
           text: 'continue_with',
           shape: 'pill',
+          locale: lang, // Google draws the button itself, in this language
         })
         setReady(true)
       } catch {
-        onError?.('Could not initialise Google sign-in.')
+        onError?.(t('auth.googleInitFail'))
       }
     }
 
@@ -48,18 +52,18 @@ export default function GoogleButton({ onCredential, onError }) {
     return () => {
       cancelled = true
     }
-  }, [onCredential, onError])
+  }, [onCredential, onError, lang, t])
 
   if (!CLIENT_ID) {
     return (
       <button
         type="button"
         disabled
-        title="Google sign-in isn't configured yet. Add VITE_GOOGLE_CLIENT_ID to enable it."
+        title={t('auth.googleNotConfigured')}
         className="flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-400"
       >
         <GoogleGlyph />
-        Continue with Google
+        {t('auth.google')}
       </button>
     )
   }

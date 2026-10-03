@@ -1,12 +1,10 @@
 import { Check, ChevronDown, CircleX, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import { useLanguage } from '../context/LanguageContext'
 import { HOME_TYPE_LABELS, STORIES_LABELS } from '../utils/format'
 
-const STATUSES = [
-  ['for_rent', 'For rent'],
-  ['for_sale', 'For sale'],
-]
+const STATUSES = ['for_rent', 'for_sale']
 const MIN_OPTIONS = ['', '1', '2', '3', '4', '5']
 
 const pill =
@@ -33,6 +31,7 @@ export default function FilterBar({
   aiOpen,
   onToggleAi,
 }) {
+  const { t } = useLanguage()
   const priceActive = filters.min_price || filters.max_price || filters.max_key_money
   const bedsActive = filters.min_beds || filters.min_baths
   const types = csv(filters.home_type)
@@ -46,12 +45,12 @@ export default function FilterBar({
       <SearchBox key={searchText} initial={searchText} onSearch={onSearch} />
 
       <Dropdown
-        label={STATUSES.find(([v]) => v === filters.status)?.[1] ?? 'For rent'}
+        label={t(`status.${STATUSES.includes(filters.status) ? filters.status : 'for_rent'}`)}
         active
       >
         {(close) => (
           <div className="w-48 py-1">
-            {STATUSES.map(([value, label]) => (
+            {STATUSES.map((value) => (
               <button
                 key={value}
                 type="button"
@@ -63,7 +62,7 @@ export default function FilterBar({
                   filters.status === value ? 'font-bold text-brand-700' : ''
                 }`}
               >
-                {label}
+                {t(`status.${value}`)}
                 {filters.status === value && <Check size={16} />}
               </button>
             ))}
@@ -71,17 +70,17 @@ export default function FilterBar({
         )}
       </Dropdown>
 
-      <Dropdown label="Price" active={Boolean(priceActive)}>
+      <Dropdown label={t('filter.price')} active={Boolean(priceActive)}>
         {(close) => <PricePanel filters={filters} onChange={onChange} close={close} />}
       </Dropdown>
 
       <Dropdown
         label={
           bedsActive
-            ? [filters.min_beds && `${filters.min_beds}+ bd`, filters.min_baths && `${filters.min_baths}+ ba`]
+            ? [filters.min_beds && `${filters.min_beds}+ ${t('unit.bd')}`, filters.min_baths && `${filters.min_baths}+ ${t('unit.ba')}`]
                 .filter(Boolean)
                 .join(', ')
-            : 'Beds & baths'
+            : t('filter.bedsBaths')
         }
         active={Boolean(bedsActive)}
       >
@@ -89,14 +88,14 @@ export default function FilterBar({
       </Dropdown>
 
       <Dropdown
-        label={types.length ? `Property type (${types.length})` : 'Property type'}
+        label={types.length ? `${t('filter.propertyType')} (${types.length})` : t('filter.propertyType')}
         active={types.length > 0}
       >
         {(close) => <TypePanel filters={filters} onChange={onChange} close={close} />}
       </Dropdown>
 
       <Dropdown
-        label={moreCount ? `Filters (${moreCount})` : 'Filters'}
+        label={moreCount ? `${t('filter.filters')} (${moreCount})` : t('filter.filters')}
         icon={<SlidersHorizontal size={18} />}
         active={moreCount > 0}
         alignRight
@@ -110,7 +109,7 @@ export default function FilterBar({
         aria-pressed={aiOpen}
         className={`${pill} ${aiOpen ? pillActive : pillIdle}`}
       >
-        <Sparkles size={18} /> Ask AI
+        <Sparkles size={18} /> {t('filter.askAi')}
       </button>
 
       <button
@@ -120,7 +119,7 @@ export default function FilterBar({
         className="flex h-12 shrink-0 items-center gap-2 rounded-lg bg-brand-600 px-6 font-bold text-white transition hover:bg-brand-700"
       >
         {saved && <Check size={18} />}
-        {saved ? 'Search saved' : 'Save search'}
+        {saved ? t('filter.searchSaved') : t('filter.saveSearch')}
       </button>
     </div>
   )
@@ -128,6 +127,7 @@ export default function FilterBar({
 
 function SearchBox({ initial, onSearch }) {
   const [text, setText] = useState(initial)
+  const { t } = useLanguage()
 
   return (
     <form
@@ -140,14 +140,14 @@ function SearchBox({ initial, onSearch }) {
       <input
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Enter Cities"
-        aria-label="Search by city"
+        placeholder={t('hero.placeholder')}
+        aria-label={t('filter.searchByCity')}
         className="h-full min-w-0 flex-1 bg-transparent text-lg outline-none placeholder:text-slate-400"
       />
       {text && (
         <button
           type="button"
-          aria-label="Clear search"
+          aria-label={t('filter.clearSearch')}
           onClick={() => {
             setText('')
             onSearch('')
@@ -157,7 +157,7 @@ function SearchBox({ initial, onSearch }) {
           <CircleX size={20} className="fill-brand-900 text-white" />
         </button>
       )}
-      <button aria-label="Search" className="rounded-lg p-2 text-brand-900 transition hover:bg-slate-100">
+      <button aria-label={t('hero.search')} className="rounded-lg p-2 text-brand-900 transition hover:bg-slate-100">
         <Search size={22} strokeWidth={2.75} />
       </button>
     </form>
@@ -214,17 +214,18 @@ function Dropdown({ label, icon, active, alignRight, children }) {
 }
 
 function PanelFooter({ onReset, onApply }) {
+  const { t } = useLanguage()
   return (
     <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
       <button type="button" onClick={onReset} className="text-sm font-bold text-brand-600 hover:underline">
-        Reset
+        {t('common.reset')}
       </button>
       <button
         type="button"
         onClick={onApply}
         className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-700"
       >
-        Apply
+        {t('common.apply')}
       </button>
     </div>
   )
@@ -254,6 +255,7 @@ function PricePanel({ filters, onChange, close }) {
     max_key_money: filters.max_key_money,
   })
   const set = (field) => (value) => setDraft((d) => ({ ...d, [field]: value }))
+  const { t } = useLanguage()
 
   function apply(values) {
     onChange(values)
@@ -262,24 +264,24 @@ function PricePanel({ filters, onChange, close }) {
 
   return (
     <form
-      className="w-80 p-4"
+      className="w-[23rem] max-w-[calc(100vw-2rem)] p-4"
       onSubmit={(e) => {
         e.preventDefault()
         apply(draft)
       }}
     >
-      <p className="mb-2 font-bold">Price range</p>
+      <p className="mb-2 font-bold">{t('filter.priceRange')}</p>
       <div className="flex items-end gap-2">
-        <NumberField label="Minimum" value={draft.min_price} onChange={set('min_price')} placeholder="No min" />
+        <NumberField label={t('filter.minimum')} value={draft.min_price} onChange={set('min_price')} placeholder={t('filter.noMin')} />
         <span className="pb-3 text-slate-400">–</span>
-        <NumberField label="Maximum" value={draft.max_price} onChange={set('max_price')} placeholder="No max" />
+        <NumberField label={t('filter.maximum')} value={draft.max_price} onChange={set('max_price')} placeholder={t('filter.noMax')} />
       </div>
-      <p className="mb-2 mt-4 font-bold">Key money</p>
+      <p className="mb-2 mt-4 font-bold">{t('filter.keyMoney')}</p>
       <NumberField
-        label="Maximum key money"
+        label={t('filter.maxKeyMoney')}
         value={draft.max_key_money}
         onChange={set('max_key_money')}
-        placeholder="Any amount"
+        placeholder={t('filter.anyAmount')}
       />
       <PanelFooter
         onReset={() => apply({ min_price: '', max_price: '', max_key_money: '' })}
@@ -290,6 +292,7 @@ function PricePanel({ filters, onChange, close }) {
 }
 
 function MinPicker({ label, value, onChange }) {
+  const { t } = useLanguage()
   return (
     <div>
       <p className="mb-2 font-bold">{label}</p>
@@ -300,11 +303,11 @@ function MinPicker({ label, value, onChange }) {
             type="button"
             onClick={() => onChange(n)}
             aria-pressed={value === n}
-            className={`flex-1 border-r border-slate-300 px-3 py-2 text-sm font-bold transition last:border-r-0 ${
+            className={`flex-1 whitespace-nowrap border-r border-slate-300 px-2 py-2 text-sm font-bold transition last:border-r-0 ${
               value === n ? 'bg-brand-600 text-white' : 'hover:bg-slate-50'
             }`}
           >
-            {n ? `${n}+` : 'Any'}
+            {n ? `${n}+` : t('common.any')}
           </button>
         ))}
       </div>
@@ -315,6 +318,7 @@ function MinPicker({ label, value, onChange }) {
 function BedsBathsPanel({ filters, onChange, close }) {
   const [beds, setBeds] = useState(filters.min_beds)
   const [baths, setBaths] = useState(filters.min_baths)
+  const { t } = useLanguage()
 
   function apply(values) {
     onChange(values)
@@ -322,9 +326,9 @@ function BedsBathsPanel({ filters, onChange, close }) {
   }
 
   return (
-    <div className="w-80 space-y-4 p-4">
-      <MinPicker label="Bedrooms" value={beds} onChange={setBeds} />
-      <MinPicker label="Bathrooms" value={baths} onChange={setBaths} />
+    <div className="w-[23rem] max-w-[calc(100vw-2rem)] space-y-4 p-4">
+      <MinPicker label={t('filter.bedrooms')} value={beds} onChange={setBeds} />
+      <MinPicker label={t('filter.bathrooms')} value={baths} onChange={setBaths} />
       <PanelFooter
         onReset={() => apply({ min_beds: '', min_baths: '' })}
         onApply={() => apply({ min_beds: beds, min_baths: baths })}
@@ -356,6 +360,7 @@ const toggleIn = (list, value) =>
 
 function TypePanel({ filters, onChange, close }) {
   const [selected, setSelected] = useState(csv(filters.home_type))
+  const { t } = useLanguage()
 
   function apply(list) {
     onChange({ home_type: list.join(',') })
@@ -364,9 +369,9 @@ function TypePanel({ filters, onChange, close }) {
 
   return (
     <div className="w-64 p-4">
-      <p className="mb-2 font-bold">Property type</p>
+      <p className="mb-2 font-bold">{t('filter.propertyType')}</p>
       <CheckList
-        options={Object.entries(HOME_TYPE_LABELS)}
+        options={Object.keys(HOME_TYPE_LABELS).map((key) => [key, t(`type.${key}`)])}
         selected={selected}
         onToggle={(value) => setSelected((list) => toggleIn(list, value))}
       />
@@ -380,6 +385,7 @@ function MorePanel({ filters, onChange, close }) {
   const [minSqft, setMinSqft] = useState(filters.min_sqft)
   const [maxSqft, setMaxSqft] = useState(filters.max_sqft)
   const [stories, setStories] = useState(csv(filters.stories))
+  const { t } = useLanguage()
 
   function apply(values) {
     onChange(values)
@@ -388,25 +394,25 @@ function MorePanel({ filters, onChange, close }) {
 
   return (
     <form
-      className="w-80 space-y-4 p-4"
+      className="w-[23rem] max-w-[calc(100vw-2rem)] space-y-4 p-4"
       onSubmit={(e) => {
         e.preventDefault()
         apply({ min_parking: parking, min_sqft: minSqft, max_sqft: maxSqft, stories: stories.join(',') })
       }}
     >
-      <MinPicker label="Parking slots" value={parking} onChange={setParking} />
+      <MinPicker label={t('filter.parking')} value={parking} onChange={setParking} />
       <div>
-        <p className="mb-2 font-bold">Square feet</p>
+        <p className="mb-2 font-bold">{t('filter.sqft')}</p>
         <div className="flex items-end gap-2">
-          <NumberField label="Minimum" value={minSqft} onChange={setMinSqft} placeholder="No min" />
+          <NumberField label={t('filter.minimum')} value={minSqft} onChange={setMinSqft} placeholder={t('filter.noMin')} />
           <span className="pb-3 text-slate-400">–</span>
-          <NumberField label="Maximum" value={maxSqft} onChange={setMaxSqft} placeholder="No max" />
+          <NumberField label={t('filter.maximum')} value={maxSqft} onChange={setMaxSqft} placeholder={t('filter.noMax')} />
         </div>
       </div>
       <div>
-        <p className="mb-2 font-bold">Number of stories</p>
+        <p className="mb-2 font-bold">{t('filter.stories')}</p>
         <CheckList
-          options={Object.entries(STORIES_LABELS)}
+          options={Object.keys(STORIES_LABELS).map((key) => [key, t(`stories.${key}`)])}
           selected={stories}
           onToggle={(value) => setStories((list) => toggleIn(list, value))}
         />

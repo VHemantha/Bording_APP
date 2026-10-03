@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { createProperty, fetchProperty, updateProperty } from '../../api/properties'
 import PageLoader from '../../components/PageLoader'
+import { useLanguage } from '../../context/LanguageContext'
 import ListingForm from './ListingForm'
 
 export default function AdminListingFormPage() {
@@ -11,6 +12,7 @@ export default function AdminListingFormPage() {
   const editing = Boolean(id)
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useLanguage()
 
   // AI import hands a draft in via router state.
   const [initial, setInitial] = useState(location.state?.draft ?? null)
@@ -23,9 +25,9 @@ export default function AdminListingFormPage() {
     if (!editing || initial) return
     fetchProperty(id)
       .then((p) => setInitial({ ...p, images: (p.images || []).map((img) => img.image_url) }))
-      .catch(() => setError('Could not load that listing.'))
+      .catch(() => setError(t('admin.loadFail')))
       .finally(() => setLoading(false))
-  }, [editing, id, initial])
+  }, [editing, id, initial, t])
 
   async function handleSubmit(payload) {
     setSubmitting(true)
@@ -36,26 +38,26 @@ export default function AdminListingFormPage() {
       return saved
     } catch (err) {
       const data = err?.response?.data
-      setError(data ? JSON.stringify(data) : 'Could not save the listing.')
+      setError(data ? JSON.stringify(data) : t('admin.saveFail'))
     } finally {
       setSubmitting(false)
     }
   }
 
-  if (loading) return <PageLoader label="Loading listing" />
+  if (loading) return <PageLoader label={t('admin.loadingListing')} />
 
   return (
     <div>
       <Link to="/admin/listings" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-brand-700">
-        <ArrowLeft size={16} /> Listings
+        <ArrowLeft size={16} /> {t('admin.listings')}
       </Link>
       <h1 className="font-display text-2xl font-semibold text-brand-900">
-        {editing ? 'Edit listing' : 'Add listing'}
+        {editing ? t('admin.editListing') : t('admin.addListing')}
       </h1>
 
       {warnings.length > 0 && (
         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          <p className="font-semibold">The AI agent flagged a few things to check:</p>
+          <p className="font-semibold">{t('admin.flagged')}</p>
           <ul className="mt-1.5 list-disc space-y-0.5 pl-5">
             {warnings.map((w) => <li key={w}>{w}</li>)}
           </ul>
@@ -69,7 +71,7 @@ export default function AdminListingFormPage() {
           initial={initial ?? undefined}
           onSubmit={handleSubmit}
           submitting={submitting}
-          submitLabel={editing ? 'Save changes' : 'Publish listing'}
+          submitLabel={editing ? t('admin.saveChanges') : t('admin.publish')}
         />
       </div>
     </div>
