@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from ai_agent.throttles import AIRateThrottle
 
@@ -12,6 +13,7 @@ from .filters import PropertyFilter
 from .media import InvalidImage, delete_uploaded_photos, save_listing_photo
 from .models import Property
 from .permissions import IsOwnerOrAdminOrReadOnly, can_manage
+from .places import CATEGORIES, nearby_places
 from .serializers import (
     InquirySerializer,
     MyListingSerializer,
@@ -105,3 +107,38 @@ class PropertyViewSet(viewsets.ModelViewSet):
         if self.action == 'inquiries' and self.request.method == 'GET':
             return []
         return super().get_throttles()
+
+
+class PlacesThrottle(AIRateThrottle):
+    scope = 'places'
+
+
+class NearbyPlacesView(APIView):
+    """GET /api/places/?categories=school,keells&south=..&west=..&north=..&east=..
+
+    Points of interest for the map's "Nearby places" menu: {places: [...], unavailable: [...]}
+    where `unavailable` lists categories the data service couldn't provide just now. 400 with
+    code "zoom" when the area is too big to query (the map then asks the user to zoom in).
+    """
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [PlacesThrottle]
+
+    def get(self, request):
+        categories = [c for c in request.query_params.get('categories', '').split(',') if c in CATEGORIES]
+        if not categories:
+            return Response({'places': [], 'unavailable': []})
+        try:
+            south, west, north, east = (
+                float(request.query_params[k]) for k in ('south', 'west', 'north', 'east')
+            )
+        except (KeyError, ValueError):
+            return Response({'detail': 'south, west, north and east are required numbers.'}, status=400)
+        if not (-90 <= south < north <= 90 and -180 <= west < east <= 180):
+            return Response({'detail': 'Invalid map area.'}, status=400)
+
+        try:
+            places, unavailable = nearby_places(categories, south, west, north, east)
+        except ValueError:
+            return Response({'detail': 'Zoom in to see places.', 'code': 'zoom'}, status=400)
+        return Response({'places': places, 'unavailable': unavailable})

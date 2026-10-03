@@ -196,3 +196,51 @@ class InquiryTests(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data[0]['name'], 'Kamala')
+
+
+class NearbyPlacesTests(APITestCase):
+    URL = '/api/places/?south=6.88&west=79.84&north=6.94&east=79.90&categories='
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+
+    @staticmethod
+    def overpass_reply(elements):
+        import json
+        from unittest import mock
+        response = mock.MagicMock()
+        response.__enter__.return_value = BytesIO(json.dumps({'elements': elements}).encode())
+        return response
+
+    def test_groups_places_by_category_and_caches_them(self):
+        from unittest import mock
+        elements = [
+            {'type': 'node', 'id': 1, 'lat': 6.9, 'lon': 79.86, 'tags': {'shop': 'supermarket', 'name': 'Keells Super'}},
+            {'type': 'way', 'id': 2, 'center': {'lat': 6.91, 'lon': 79.87}, 'tags': {'shop': 'supermarket', 'name': 'Cargills Food City'}},
+            {'type': 'node', 'id': 3, 'lat': 6.92, 'lon': 79.88, 'tags': {'shop': 'supermarket', 'name': 'Arpico'}},
+        ]
+        with mock.patch('urllib.request.urlopen', return_value=self.overpass_reply(elements)) as urlopen:
+            first = self.client.get(self.URL + 'keells,foodcity').data
+            again = self.client.get(self.URL + 'keells,foodcity').data
+        self.assertEqual(urlopen.call_count, 1)  # second answer came from the cache
+        self.assertEqual(first, again)
+        self.assertEqual({p['category'] for p in first['places']}, {'keells', 'foodcity'})
+        self.assertEqual(first['unavailable'], [])
+        self.assertEqual(len(first['places']), 2)  # the non-chain supermarket is left out
+
+    def test_too_large_an_area_asks_to_zoom_in(self):
+        response = self.client.get('/api/places/?categories=school&south=6&west=79&north=8&east=81')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['code'], 'zoom')
+
+    def test_service_down_reports_categories_as_unavailable(self):
+        import urllib.error
+        from unittest import mock
+        with mock.patch('urllib.request.urlopen', side_effect=urllib.error.URLError('down')), mock.patch('time.sleep'):
+            response = self.client.get(self.URL + 'school')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {'places': [], 'unavailable': ['school']})
+
+    def test_unknown_categories_are_ignored(self):
+        self.assertEqual(self.client.get(self.URL + 'casino').data, {'places': [], 'unavailable': []})

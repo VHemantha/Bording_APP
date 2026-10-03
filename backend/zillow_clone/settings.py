@@ -118,6 +118,13 @@ ANTHROPIC_WORKSPACE_ID = os.environ.get('ANTHROPIC_WORKSPACE_ID', '')
 # shown disabled and POST /api/auth/google/ returns 503.
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
 
+# --- Map "Nearby places" (properties/places.py) ---
+# OpenStreetMap's public Overpass API. OVERPASS_URLS (comma-separated) adds fallback servers,
+# tried in order; the public mirrors were unreliable when this was written, so none by default. Overpass asks clients to identify themselves (keep the user agent
+# simple: its firewall rejects some punctuation with 406 Not Acceptable).
+OVERPASS_URLS = _env_list('OVERPASS_URLS') or ['https://overpass-api.de/api/interpreter']
+OVERPASS_USER_AGENT = os.environ.get('OVERPASS_USER_AGENT', 'Nestwell/1.0')
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -135,6 +142,8 @@ REST_FRAMEWORK = {
         'inquiry': os.environ.get('INQUIRY_THROTTLE_RATE', '10/hour'),
         # Listing photo uploads (per signed-in user).
         'upload': os.environ.get('UPLOAD_THROTTLE_RATE', '120/hour'),
+        # Map "Nearby places" lookups (per IP; results are cached server-side).
+        'places': os.environ.get('PLACES_THROTTLE_RATE', '60/min'),
     },
 }
 

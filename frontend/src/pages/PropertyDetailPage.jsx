@@ -9,6 +9,8 @@ import ContactOwnerCard from '../components/ContactOwnerCard'
 import MapView from '../components/MapView'
 import PageLoader from '../components/PageLoader'
 import PhotoGallery from '../components/PhotoGallery'
+import PlacesMenu from '../components/PlacesMenu'
+import useNearbyPlaces from '../components/useNearbyPlaces'
 import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
 import { useLanguage } from '../context/LanguageContext'
@@ -25,6 +27,9 @@ export default function PropertyDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isFavorited, setIsFavorited] = useState(false)
+  const [placeCategories, setPlaceCategories] = useState([])
+  const [mapBounds, setMapBounds] = useState(null)
+  const nearby = useNearbyPlaces(placeCategories, mapBounds)
 
   useEffect(() => {
     setLoading(true)
@@ -141,8 +146,9 @@ export default function PropertyDetailPage() {
 
         <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           <ContactOwnerCard property={property} />
-          <div className="isolate h-72 overflow-hidden rounded-2xl border border-slate-200">
-            <MapView properties={[property]} />
+          <div className="relative isolate h-96 overflow-hidden rounded-2xl border border-slate-200">
+            <MapView properties={[property]} places={nearby.places} onBoundsChange={setMapBounds} />
+            <PlacesMenu selected={placeCategories} onChange={setPlaceCategories} status={nearby.status} />
           </div>
         </div>
       </div>

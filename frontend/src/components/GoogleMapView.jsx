@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useLanguage } from '../context/LanguageContext'
 import { formatCompactPrice, formatPrice } from '../utils/format'
 import MapView from './MapView'
+import { PLACE_MARKER_SIZE, placeMarkerSvg } from './placeCategories'
 
 // Public browser key (restrict it by HTTP referrer in Google Cloud). Baked in at build time.
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
@@ -44,7 +45,7 @@ function pillIcon(maps, text, active) {
  * Listings on a Google map. Falls back to the OpenStreetMap view (MapView) when no API key
  * is configured or Google rejects it, so the page never shows a broken map.
  */
-export default function GoogleMapView({ properties, highlightedId, onMarkerHover }) {
+export default function GoogleMapView({ properties, highlightedId, onMarkerHover, places = [], onBoundsChange }) {
   const [failed, setFailed] = useState(!API_KEY)
   const [maps, setMaps] = useState(null)
   const containerRef = useRef(null)
@@ -52,12 +53,15 @@ export default function GoogleMapView({ properties, highlightedId, onMarkerHover
   const infoRef = useRef(null)
   const markersRef = useRef(new Map())
   const hoverRef = useRef(onMarkerHover)
+  const boundsRef = useRef(onBoundsChange)
+  const placeMarkersRef = useRef([])
   const navigate = useNavigate()
   const { t } = useLanguage()
 
   useEffect(() => {
     hoverRef.current = onMarkerHover
-  }, [onMarkerHover])
+    boundsRef.current = onBoundsChange
+  }, [onMarkerHover, onBoundsChange])
 
   useEffect(() => {
     if (failed) return
@@ -95,7 +99,49 @@ export default function GoogleMapView({ properties, highlightedId, onMarkerHover
       clickableIcons: false,
     })
     infoRef.current = new maps.InfoWindow()
+    // "idle" fires once the map settles after any pan/zoom: report the visible area.
+    mapRef.current.addListener('idle', () => {
+      const b = mapRef.current.getBounds()
+      if (!b) return
+      const sw = b.getSouthWest()
+      const ne = b.getNorthEast()
+      boundsRef.current?.({ south: sw.lat(), west: sw.lng(), north: ne.lat(), east: ne.lng() })
+    })
   }, [maps, failed])
+
+  // Nearby-places markers (schools, Keells, ...), drawn under the listing price pills.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!maps || failed || !map) return
+    placeMarkersRef.current.forEach((marker) => marker.setMap(null))
+    const half = PLACE_MARKER_SIZE / 2
+    placeMarkersRef.current = places.map((place) => {
+      const marker = new maps.Marker({
+        map,
+        position: { lat: place.lat, lng: place.lng },
+        title: place.name,
+        zIndex: 1,
+        icon: {
+          url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(placeMarkerSvg(place.category))}`,
+          scaledSize: new maps.Size(PLACE_MARKER_SIZE, PLACE_MARKER_SIZE),
+          anchor: new maps.Point(half, half),
+        },
+      })
+      marker.addListener('click', () => {
+        const node = document.createElement('div')
+        node.style.cssText = 'font: 14px Manrope, sans-serif'
+        const name = document.createElement('strong')
+        name.textContent = place.name || t('places.unnamed')
+        const kind = document.createElement('div')
+        kind.textContent = t(`places.${place.category}`)
+        kind.style.cssText = 'color: #475569'
+        node.append(name, kind)
+        infoRef.current.setContent(node)
+        infoRef.current.open({ map, anchor: marker })
+      })
+      return marker
+    })
+  }, [maps, failed, places, t])
 
   // Rebuild the markers whenever the result set changes, then frame them.
   useEffect(() => {
@@ -113,6 +159,7 @@ export default function GoogleMapView({ properties, highlightedId, onMarkerHover
       const marker = new maps.Marker({
         map,
         position,
+        zIndex: 10, // listings above nearby-places icons
         title: p.address,
         icon: pillIcon(maps, text, false),
         label: { text, color: '#ffffff', fontSize: '12px', fontWeight: '700' },
@@ -162,12 +209,20 @@ export default function GoogleMapView({ properties, highlightedId, onMarkerHover
     markersRef.current.forEach((marker, id) => {
       const active = id === highlightedId
       marker.setIcon(pillIcon(maps, marker.nestwellText, active))
-      marker.setZIndex(active ? 1000 : undefined)
+      marker.setZIndex(active ? 1000 : 10)
     })
   }, [maps, failed, highlightedId, properties])
 
   if (failed) {
-    return <MapView properties={properties} highlightedId={highlightedId} onMarkerHover={onMarkerHover} />
+    return (
+      <MapView
+        properties={properties}
+        highlightedId={highlightedId}
+        onMarkerHover={onMarkerHover}
+        places={places}
+        onBoundsChange={onBoundsChange}
+      />
+    )
   }
 
   return <div ref={containerRef} className="h-full w-full bg-slate-200" />

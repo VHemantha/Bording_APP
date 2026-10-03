@@ -1,11 +1,12 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useMemo } from 'react'
-import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
+import { useEffect } from 'react'
+import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { Link } from 'react-router-dom'
 
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
+import { PLACE_MARKER_SIZE, placeMarkerSvg } from './placeCategories'
 
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
@@ -32,18 +33,56 @@ const highlightIcon = L.icon({
 
 function FitBounds({ properties }) {
   const map = useMap()
-  useMemo(() => {
-    if (properties.length === 0) return
-    const bounds = L.latLngBounds(
-      properties.map((p) => [p.latitude, p.longitude])
-    )
+  // Keyed on the actual coordinates, not the array: callers may pass a fresh array each
+  // render (e.g. [property]), and re-fitting on every render would move the map, report new
+  // bounds, re-render the parent, and loop.
+  const key = properties.map((p) => `${p.latitude},${p.longitude}`).join(';')
+  useEffect(() => {
+    if (!key) return
+    const bounds = L.latLngBounds(key.split(';').map((pair) => pair.split(',').map(Number)))
     map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [properties])
+  }, [key, map])
   return null
 }
 
-export default function MapView({ properties, highlightedId, onMarkerHover }) {
+const placeIcons = new Map()
+
+function placeIcon(category) {
+  if (!placeIcons.has(category)) {
+    const half = PLACE_MARKER_SIZE / 2
+    placeIcons.set(
+      category,
+      L.divIcon({
+        html: placeMarkerSvg(category),
+        className: 'place-marker', // replaces Leaflet's default white square
+        iconSize: [PLACE_MARKER_SIZE, PLACE_MARKER_SIZE],
+        iconAnchor: [half, half],
+        popupAnchor: [0, -half],
+      })
+    )
+  }
+  return placeIcons.get(category)
+}
+
+function report(map, onChange) {
+  const b = map.getBounds()
+  onChange?.({ south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() })
+}
+
+/** Tells the parent which area is visible (for the "Nearby places" lookup). */
+function BoundsReporter({ onChange }) {
+  const map = useMapEvents({
+    moveend: () => report(map, onChange),
+  })
+  // Also report the starting view (FitBounds may have already moved the map).
+  useEffect(() => {
+    report(map, onChange)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map])
+  return null
+}
+
+export default function MapView({ properties, highlightedId, onMarkerHover, places = [], onBoundsChange }) {
   const { t } = useLanguage()
   const center = properties.length
     ? [properties[0].latitude, properties[0].longitude]
@@ -56,6 +95,15 @@ export default function MapView({ properties, highlightedId, onMarkerHover }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <FitBounds properties={properties} />
+      {onBoundsChange && <BoundsReporter onChange={onBoundsChange} />}
+      {places.map((place) => (
+        <Marker key={place.id} position={[place.lat, place.lng]} icon={placeIcon(place.category)} zIndexOffset={-100}>
+          <Popup>
+            <p className="font-bold">{place.name || t('places.unnamed')}</p>
+            <p className="text-gray-500">{t(`places.${place.category}`)}</p>
+          </Popup>
+        </Marker>
+      ))}
       {properties.map((p) => (
         <Marker
           key={p.id}

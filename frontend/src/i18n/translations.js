@@ -3,6 +3,7 @@
 // `en` first. "{name}"-style placeholders are filled in by t(key, { name }).
 
 import { pageTranslations } from './pages'
+import { placesTranslations } from './places'
 import { postingTranslations } from './posting'
 
 export const LANGUAGES = [
@@ -248,9 +249,9 @@ const landingTranslations = {
 }
 
 export const translations = {
-  en: { ...landingTranslations.en, ...pageTranslations.en, ...postingTranslations.en },
-  si: { ...landingTranslations.si, ...pageTranslations.si, ...postingTranslations.si },
-  ta: { ...landingTranslations.ta, ...pageTranslations.ta, ...postingTranslations.ta },
+  en: { ...landingTranslations.en, ...pageTranslations.en, ...postingTranslations.en, ...placesTranslations.en },
+  si: { ...landingTranslations.si, ...pageTranslations.si, ...postingTranslations.si, ...placesTranslations.si },
+  ta: { ...landingTranslations.ta, ...pageTranslations.ta, ...postingTranslations.ta, ...placesTranslations.ta },
 }
 
 /** A city's name in the given language; unknown places (typed searches) are returned as-is. */

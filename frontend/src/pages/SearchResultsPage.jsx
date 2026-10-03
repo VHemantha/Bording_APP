@@ -8,6 +8,8 @@ import { fetchProperties } from '../api/properties'
 import AiSearchBar from '../components/AiSearchBar'
 import FilterBar from '../components/FilterBar'
 import GoogleMapView from '../components/GoogleMapView'
+import PlacesMenu from '../components/PlacesMenu'
+import useNearbyPlaces from '../components/useNearbyPlaces'
 import PropertyCard, { PropertyCardSkeleton } from '../components/PropertyCard'
 import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
@@ -67,6 +69,9 @@ export default function SearchResultsPage() {
   const [aiOpen, setAiOpen] = useState(false)
   const [sort, setSort] = useState('recommended')
   const [savedSearches, setSavedSearches] = useState(readSavedSearches)
+  const [placeCategories, setPlaceCategories] = useState([])
+  const [mapBounds, setMapBounds] = useState(null)
+  const nearby = useNearbyPlaces(placeCategories, mapBounds)
 
   const filters = useMemo(() => {
     const values = {}
@@ -225,12 +230,15 @@ export default function SearchResultsPage() {
 
       <div className="flex min-h-0 flex-1">
         {/* "isolate" keeps the map library's own stacking layers below the toolbar dropdowns. */}
-        <div className="isolate hidden md:block md:w-2/5">
+        <div className="relative isolate hidden md:block md:w-2/5">
           <GoogleMapView
             properties={properties}
             highlightedId={highlightedId}
             onMarkerHover={setHighlightedId}
+            places={nearby.places}
+            onBoundsChange={setMapBounds}
           />
+          <PlacesMenu selected={placeCategories} onChange={setPlaceCategories} status={nearby.status} />
         </div>
 
         <div className="min-w-0 flex-1 overflow-y-auto px-4 py-6 lg:px-7">
