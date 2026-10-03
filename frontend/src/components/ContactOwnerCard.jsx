@@ -69,7 +69,7 @@ export default function ContactOwnerCard({ property }) {
   const whatsapp = phone ? phone.replace(/[^\d]/g, '').replace(/^0/, '94') : ''
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft">
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-lift">
       <h2 className="text-xl font-extrabold text-brand-900">{t('contact.title')}</h2>
 
       {(property.contact_name || phone) && (
@@ -88,7 +88,7 @@ export default function ContactOwnerCard({ property }) {
         <div className="mt-4 grid grid-cols-1 gap-2">
           <a
             href={`tel:${phone.replace(/\s/g, '')}`}
-            className="flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 font-bold text-white transition hover:bg-brand-700"
+            className="flex h-12 items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 text-lg font-bold text-white transition hover:bg-brand-700"
           >
             <Phone size={17} /> {t('contact.call', { phone })}
           </a>
@@ -96,7 +96,7 @@ export default function ContactOwnerCard({ property }) {
             href={`https://wa.me/${whatsapp}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 rounded-xl border-2 border-leaf-500 px-4 py-2.5 font-bold text-leaf-600 transition hover:bg-leaf-500/10"
+            className="flex h-12 items-center justify-center gap-2 rounded-lg border-2 border-brand-600 px-4 text-lg font-bold text-brand-600 transition hover:bg-brand-50"
           >
             WhatsApp
           </a>
@@ -137,7 +137,7 @@ export default function ContactOwnerCard({ property }) {
           <button
             type="submit"
             disabled={sending}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-900 px-4 py-3 font-bold text-white transition hover:bg-brand-800 disabled:opacity-60"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 text-lg font-bold text-white transition hover:bg-brand-700 disabled:opacity-60"
           >
             {sending && <Loader2 size={16} className="animate-spin" />}
             {sending ? t('contact.sending') : t('contact.send')}

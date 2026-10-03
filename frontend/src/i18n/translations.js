@@ -2,6 +2,7 @@
 // `si` / `ta` falls back to English (see LanguageContext), so new strings can be added to
 // `en` first. "{name}"-style placeholders are filled in by t(key, { name }).
 
+import { detailTranslations } from './detail'
 import { pageTranslations } from './pages'
 import { placesTranslations } from './places'
 import { postingTranslations } from './posting'
@@ -249,9 +250,9 @@ const landingTranslations = {
 }
 
 export const translations = {
-  en: { ...landingTranslations.en, ...pageTranslations.en, ...postingTranslations.en, ...placesTranslations.en },
-  si: { ...landingTranslations.si, ...pageTranslations.si, ...postingTranslations.si, ...placesTranslations.si },
-  ta: { ...landingTranslations.ta, ...pageTranslations.ta, ...postingTranslations.ta, ...placesTranslations.ta },
+  en: { ...landingTranslations.en, ...pageTranslations.en, ...postingTranslations.en, ...placesTranslations.en, ...detailTranslations.en },
+  si: { ...landingTranslations.si, ...pageTranslations.si, ...postingTranslations.si, ...placesTranslations.si, ...detailTranslations.si },
+  ta: { ...landingTranslations.ta, ...pageTranslations.ta, ...postingTranslations.ta, ...placesTranslations.ta, ...detailTranslations.ta },
 }
 
 /** A city's name in the given language; unknown places (typed searches) are returned as-is. */
