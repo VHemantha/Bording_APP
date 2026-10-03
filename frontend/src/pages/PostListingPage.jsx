@@ -269,7 +269,7 @@ export default function PostListingPage() {
                           onClick={() => makeCover(photo.key)}
                           title={t('post.makeCover')}
                           aria-label={t('post.makeCover')}
-                          className="rounded-full bg-white/90 p-1.5 text-slate-700 shadow hover:text-brand-600"
+                          className="rounded-full bg-white/90 p-2 text-slate-700 shadow hover:text-brand-600"
                         >
                           <Star size={14} />
                         </button>
@@ -279,7 +279,7 @@ export default function PostListingPage() {
                         onClick={() => setPhotos((list) => list.filter((p) => p.key !== photo.key))}
                         title={t('post.removePhoto')}
                         aria-label={t('post.removePhoto')}
-                        className="rounded-full bg-white/90 p-1.5 text-slate-700 shadow hover:text-red-600"
+                        className="rounded-full bg-white/90 p-2 text-slate-700 shadow hover:text-red-600"
                       >
                         <X size={14} />
                       </button>

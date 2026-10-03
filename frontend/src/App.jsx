@@ -6,6 +6,7 @@ import AuthModal from './components/AuthModal'
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
+import { useLanguage } from './context/LanguageContext'
 import AdminAIImportPage from './pages/admin/AdminAIImportPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminLayout from './pages/admin/AdminLayout'
@@ -18,6 +19,19 @@ import PostListingPage from './pages/PostListingPage'
 import PropertyDetailPage from './pages/PropertyDetailPage'
 import SavedHomesPage from './pages/SavedHomesPage'
 import SearchResultsPage from './pages/SearchResultsPage'
+
+/** First thing a keyboard user reaches: jumps past the navbar to the page content. */
+function SkipLink() {
+  const { t } = useLanguage()
+  return (
+    <a
+      href="#main-content"
+      className="sr-only z-[200] rounded-lg bg-brand-600 px-4 py-2 font-bold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+    >
+      {t('a11y.skip')}
+    </a>
+  )
+}
 
 function PublicLayout() {
   const { pathname } = useLocation()
@@ -33,10 +47,11 @@ function PublicLayout() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <SkipLink />
       <Navbar />
-      <div className="flex-1">
+      <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
         <Outlet />
-      </div>
+      </main>
       {!fullScreen && <Footer />}
       <AssistantWidget />
     </div>

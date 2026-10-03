@@ -25,15 +25,16 @@ export default function Footer() {
             </div>
             <p className="mt-3 max-w-xs text-sm text-slate-500">{t('footer.tagline')}</p>
             <form
-              className="mt-5 flex max-w-sm items-center gap-2 rounded-full border border-slate-200 p-1.5"
+              className="mt-5 flex max-w-sm items-center gap-2 rounded-lg border border-slate-300 p-1.5"
               onSubmit={(e) => e.preventDefault()}
             >
               <input
                 type="email"
+                aria-label={t('footer.emailPlaceholder')}
                 placeholder={t('footer.emailPlaceholder')}
                 className="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none"
               />
-              <button className="rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white">
+              <button className="rounded-md bg-brand-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-700">
                 {t('footer.subscribe')}
               </button>
             </form>

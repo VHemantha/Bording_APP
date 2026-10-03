@@ -2,6 +2,11 @@
 
 export const detailTranslations = {
   en: {
+    'a11y.skip': 'Skip to main content',
+    'a11y.mainMenu': 'Main menu',
+    'a11y.sections': 'Page sections',
+    'admin.actions': 'Actions',
+    'admin.avgSalePrice': 'Avg. sale price',
     'detail.share': 'Share',
     'contact.callShort': 'Call',
     'detail.linkCopied': 'Link copied',
@@ -23,6 +28,11 @@ export const detailTranslations = {
     'detail.neighborhoodHint': 'Use "Nearby places" on the map to see schools, supermarkets, hospitals and more around this home.',
   },
   si: {
+    'a11y.skip': 'ප්‍රධාන අන්තර්ගතයට යන්න',
+    'a11y.mainMenu': 'ප්‍රධාන මෙනුව',
+    'a11y.sections': 'පිටුවේ කොටස්',
+    'admin.actions': 'ක්‍රියා',
+    'admin.avgSalePrice': 'සාමාන්‍ය විකුණුම් මිල',
     'detail.share': 'බෙදාගන්න',
     'contact.callShort': 'අමතන්න',
     'detail.linkCopied': 'සබැඳිය පිටපත් කළා',
@@ -44,6 +54,11 @@ export const detailTranslations = {
     'detail.neighborhoodHint': 'මෙම නිවස අවට පාසල්, සුපිරි වෙළඳසැල්, රෝහල් සහ තවත් දේ බැලීමට සිතියමේ "අවට ස්ථාන" භාවිත කරන්න.',
   },
   ta: {
+    'a11y.skip': 'முதன்மை உள்ளடக்கத்திற்குச் செல்',
+    'a11y.mainMenu': 'முதன்மைப் பட்டி',
+    'a11y.sections': 'பக்கப் பிரிவுகள்',
+    'admin.actions': 'செயல்கள்',
+    'admin.avgSalePrice': 'சராசரி விற்பனை விலை',
     'detail.share': 'பகிர்',
     'contact.callShort': 'அழைக்கவும்',
     'detail.linkCopied': 'இணைப்பு நகலெடுக்கப்பட்டது',

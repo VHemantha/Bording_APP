@@ -109,7 +109,7 @@ export default function AssistantWidget() {
                 <button
                   type="button"
                   onClick={goToResults}
-                  className="flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-100"
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-2 text-sm font-bold text-brand-700 transition hover:bg-brand-100"
                 >
                   {t('assistant.showHomes')} <ArrowRight size={15} />
                 </button>

@@ -90,6 +90,9 @@ export default function AuthModal() {
           onMouseDown={(e) => e.target === e.currentTarget && closeAuth()}
         >
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="auth-title"
             className="relative w-full max-w-md rounded-3xl bg-white p-7 shadow-lift sm:p-9"
             initial={{ opacity: 0, y: 24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -105,7 +108,7 @@ export default function AuthModal() {
               <X size={20} />
             </button>
 
-            <h2 className="font-display text-2xl font-semibold text-brand-900">
+            <h2 id="auth-title" className="text-2xl font-extrabold text-brand-900">
               {isRegister ? t('auth.createTitle') : t('auth.welcomeBack')}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
@@ -129,6 +132,7 @@ export default function AuthModal() {
                 value={email}
                 onChange={setEmail}
                 autoComplete={isRegister ? 'email' : 'username'}
+                autoFocus // keyboard focus moves into the dialog when it opens
               />
               <Field
                 label={t('auth.password')}
@@ -145,7 +149,7 @@ export default function AuthModal() {
               <button
                 type="submit"
                 disabled={busy}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-3 text-base font-bold text-white transition hover:bg-brand-700 disabled:opacity-60"
               >
                 {busy && <Loader2 size={16} className="animate-spin" />}
                 {isRegister ? t('auth.createAccount') : t('nav.signIn')}
@@ -173,7 +177,7 @@ export default function AuthModal() {
   )
 }
 
-function Field({ label, type, value, onChange, autoComplete }) {
+function Field({ label, type, value, onChange, autoComplete, autoFocus }) {
   return (
     <label className="block">
       <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
@@ -182,6 +186,7 @@ function Field({ label, type, value, onChange, autoComplete }) {
         value={value}
         required
         autoComplete={autoComplete}
+        autoFocus={autoFocus}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
       />

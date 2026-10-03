@@ -39,7 +39,7 @@ export default function GoogleButton({ onCredential, onError }) {
           size: 'large',
           width: 320,
           text: 'continue_with',
-          shape: 'pill',
+          shape: 'rectangular',
           locale: lang, // Google draws the button itself, in this language
         })
         setReady(true)
@@ -60,7 +60,7 @@ export default function GoogleButton({ onCredential, onError }) {
         type="button"
         disabled
         title={t('auth.googleNotConfigured')}
-        className="flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-400"
+        className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-400"
       >
         <GoogleGlyph />
         {t('auth.google')}

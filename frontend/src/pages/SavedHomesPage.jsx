@@ -31,7 +31,7 @@ export default function SavedHomesPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="font-display text-3xl font-semibold text-brand-900">{t('nav.savedHomes')}</h1>
+      <h1 className="text-3xl font-extrabold text-brand-900">{t('nav.savedHomes')}</h1>
       <p className="mt-1 text-sm text-slate-500">{t('saved.subtitle')}</p>
 
       <div className="mt-8">
@@ -42,13 +42,13 @@ export default function SavedHomesPage() {
         ) : favorites.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
             <HeartOff className="mx-auto text-slate-300" size={36} />
-            <p className="mt-3 font-display text-lg font-semibold text-brand-900">{t('saved.emptyTitle')}</p>
+            <p className="mt-3 text-lg font-bold text-brand-900">{t('saved.emptyTitle')}</p>
             <p className="mt-1 text-sm text-slate-500">
               {t('saved.emptyBody')}
             </p>
             <Link
               to="/search"
-              className="mt-5 inline-block rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700"
+              className="mt-5 inline-block rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-700"
             >
               {t('saved.browse')}
             </Link>

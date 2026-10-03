@@ -32,7 +32,7 @@ export default function AdminAIImportPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-semibold text-brand-900">{t('admin.aiImport')}</h1>
+      <h1 className="text-2xl font-extrabold text-brand-900">{t('admin.aiImport')}</h1>
       <p className="mt-1 max-w-2xl text-sm text-slate-500">
         {t('admin.importBody')}
       </p>
@@ -49,7 +49,7 @@ export default function AdminAIImportPage() {
         <button
           onClick={run}
           disabled={busy || text.trim().length < 20}
-          className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-700 disabled:opacity-60"
         >
           {busy ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
           {busy ? t('admin.extracting') : t('admin.extract')}

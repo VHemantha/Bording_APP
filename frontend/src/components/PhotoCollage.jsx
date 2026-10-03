@@ -23,7 +23,7 @@ export default function PhotoCollage({ photos, alt }) {
           side.length ? 'sm:grid-cols-2' : ''
         }`}
       >
-        <Tile src={photos[0]} alt={alt} onClick={() => setViewing(0)} />
+        <Tile src={photos[0]} alt={alt} label={t('detail.photoOf', { n: 1, total: photos.length })} onClick={() => setViewing(0)} />
         {side.length > 0 && (
           <div className={`hidden gap-2 sm:grid ${side.length > 1 ? 'grid-cols-2' : ''} ${side.length > 2 ? 'grid-rows-2' : ''}`}>
             {side.map((src, i) => (
@@ -31,6 +31,7 @@ export default function PhotoCollage({ photos, alt }) {
                 key={src + i}
                 src={src}
                 alt=""
+                label={t('detail.photoOf', { n: i + 2, total: photos.length })}
                 onClick={() => setViewing(i + 1)}
                 // With three side photos, the last one spans the bottom row.
                 className={side.length === 3 && i === 2 ? 'col-span-2' : ''}
@@ -54,9 +55,9 @@ export default function PhotoCollage({ photos, alt }) {
   )
 }
 
-function Tile({ src, alt, onClick, className = '' }) {
+function Tile({ src, alt, label, onClick, className = '' }) {
   return (
-    <button type="button" onClick={onClick} className={`group h-full min-h-0 overflow-hidden bg-slate-100 ${className}`}>
+    <button type="button" onClick={onClick} aria-label={label} className={`group h-full min-h-0 overflow-hidden bg-slate-100 ${className}`}>
       <img
         src={mediaUrl(src)}
         alt={alt}

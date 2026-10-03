@@ -129,10 +129,18 @@ export default function ContactOwnerCard({ property }) {
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="mt-5 space-y-3 border-t border-slate-100 pt-4">
-          <input required maxLength={100} value={form.name} onChange={set('name')} placeholder={t('post.contactName')} aria-label={t('post.contactName')} className={inputClass} />
-          <input type="email" value={form.email} onChange={set('email')} placeholder={t('auth.email')} aria-label={t('auth.email')} className={inputClass} />
-          <input type="tel" value={form.phone} onChange={set('phone')} placeholder={t('post.contactPhone')} aria-label={t('post.contactPhone')} className={inputClass} />
-          <textarea required maxLength={2000} rows={4} value={form.message} onChange={set('message')} aria-label={t('contact.message')} className={inputClass} />
+          <Labeled text={t('post.contactName')}>
+            <input required maxLength={100} autoComplete="name" value={form.name} onChange={set('name')} className={inputClass} />
+          </Labeled>
+          <Labeled text={t('auth.email')}>
+            <input type="email" autoComplete="email" value={form.email} onChange={set('email')} className={inputClass} />
+          </Labeled>
+          <Labeled text={t('post.contactPhone')}>
+            <input type="tel" autoComplete="tel" value={form.phone} onChange={set('phone')} className={inputClass} />
+          </Labeled>
+          <Labeled text={t('contact.message')}>
+            <textarea required maxLength={2000} rows={4} value={form.message} onChange={set('message')} className={inputClass} />
+          </Labeled>
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
           <button
             type="submit"
@@ -146,5 +154,14 @@ export default function ContactOwnerCard({ property }) {
         </form>
       )}
     </div>
+  )
+}
+
+function Labeled({ text, children }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-sm font-bold text-slate-700">{text}</span>
+      {children}
+    </label>
   )
 }

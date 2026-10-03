@@ -42,8 +42,8 @@ export default function AdminListingsPage() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-2xl font-semibold text-brand-900">{t('admin.listings')}</h1>
-        <Link to="/admin/listings/new" className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
+        <h1 className="text-2xl font-extrabold text-brand-900">{t('admin.listings')}</h1>
+        <Link to="/admin/listings/new" className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
           <Plus size={15} /> {t('admin.addListing')}
         </Link>
       </div>
@@ -66,7 +66,9 @@ export default function AdminListingsPage() {
               <th className="px-4 py-3">{t('filter.price')}</th>
               <th className="hidden px-4 py-3 sm:table-cell">{t('admin.bedsBaths')}</th>
               <th className="hidden px-4 py-3 sm:table-cell">{t('detail.status')}</th>
-              <th className="px-4 py-3" />
+              <th className="px-4 py-3">
+                <span className="sr-only">{t('admin.actions')}</span>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">

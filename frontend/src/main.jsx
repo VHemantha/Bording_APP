@@ -1,3 +1,4 @@
+import { MotionConfig } from 'framer-motion'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -14,7 +15,10 @@ createRoot(document.getElementById('root')).render(
       <AuthProvider>
         <AuthModalProvider>
           <LanguageProvider>
-            <App />
+            {/* Scroll/entrance animations are skipped for people who ask their OS for less motion. */}
+            <MotionConfig reducedMotion="user">
+              <App />
+            </MotionConfig>
           </LanguageProvider>
         </AuthModalProvider>
       </AuthProvider>

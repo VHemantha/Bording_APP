@@ -65,7 +65,7 @@ export default function LanguageSwitcher({ inline = false, onChange }) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={t('nav.language')}
-        className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+        className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
       >
         <Globe size={16} />
         <span lang={current.code}>{current.label}</span>

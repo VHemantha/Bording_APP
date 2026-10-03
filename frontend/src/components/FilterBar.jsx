@@ -1,4 +1,4 @@
-import { Check, ChevronDown, CircleX, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
+import { Bookmark, BookmarkCheck, Check, ChevronDown, CircleX, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { useLanguage } from '../context/LanguageContext'
@@ -8,7 +8,7 @@ const STATUSES = ['for_rent', 'for_sale']
 const MIN_OPTIONS = ['', '1', '2', '3', '4', '5']
 
 const pill =
-  'flex h-12 shrink-0 items-center gap-2 rounded-lg border px-4 font-bold text-brand-900 transition'
+  'flex h-10 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-sm font-bold text-brand-900 transition sm:h-12 sm:gap-2 sm:px-4 sm:text-base'
 const pillIdle = 'border-slate-400 bg-white hover:bg-slate-50'
 const pillActive = 'border-brand-600 bg-brand-50 text-brand-700 ring-1 ring-brand-600'
 const inputClass =
@@ -42,7 +42,7 @@ export default function FilterBar({
     (filters.furnishing ? 1 : 0)
 
   return (
-    <div className="relative z-30 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
+    <div className="relative z-30 flex flex-wrap items-center gap-2 border-b sm:gap-3 border-slate-200 bg-white px-4 py-2.5">
       <SearchBox key={searchText} initial={searchText} onSearch={onSearch} />
 
       <Dropdown
@@ -108,19 +108,23 @@ export default function FilterBar({
         type="button"
         onClick={onToggleAi}
         aria-pressed={aiOpen}
-        className={`${pill} ${aiOpen ? pillActive : pillIdle}`}
+        title={t('filter.askAi')}
+        className={`${pill} w-10 justify-center px-0 sm:w-auto sm:px-4 ${aiOpen ? pillActive : pillIdle}`}
       >
-        <Sparkles size={18} /> {t('filter.askAi')}
+        <Sparkles size={18} />
+        {/* Icon only on phones (the name is still read out); text from sm up. */}
+        <span className="sr-only sm:not-sr-only">{t('filter.askAi')}</span>
       </button>
 
       <button
         type="button"
         onClick={onToggleSaved}
         aria-pressed={saved}
-        className="flex h-12 shrink-0 items-center gap-2 rounded-lg bg-brand-600 px-6 font-bold text-white transition hover:bg-brand-700"
+        title={saved ? t('filter.searchSaved') : t('filter.saveSearch')}
+        className="flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-brand-600 text-sm font-bold sm:w-auto sm:px-6 text-white transition hover:bg-brand-700 sm:h-12 sm:px-6 sm:text-base"
       >
-        {saved && <Check size={18} />}
-        {saved ? t('filter.searchSaved') : t('filter.saveSearch')}
+        {saved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+        <span className="sr-only sm:not-sr-only">{saved ? t('filter.searchSaved') : t('filter.saveSearch')}</span>
       </button>
     </div>
   )
@@ -136,7 +140,7 @@ function SearchBox({ initial, onSearch }) {
         e.preventDefault()
         onSearch(text.trim())
       }}
-      className="flex h-12 w-full items-center rounded-lg border border-slate-400 bg-white pl-4 pr-1 transition focus-within:border-brand-600 focus-within:ring-1 focus-within:ring-brand-600 sm:w-80 lg:w-[26rem]"
+      className="flex h-11 w-full items-center rounded-lg border border-slate-400 bg-white pl-4 pr-1 sm:h-12 transition focus-within:border-brand-600 focus-within:ring-1 focus-within:ring-brand-600 sm:w-80 lg:w-[26rem]"
     >
       <input
         value={text}

@@ -114,6 +114,7 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
 
       <Section title={t('admin.description')}>
         <textarea
+          aria-label={t('admin.description')}
           value={values.description}
           onChange={(e) => set('description', e.target.value)}
           rows={4}
@@ -144,7 +145,7 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
           <button
             type="button"
             onClick={() => set('images', [...values.images, ''])}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
           >
             <Plus size={15} /> {t('admin.addPhoto')}
           </button>
@@ -156,7 +157,7 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
       <button
         type="submit"
         disabled={submitting}
-        className="rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
+        className="rounded-lg bg-brand-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-brand-700 disabled:opacity-60"
       >
         {submitting ? t('admin.saving') : (submitLabel ?? t('admin.publish'))}
       </button>
@@ -167,7 +168,7 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
 function Section({ title, children }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5">
-      <h3 className="mb-4 font-display text-lg font-semibold text-brand-900">{title}</h3>
+      <h2 className="mb-4 text-lg font-extrabold text-brand-900">{title}</h2>
       {children}
     </div>
   )

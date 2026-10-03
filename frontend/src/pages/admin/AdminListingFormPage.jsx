@@ -51,7 +51,7 @@ export default function AdminListingFormPage() {
       <Link to="/admin/listings" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-brand-700">
         <ArrowLeft size={16} /> {t('admin.listings')}
       </Link>
-      <h1 className="font-display text-2xl font-semibold text-brand-900">
+      <h1 className="text-2xl font-extrabold text-brand-900">
         {editing ? t('admin.editListing') : t('admin.addListing')}
       </h1>
 

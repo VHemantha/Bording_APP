@@ -36,7 +36,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/95 backdrop-blur-md">
       {/* Links left, logo centered, account right. Below md: logo left, menu button right. */}
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-4 md:grid md:h-20 md:grid-cols-[1fr_auto_1fr]">
-        <nav className="hidden items-center gap-6 whitespace-nowrap font-medium text-slate-800 md:flex lg:gap-8">
+        <nav aria-label={t('a11y.mainMenu')} className="hidden items-center gap-6 whitespace-nowrap font-medium text-slate-800 md:flex lg:gap-8">
           {LINKS.map((l) => (
             <NavLink key={l.label} to={l.to} className="transition hover:text-brand-600">
               {t(l.label)}

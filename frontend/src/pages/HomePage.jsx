@@ -92,7 +92,7 @@ export default function HomePage() {
 
       {/* Explore by city */}
       <section className="mx-auto max-w-7xl px-4 pt-16 pb-8">
-        <h2 className="font-display text-2xl font-semibold text-brand-900 sm:text-3xl">{t('cities.title')}</h2>
+        <h2 className="text-2xl font-extrabold text-brand-900 sm:text-3xl">{t('cities.title')}</h2>
         <p className="mt-1 text-sm text-slate-500">{t('cities.subtitle')}</p>
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {CITIES.map((c, i) => (
@@ -119,7 +119,7 @@ export default function HomePage() {
 
       {/* How it works */}
       <section className="mx-auto max-w-7xl px-4 py-16">
-        <h2 className="text-center font-display text-2xl font-semibold text-brand-900 sm:text-3xl">
+        <h2 className="text-2xl font-extrabold text-brand-900 sm:text-3xl">
           {t('how.title')}
         </h2>
         <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -135,7 +135,7 @@ export default function HomePage() {
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
                 <s.icon size={20} />
               </span>
-              <p className="mt-4 font-display text-lg font-semibold text-brand-900">{t(`${s.key}.title`)}</p>
+              <p className="mt-4 text-lg font-bold text-brand-900">{t(`${s.key}.title`)}</p>
               <p className="mt-1.5 text-sm text-slate-500">{t(`${s.key}.body`)}</p>
             </motion.div>
           ))}
@@ -145,7 +145,7 @@ export default function HomePage() {
       {/* Testimonials */}
       <section className="bg-white py-16">
         <div className="mx-auto max-w-7xl px-4">
-          <h2 className="font-display text-2xl font-semibold text-brand-900 sm:text-3xl">{t('testimonials.title')}</h2>
+          <h2 className="text-2xl font-extrabold text-brand-900 sm:text-3xl">{t('testimonials.title')}</h2>
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {TESTIMONIALS.map((item, i) => (
               <motion.blockquote
@@ -174,11 +174,11 @@ export default function HomePage() {
             <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium">
               <Building2 size={14} /> {t('cta.badge')}
             </span>
-            <h2 className="mt-4 font-display text-3xl font-semibold">{t('cta.title')}</h2>
+            <h2 className="mt-4 text-3xl font-extrabold">{t('cta.title')}</h2>
             <p className="mt-3 max-w-md text-white/75">{t('cta.body')}</p>
             <button
               onClick={() => openAuth('register')}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-brand-800 transition hover:bg-brand-50"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-bold text-brand-800 transition hover:bg-brand-50"
             >
               <KeyRound size={16} /> {t('cta.button')}
             </button>
@@ -187,7 +187,7 @@ export default function HomePage() {
             <div className="animate-floaty rounded-2xl bg-white/10 p-5 backdrop-blur">
               <p className="text-sm text-white/70">{t('cta.previewLabel')}</p>
               {/* The sample notes stay in English: they stand for what an agent would paste. */}
-              <p className="mt-2 font-display text-lg" lang="en">{t('cta.previewText')}</p>
+              <p className="mt-2 text-lg font-semibold" lang="en">{t('cta.previewText')}</p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 {[t('cta.chip.beds'), t('cta.chip.baths'), '$529,000', t('cta.chip.city'), t('cta.chip.type')].map((chip) => (
                   <span key={chip} className="rounded-full bg-white/15 px-2.5 py-1">{chip}</span>

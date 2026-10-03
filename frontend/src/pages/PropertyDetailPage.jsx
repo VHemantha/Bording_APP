@@ -191,7 +191,7 @@ export default function PropertyDetailPage() {
       <SectionTabs t={t} />
 
       <div className="mx-auto mt-6 grid max-w-6xl grid-cols-1 gap-10 px-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <main className="min-w-0">
+        <div className="min-w-0">
           <section id="overview" className="scroll-mt-40">
             <div className="flex flex-wrap gap-2">
               <span className="rounded-md bg-brand-50 px-2 py-0.5 text-sm font-bold text-brand-700">
@@ -265,7 +265,7 @@ export default function PropertyDetailPage() {
               <PlacesMenu selected={placeCategories} onChange={setPlaceCategories} status={nearby.status} />
             </div>
           </section>
-        </main>
+        </div>
 
         <aside id="contact" className="scroll-mt-40 lg:sticky lg:top-40 lg:self-start">
           <ContactOwnerCard property={p} />
@@ -320,7 +320,7 @@ function SectionTabs({ t }) {
   }, [])
 
   return (
-    <nav className="sticky top-16 z-40 mt-6 border-b border-slate-200 bg-white md:top-20">
+    <nav aria-label={t('a11y.sections')} className="sticky top-16 z-40 mt-6 border-b border-slate-200 bg-white md:top-20">
       <div className="no-scrollbar mx-auto flex max-w-6xl gap-8 overflow-x-auto px-4">
         {SECTIONS.map(([sectionId, label]) => (
           <a
