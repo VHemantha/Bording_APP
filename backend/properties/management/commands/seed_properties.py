@@ -7,28 +7,61 @@ from properties.models import Property, PropertyImage
 
 # Same city names as the home page's city grid (frontend/src/i18n/translations.js), so every
 # tile there finds listings. `state` is the two-letter province code; `zips` are postal codes.
-# Coastal cities are centred slightly inland so the randomised pins stay on land.
 CITIES = [
-    {'city': 'Colombo', 'state': 'WP', 'lat': 6.9271, 'lng': 79.8780, 'zips': ['00100', '00300', '00500', '00700']},
-    {'city': 'Kandy', 'state': 'CP', 'lat': 7.2906, 'lng': 80.6337, 'zips': ['20000']},
-    {'city': 'Galle', 'state': 'SP', 'lat': 6.0735, 'lng': 80.2210, 'zips': ['80000']},
-    {'city': 'Jaffna', 'state': 'NP', 'lat': 9.6615, 'lng': 80.0255, 'zips': ['40000']},
-    {'city': 'Negombo', 'state': 'WP', 'lat': 7.2083, 'lng': 79.8558, 'zips': ['11500']},
-    {'city': 'Anuradhapura', 'state': 'NC', 'lat': 8.3114, 'lng': 80.4037, 'zips': ['50000']},
-    {'city': 'Trincomalee', 'state': 'EP', 'lat': 8.5874, 'lng': 81.1952, 'zips': ['31000']},
-    {'city': 'Batticaloa', 'state': 'EP', 'lat': 7.7310, 'lng': 81.6547, 'zips': ['30000']},
-    {'city': 'Matara', 'state': 'SP', 'lat': 5.9749, 'lng': 80.5550, 'zips': ['81000']},
-    {'city': 'Kurunegala', 'state': 'NW', 'lat': 7.4863, 'lng': 80.3647, 'zips': ['60000']},
+    {'city': 'Colombo', 'state': 'WP', 'lat': 6.9271, 'lng': 79.8612, 'zips': ['00100']},
+    {'city': 'Kesbewa', 'state': 'WP', 'lat': 6.7957, 'lng': 79.9408, 'zips': ['10240']},
+    {'city': 'Mount Lavinia', 'state': 'WP', 'lat': 6.8317, 'lng': 79.8628, 'zips': ['10370']},
+    {'city': 'Maharagama', 'state': 'WP', 'lat': 6.8473, 'lng': 79.9266, 'zips': ['10280']},
+    {'city': 'Gampaha', 'state': 'WP', 'lat': 7.0917, 'lng': 79.9999, 'zips': ['11000']},
+    {'city': 'Moratuwa', 'state': 'WP', 'lat': 6.7747, 'lng': 79.8826, 'zips': ['10400']},
     {'city': 'Ratnapura', 'state': 'SG', 'lat': 6.6828, 'lng': 80.3992, 'zips': ['70000']},
-    {'city': 'Badulla', 'state': 'UP', 'lat': 6.9934, 'lng': 81.0550, 'zips': ['90000']},
+    {'city': 'Negombo', 'state': 'WP', 'lat': 7.2094, 'lng': 79.8331, 'zips': ['11500']},
+    {'city': 'Kandy', 'state': 'CP', 'lat': 7.2931, 'lng': 80.635, 'zips': ['20000']},
+    {'city': 'Sri Jayewardenepura Kotte', 'state': 'WP', 'lat': 6.8883, 'lng': 79.9187, 'zips': ['10100']},
+    {'city': 'Mawanella', 'state': 'SG', 'lat': 7.2523, 'lng': 80.446, 'zips': ['71500']},
+    {'city': 'Kotmale', 'state': 'CP', 'lat': 7.0608, 'lng': 80.5969, 'zips': ['20560']},
+    {'city': 'Kilinochchi', 'state': 'NP', 'lat': 9.384, 'lng': 80.4087, 'zips': ['44000']},
+    {'city': 'Hikkaduwa', 'state': 'SP', 'lat': 6.1408, 'lng': 80.1028, 'zips': ['80240']},
+    {'city': 'Trincomalee', 'state': 'EP', 'lat': 8.5764, 'lng': 81.2345, 'zips': ['31000']},
+    {'city': 'Batticaloa', 'state': 'EP', 'lat': 7.731, 'lng': 81.6747, 'zips': ['30000']},
+    {'city': 'Galle', 'state': 'SP', 'lat': 6.0328, 'lng': 80.215, 'zips': ['80000']},
+    {'city': 'Kalmunai', 'state': 'EP', 'lat': 7.4132, 'lng': 81.8269, 'zips': ['32300']},
+    {'city': 'Jaffna', 'state': 'NP', 'lat': 9.6651, 'lng': 80.0093, 'zips': ['40000']},
+    {'city': 'Vavuniya', 'state': 'NP', 'lat': 8.7594, 'lng': 80.5001, 'zips': ['43000']},
+    {'city': 'Weligama', 'state': 'SP', 'lat': 5.9751, 'lng': 80.4291, 'zips': ['81700']},
+    {'city': 'Tangalla', 'state': 'SP', 'lat': 6.0243, 'lng': 80.7941, 'zips': ['82200']},
+    {'city': 'Matara', 'state': 'SP', 'lat': 5.9478, 'lng': 80.5483, 'zips': ['81000']},
+    {'city': 'Kalpitiya', 'state': 'NW', 'lat': 8.2368, 'lng': 79.7662, 'zips': ['61360']},
+    {'city': 'Kolonnawa', 'state': 'WP', 'lat': 6.9326, 'lng': 79.8903, 'zips': ['10600']},
+    {'city': 'Akurana', 'state': 'CP', 'lat': 7.3603, 'lng': 80.6006, 'zips': ['20850']},
+    {'city': 'Anuradhapura', 'state': 'NC', 'lat': 8.335, 'lng': 80.4106, 'zips': ['50000']},
+    {'city': 'Puttalam', 'state': 'NW', 'lat': 8.0362, 'lng': 79.8283, 'zips': ['61300']},
+    {'city': 'Badulla', 'state': 'UP', 'lat': 6.99, 'lng': 81.057, 'zips': ['90000']},
+    {'city': 'Mullaittivu', 'state': 'NP', 'lat': 9.2671, 'lng': 80.8142, 'zips': ['42000']},
+    {'city': 'Kalutara', 'state': 'WP', 'lat': 6.5854, 'lng': 79.9607, 'zips': ['12000']},
+    {'city': 'Bentota', 'state': 'SP', 'lat': 6.4215, 'lng': 79.9979, 'zips': ['80500']},
+    {'city': 'Matale', 'state': 'CP', 'lat': 7.4675, 'lng': 80.6234, 'zips': ['21000']},
+    {'city': 'Mannar', 'state': 'NP', 'lat': 8.9813, 'lng': 79.9044, 'zips': ['41000']},
+    {'city': 'Bandarawela', 'state': 'UP', 'lat': 6.8305, 'lng': 80.9888, 'zips': ['90100']},
+    {'city': 'Point Pedro', 'state': 'NP', 'lat': 9.8241, 'lng': 80.2362, 'zips': ['40400']},
+    {'city': 'Kurunegala', 'state': 'NW', 'lat': 7.487, 'lng': 80.3649, 'zips': ['60000']},
+    {'city': 'Mabole', 'state': 'WP', 'lat': 7.0049, 'lng': 79.8969, 'zips': ['11104']},
+    {'city': 'Gampola', 'state': 'CP', 'lat': 7.1636, 'lng': 80.5703, 'zips': ['20500']},
     {'city': 'Nuwara Eliya', 'state': 'CP', 'lat': 6.9497, 'lng': 80.7891, 'zips': ['22200']},
-    {'city': 'Gampaha', 'state': 'WP', 'lat': 7.0840, 'lng': 79.9939, 'zips': ['11000']},
-    {'city': 'Kalutara', 'state': 'WP', 'lat': 6.5854, 'lng': 79.9807, 'zips': ['12000']},
-    {'city': 'Moratuwa', 'state': 'WP', 'lat': 6.7730, 'lng': 79.9016, 'zips': ['10400']},
-    {'city': 'Dehiwala-Mount Lavinia', 'state': 'WP', 'lat': 6.8409, 'lng': 79.8850, 'zips': ['10350', '10370']},
-    {'city': 'Sri Jayawardenepura Kotte', 'state': 'WP', 'lat': 6.8868, 'lng': 79.9187, 'zips': ['10100']},
-    {'city': 'Vavuniya', 'state': 'NP', 'lat': 8.7514, 'lng': 80.4971, 'zips': ['43000']},
-    {'city': 'Hambantota', 'state': 'SP', 'lat': 6.1441, 'lng': 81.1185, 'zips': ['82000']},
+    {'city': 'Galhinna', 'state': 'CP', 'lat': 7.4184, 'lng': 80.5633, 'zips': ['20112']},
+    {'city': 'Kegalle', 'state': 'SG', 'lat': 7.2513, 'lng': 80.3464, 'zips': ['71000']},
+    {'city': 'Hatton', 'state': 'CP', 'lat': 6.8916, 'lng': 80.5985, 'zips': ['22000']},
+    {'city': 'Gandara West', 'state': 'SP', 'lat': 5.9377, 'lng': 80.6134, 'zips': ['81170']},
+    {'city': 'Hambantota', 'state': 'SP', 'lat': 6.1249, 'lng': 81.1243, 'zips': ['82000']},
+    {'city': 'Abasingammedda', 'state': 'CP', 'lat': 7.317, 'lng': 80.667, 'zips': ['20000']},
+    {'city': 'Monaragala', 'state': 'UP', 'lat': 6.8727, 'lng': 81.3506, 'zips': ['91000']},
+    {'city': 'Polikandi', 'state': 'NP', 'lat': 9.8162, 'lng': 80.1859, 'zips': ['40520']},
+    {'city': 'Athurugiriya', 'state': 'WP', 'lat': 6.878, 'lng': 79.99, 'zips': ['10150']},
+    {'city': 'Mirissa South', 'state': 'SP', 'lat': 5.9494, 'lng': 80.4558, 'zips': ['81740']},
+    {'city': 'Oruwala', 'state': 'WP', 'lat': 6.8919, 'lng': 79.9955, 'zips': ['10150']},
+    {'city': 'Yakkala', 'state': 'WP', 'lat': 7.0859, 'lng': 80.0336, 'zips': ['11870']},
+    {'city': 'Nittambuwa', 'state': 'WP', 'lat': 7.1441, 'lng': 80.0965, 'zips': ['11880']},
+    {'city': 'Wathupitiwala', 'state': 'WP', 'lat': 7.1256, 'lng': 80.111, 'zips': ['11054']},
 ]
 
 STREET_NAMES = [
@@ -86,8 +119,8 @@ class Command(BaseCommand):
             # Rentals usually ask for some months of rent up front; sales don't.
             key_money_months = random.choice([0, 0, 1, 2, 3, 6, 6, 10, 12])
 
-            lat = city_info['lat'] + random.uniform(-0.018, 0.018)
-            lng = city_info['lng'] + random.uniform(-0.018, 0.018)
+            lat = city_info['lat'] + random.uniform(-0.012, 0.012)
+            lng = city_info['lng'] + random.uniform(-0.012, 0.012)
 
             street_number = random.randint(100, 9999)
             street_name = random.choice(STREET_NAMES)
