@@ -9,7 +9,7 @@ import PageLoader from '../components/PageLoader'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { CITIES } from '../i18n/translations'
-import { HOME_TYPE_LABELS, STORIES_LABELS } from '../utils/format'
+import { formatKeyMoney, HOME_TYPE_LABELS, STORIES_LABELS } from '../utils/format'
 
 const MAX_PHOTOS = 20
 
@@ -17,7 +17,7 @@ const EMPTY = {
   status: 'for_rent',
   home_type: 'house',
   price: '',
-  key_money: '0',
+  key_money_months: '0',
   furnishing: 'unfurnished',
   beds: '',
   baths: '',
@@ -127,7 +127,8 @@ export default function PostListingPage() {
     const payload = {
       ...values,
       price: num(values.price),
-      key_money: num(values.key_money) ?? 0,
+      key_money_months: num(values.key_money_months) ?? 0,
+      status: 'for_rent', // rentals only for now
       beds: land ? 0 : num(values.beds),
       baths: land ? 0 : num(values.baths),
       sqft: num(values.sqft),
@@ -171,14 +172,6 @@ export default function PostListingPage() {
 
       <form onSubmit={handleSubmit} noValidate={false} className="mt-8 space-y-6">
         <Section title={t('post.basics')}>
-          <div className="sm:col-span-2">
-            <span className="mb-1.5 block text-sm font-bold text-slate-700">{t('post.listingFor')}</span>
-            <Segmented
-              value={values.status}
-              onChange={(v) => set('status', v)}
-              options={['for_rent', 'for_sale'].map((k) => [k, t(`status.${k}`)])}
-            />
-          </div>
           <Select
             label={t('filter.propertyType')}
             value={values.home_type}
@@ -192,13 +185,18 @@ export default function PostListingPage() {
             options={['unfurnished', 'furnished'].map((k) => [k, t(`furnishing.${k}`)])}
           />
           <Field
-            label={values.status === 'for_rent' ? t('post.priceRent') : t('post.priceSale')}
+            label={t('post.priceRent')}
             type="number" min="1" required
             value={values.price} onChange={(v) => set('price', v)} error={errors.price}
           />
-          <Field
-            label={t('post.keyMoney')} type="number" min="0"
-            value={values.key_money} onChange={(v) => set('key_money', v)} error={errors.key_money}
+          <Select
+            label={t('post.keyMoney')}
+            value={values.key_money_months}
+            onChange={(v) => set('key_money_months', v)}
+            options={Array.from({ length: 13 }, (_, n) => [
+              String(n),
+              n === 0 ? t('card.noKeyMoney') : formatKeyMoney(n, t),
+            ])}
           />
         </Section>
 
@@ -392,23 +390,5 @@ function Select({ label, value, onChange, options }) {
         ))}
       </select>
     </label>
-  )
-}
-
-function Segmented({ value, onChange, options }) {
-  return (
-    <div className="inline-flex overflow-hidden rounded-lg border border-slate-300">
-      {options.map(([v, l]) => (
-        <button
-          key={v}
-          type="button"
-          onClick={() => onChange(v)}
-          aria-pressed={value === v}
-          className={`px-5 py-2 font-bold transition ${value === v ? 'bg-brand-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-50'}`}
-        >
-          {l}
-        </button>
-      ))}
-    </div>
   )
 }

@@ -2,7 +2,7 @@
 
     extract_filters  ->  fetch_listings  ->  compose_reply
 
-`extract_filters` turns "3 bed house in Austin under 500k" into structured filter
+`extract_filters` turns "3 bed house in Colombo under 100,000 rupees" into structured filter
 params (Claude, structured output). `fetch_listings` runs those through the exact
 same PropertyFilter the REST API uses. `compose_reply` has Claude write a short,
 friendly sentence about what came back.
@@ -58,7 +58,7 @@ def _fetch_listings(state: SearchState) -> SearchState:
 def _compose_reply(state: SearchState) -> SearchState:
     llm = get_llm(temperature=0.4)
     preview = [
-        f"- {r['address']}, {r['city']} {r['state']} - ${r['price']:,} "
+        f"- {r['address']}, {r['city']} {r['state']} - LKR {r['price']:,} "
         f"({r['beds']}bd/{r['baths']}ba, {r['sqft']:,} sqft)"
         for r in state.get('results', [])[:PREVIEW_COUNT]
     ]

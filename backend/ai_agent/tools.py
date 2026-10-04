@@ -9,7 +9,7 @@ from properties.services import run_property_search
 SITE_HELP = {
     'search': (
         "Use the search bar on the home page (or the AI search box) to type things like "
-        "'3 bed house in Austin under 500k'. You can also use the filter bar on the Search "
+        "'3 bed house in Colombo under 100,000 rupees'. You can also use the filter bar on the Search "
         "Results page for precise price/bed/bath/type filters."
     ),
     'save': (
@@ -71,7 +71,8 @@ def make_search_properties_tool(filters_sink: list):
         search: Optional[str] = None,
     ) -> str:
         """Search live property listings. `status` is 'for_sale' or 'for_rent',
-        `home_type` is one of house/apartment/annex/land/upper_floor_house. Returns a short
+        `home_type` is one of house/apartment/annex/land/upper_floor_house/shop.
+        Prices are monthly rents in Sri Lankan rupees (LKR). Returns a short
         text summary of matching homes (not the full data).
         """
         filters = {
@@ -93,7 +94,7 @@ def make_search_properties_tool(filters_sink: list):
         if not results:
             return 'No listings matched those filters.'
         lines = [
-            f"{r['address']}, {r['city']} {r['state']} - ${r['price']:,} "
+            f"{r['address']}, {r['city']} {r['state']} - LKR {r['price']:,} "
             f"({r['beds']}bd/{r['baths']}ba)"
             for r in results
         ]

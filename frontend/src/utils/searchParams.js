@@ -6,7 +6,7 @@ const ALLOWED = [
   'min_beds',
   'min_baths',
   'home_type',
-  'max_key_money',
+  'max_key_money_months',
   'min_parking',
   'min_sqft',
   'max_sqft',

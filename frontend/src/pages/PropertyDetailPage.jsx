@@ -30,7 +30,7 @@ import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
 import { useLanguage } from '../context/LanguageContext'
 import { cityName } from '../i18n/translations'
-import { formatBaths, formatPrice } from '../utils/format'
+import { formatBaths, formatKeyMoney, formatPrice } from '../utils/format'
 
 const SECTIONS = [
   ['overview', 'detail.tabOverview'],
@@ -122,7 +122,7 @@ export default function PropertyDetailPage() {
   const photos = p.images?.length ? p.images.map((img) => img.image_url) : [p.primary_image_url].filter(Boolean)
   const address = [p.address, city, `${p.state} ${p.zip_code}`.trim()].filter(Boolean).join(', ')
   const sqft = `${p.sqft.toLocaleString()} ${t('unit.sqft')}`
-  const keyMoney = p.key_money ? formatPrice(p.key_money) : t('common.none')
+  const keyMoney = formatKeyMoney(p.key_money_months, t)
   const stories = p.stories ? t(`stories.${p.stories}`) : null
 
   // The tiles under the title (Zillow's icon fact grid).

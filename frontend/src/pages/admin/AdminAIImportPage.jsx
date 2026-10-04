@@ -5,8 +5,9 @@ import { useNavigate } from 'react-router-dom'
 import { aiErrorMessage, extractListing } from '../../api/ai'
 import { useLanguage } from '../../context/LanguageContext'
 
-const SAMPLE = `Charming 3 bed / 2 bath bungalow in East Austin (78702). 1,540 sqft, built 1994.
-Updated kitchen with quartz counters, big backyard, detached garage. Asking $529,000.
+const SAMPLE = `Furnished 2 bedroom annex for rent in Nugegoda, Colombo 10250. 1 bathroom, 850 sqft, single story,
+private entrance and parking for 1 car. Rent LKR 55,000 per month, 6 months key money.
+Call Nimal on 077 123 4567.
 Photos: https://images.unsplash.com/photo-1568605114967-8130f3a36994`
 
 export default function AdminAIImportPage() {

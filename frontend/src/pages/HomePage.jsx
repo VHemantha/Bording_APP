@@ -1,31 +1,17 @@
 import { motion } from 'framer-motion'
-import { Building2, Heart, KeyRound, Search, Sparkles } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { useAuthModal } from '../context/AuthModalContext'
 import { useLanguage } from '../context/LanguageContext'
 import { CITIES } from '../i18n/translations'
 
 const HERO_IMG =
   'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=2000&q=80'
 
-const STEPS = [
-  { icon: Sparkles, key: 'how.step1' },
-  { icon: Search, key: 'how.step2' },
-  { icon: Heart, key: 'how.step3' },
-]
-
-const TESTIMONIALS = [
-  { key: 'testimonials.1', name: 'Priya M.' },
-  { key: 'testimonials.2', name: 'Marcus T.' },
-  { key: 'testimonials.3', name: 'Dana R.' },
-]
-
 export default function HomePage() {
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
-  const { openAuth } = useAuthModal()
   const { lang, t } = useLanguage()
 
   function search(e) {
@@ -71,7 +57,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12 }}
-            className="mt-10 flex h-16 w-full max-w-[37.5rem] items-center rounded-xl border border-slate-300 bg-white pl-5 pr-2 shadow-lift transition focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/25 sm:h-[5.5rem] sm:pl-6 sm:pr-3"
+            className="mt-10 flex h-16 w-full max-w-[37.5rem] items-center rounded-xl border border-slate-300 bg-white pl-5 pr-2 shadow-lift sm:h-[5.5rem] sm:pl-6 sm:pr-3"
           >
             <input
               value={query}
@@ -117,86 +103,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="mx-auto max-w-7xl px-4 py-16">
-        <h2 className="text-2xl font-extrabold text-brand-900 sm:text-3xl">
-          {t('how.title')}
-        </h2>
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {STEPS.map((s, i) => (
-            <motion.div
-              key={s.key}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-              className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft"
-            >
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-                <s.icon size={20} />
-              </span>
-              <p className="mt-4 text-lg font-bold text-brand-900">{t(`${s.key}.title`)}</p>
-              <p className="mt-1.5 text-sm text-slate-500">{t(`${s.key}.body`)}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="bg-white py-16">
-        <div className="mx-auto max-w-7xl px-4">
-          <h2 className="text-2xl font-extrabold text-brand-900 sm:text-3xl">{t('testimonials.title')}</h2>
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {TESTIMONIALS.map((item, i) => (
-              <motion.blockquote
-                key={item.key}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="rounded-2xl border border-slate-200/80 bg-slate-50 p-6"
-              >
-                <p className="text-sm leading-relaxed text-slate-700">"{t(`${item.key}.quote`)}"</p>
-                <footer className="mt-4 text-sm">
-                  <span className="font-semibold text-brand-900">{item.name}</span>
-                  <span className="text-slate-400"> &middot; {t(`${item.key}.role`)}</span>
-                </footer>
-              </motion.blockquote>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="mx-auto max-w-7xl px-4 py-16">
-        <div className="grid items-center gap-8 overflow-hidden rounded-3xl bg-brand-900 p-10 text-white md:grid-cols-2 md:p-14">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium">
-              <Building2 size={14} /> {t('cta.badge')}
-            </span>
-            <h2 className="mt-4 text-3xl font-extrabold">{t('cta.title')}</h2>
-            <p className="mt-3 max-w-md text-white/75">{t('cta.body')}</p>
-            <button
-              onClick={() => openAuth('register')}
-              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-bold text-brand-800 transition hover:bg-brand-50"
-            >
-              <KeyRound size={16} /> {t('cta.button')}
-            </button>
-          </div>
-          <div className="relative hidden md:block">
-            <div className="animate-floaty rounded-2xl bg-white/10 p-5 backdrop-blur">
-              <p className="text-sm text-white/70">{t('cta.previewLabel')}</p>
-              {/* The sample notes stay in English: they stand for what an agent would paste. */}
-              <p className="mt-2 text-lg font-semibold" lang="en">{t('cta.previewText')}</p>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                {[t('cta.chip.beds'), t('cta.chip.baths'), '$529,000', t('cta.chip.city'), t('cta.chip.type')].map((chip) => (
-                  <span key={chip} className="rounded-full bg-white/15 px-2.5 py-1">{chip}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   )
 }

@@ -40,7 +40,6 @@ STREET_TYPES = ['Rd', 'Mawatha', 'Lane', 'Place', 'Avenue', 'Gardens']
 CONTACT_NAMES = ['Nimal Perera', 'Kamala Silva', 'Ruwan Fernando', 'Fathima Rizwan', 'Suresh Kumar', 'Dilani Jayawardena']
 
 HOME_TYPES = [c[0] for c in Property.HomeType.choices]
-STATUSES = [c[0] for c in Property.Status.choices]
 
 DESCRIPTIONS = [
     'Beautifully updated home featuring an open-concept layout, natural light throughout, and a spacious backyard perfect for entertaining.',
@@ -71,7 +70,7 @@ class Command(BaseCommand):
         for i in range(count):
             city_info = random.choice(CITIES)
             home_type = random.choice(HOME_TYPES)
-            status = random.choices(STATUSES, weights=[0.4, 0.6])[0]
+            status = Property.Status.FOR_RENT  # the site lists rentals only
 
             beds = random.randint(1, 5)
             baths = random.choice([1, 1.5, 2, 2.5, 3, 3.5])
@@ -82,12 +81,10 @@ class Command(BaseCommand):
                 # Bare land: nothing built on it yet.
                 beds, baths, stories = 0, 0, None
 
-            base_price_per_sqft = random.uniform(180, 420)
-            price = int(sqft * base_price_per_sqft)
-            if status == Property.Status.FOR_RENT:
-                price = int(price / 180)  # rough monthly rent estimate
+            # Monthly rent in LKR, rounded to the nearest 500.
+            price = round(sqft * random.uniform(25, 80) / 500) * 500
             # Rentals usually ask for some months of rent up front; sales don't.
-            key_money = price * random.choice([0, 3, 6, 12]) if status == Property.Status.FOR_RENT else 0
+            key_money_months = random.choice([0, 0, 1, 2, 3, 6, 6, 10, 12])
 
             lat = city_info['lat'] + random.uniform(-0.018, 0.018)
             lng = city_info['lng'] + random.uniform(-0.018, 0.018)
@@ -115,7 +112,7 @@ class Command(BaseCommand):
                 sqft=sqft,
                 home_type=home_type,
                 status=status,
-                key_money=key_money,
+                key_money_months=key_money_months,
                 parking_slots=parking_slots,
                 stories=stories,
                 furnishing=random.choice(['furnished', 'unfurnished']),

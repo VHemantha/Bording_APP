@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { mediaUrl } from '../api/client'
 import { useLanguage } from '../context/LanguageContext'
 import { cityName } from '../i18n/translations'
-import { formatBaths, formatPrice } from '../utils/format'
+import { formatBaths, formatKeyMoney, formatPrice } from '../utils/format'
 
 export default function PropertyCard({
   property,
@@ -31,8 +31,8 @@ export default function PropertyCard({
   ].filter(Boolean)
 
   const extras = [
-    property.key_money > 0
-      ? t('card.keyMoney', { amount: formatPrice(property.key_money) })
+    property.key_money_months > 0
+      ? t('card.keyMoney', { amount: formatKeyMoney(property.key_money_months, t) })
       : t('card.noKeyMoney'),
     property.parking_slots > 0 && t('card.parking', { count: property.parking_slots }),
     property.stories && t(`stories.${property.stories}`),

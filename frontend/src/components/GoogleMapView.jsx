@@ -32,7 +32,7 @@ function loadGoogleMaps() {
 function pillIcon(maps, text, active) {
   const width = Math.max(46, text.length * 8 + 20)
   const height = 28
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect x="1.5" y="1.5" width="${width - 3}" height="${height - 3}" rx="${(height - 3) / 2}" fill="${active ? '#0b1220' : '#6d28d9'}" stroke="#fff" stroke-width="2"/></svg>`
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect x="1.5" y="1.5" width="${width - 3}" height="${height - 3}" rx="${(height - 3) / 2}" fill="${active ? '#1e1e1e' : '#c2550a'}" stroke="#fff" stroke-width="2"/></svg>`
   return {
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
     scaledSize: new maps.Size(width, height),
@@ -178,7 +178,7 @@ export default function GoogleMapView({ properties, highlightedId, onMarkerHover
         const link = document.createElement('a')
         link.href = `/property/${p.id}`
         link.textContent = t('map.viewDetails')
-        link.style.cssText = 'color: #2a3fd4; font-weight: 700'
+        link.style.cssText = 'color: #c2550a; font-weight: 700'
         link.addEventListener('click', (e) => {
           e.preventDefault()
           navigate(`/property/${p.id}`)

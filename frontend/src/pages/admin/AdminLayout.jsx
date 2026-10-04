@@ -1,7 +1,8 @@
-import { LayoutDashboard, List, LogOut, Plus, Sparkles, Wand2 } from 'lucide-react'
+import { LayoutDashboard, List, LogOut, Plus, Wand2 } from 'lucide-react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import LanguageSwitcher from '../../components/LanguageSwitcher'
+import Logo from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
 import { useLanguage } from '../../context/LanguageContext'
 
@@ -21,11 +22,8 @@ export default function AdminLayout() {
     <div className="flex min-h-screen bg-slate-100">
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col justify-between bg-brand-900 p-5 text-white lg:flex">
         <div>
-          <Link to="/" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
-              <Sparkles size={18} />
-            </span>
-            <span className="font-display text-lg font-semibold">Nestwell</span>
+          <Link to="/" className="inline-block rounded-xl bg-white px-3 py-2" aria-label="Rent House.lk">
+            <Logo className="h-9" />
           </Link>
           <p className="mt-1 text-xs text-white/50">{t('admin.console')}</p>
 

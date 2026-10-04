@@ -2,9 +2,8 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { useLanguage } from '../../context/LanguageContext'
-import { HOME_TYPE_LABELS, STORIES_LABELS } from '../../utils/format'
+import { formatKeyMoney, HOME_TYPE_LABELS, STORIES_LABELS } from '../../utils/format'
 
-const STATUSES = ['for_sale', 'for_rent']
 
 const EMPTY = {
   address: '',
@@ -18,8 +17,8 @@ const EMPTY = {
   baths: '',
   sqft: '',
   home_type: 'house',
-  status: 'for_sale',
-  key_money: 0,
+  status: 'for_rent',
+  key_money_months: '0',
   parking_slots: 0,
   stories: '',
   furnishing: 'unfurnished',
@@ -67,7 +66,8 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
       beds: num(values.beds),
       baths: num(values.baths),
       sqft: num(values.sqft),
-      key_money: num(values.key_money) ?? 0,
+      key_money_months: num(values.key_money_months) ?? 0,
+      status: 'for_rent', // rentals only for now
       parking_slots: num(values.parking_slots) ?? 0,
       stories: num(values.stories),
       year_built: num(values.year_built),
@@ -100,8 +100,7 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
           <Text label={t('filter.bathrooms')} type="number" step="0.5" value={values.baths} onChange={(v) => set('baths', v)} required />
           <Text label={t('filter.sqft')} type="number" value={values.sqft} onChange={(v) => set('sqft', v)} required />
           <Select label={t('detail.homeType')} value={values.home_type} onChange={(v) => set('home_type', v)} options={Object.keys(HOME_TYPE_LABELS).map((key) => [key, t(`type.${key}`)])} />
-          <Select label={t('detail.status')} value={values.status} onChange={(v) => set('status', v)} options={STATUSES.map((key) => [key, t(`status.${key}`)])} />
-          <Text label={t('admin.keyMoneyUsd')} type="number" value={values.key_money} onChange={(v) => set('key_money', v)} />
+          <Select label={t('admin.keyMoneyUsd')} value={String(values.key_money_months ?? 0)} onChange={(v) => set('key_money_months', v)} options={Array.from({ length: 13 }, (_, n) => [String(n), n === 0 ? t('card.noKeyMoney') : formatKeyMoney(n, t)])} />
           <Text label={t('filter.parking')} type="number" value={values.parking_slots} onChange={(v) => set('parking_slots', v)} />
           <Select label={t('detail.stories')} value={values.stories ?? ''} onChange={(v) => set('stories', v)} options={[['', t('admin.notApplicable')], ...Object.keys(STORIES_LABELS).map((key) => [key, t(`stories.${key}`)])]} />
           <Select label={t('filter.furnishing')} value={values.furnishing} onChange={(v) => set('furnishing', v)} options={['furnished', 'unfurnished'].map((key) => [key, t(`furnishing.${key}`)])} />

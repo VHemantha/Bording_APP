@@ -1,10 +1,11 @@
-import { Bookmark, BookmarkCheck, Check, ChevronDown, CircleX, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
+import { Bookmark, BookmarkCheck, ChevronDown, CircleX, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { useLanguage } from '../context/LanguageContext'
 import { HOME_TYPE_LABELS, STORIES_LABELS } from '../utils/format'
 
-const STATUSES = ['for_rent', 'for_sale']
+// Key money options: any, none, or up to N months' rent.
+const KEY_MONEY_MONTHS = Array.from({ length: 12 }, (_, i) => String(i + 1))
 const MIN_OPTIONS = ['', '1', '2', '3', '4', '5']
 
 const pill =
@@ -32,7 +33,7 @@ export default function FilterBar({
   onToggleAi,
 }) {
   const { t } = useLanguage()
-  const priceActive = filters.min_price || filters.max_price || filters.max_key_money
+  const priceActive = filters.min_price || filters.max_price || filters.max_key_money_months
   const bedsActive = filters.min_beds || filters.min_baths
   const types = csv(filters.home_type)
   const moreCount =
@@ -44,32 +45,6 @@ export default function FilterBar({
   return (
     <div className="relative z-30 flex flex-wrap items-center gap-2 border-b sm:gap-3 border-slate-200 bg-white px-4 py-2.5">
       <SearchBox key={searchText} initial={searchText} onSearch={onSearch} />
-
-      <Dropdown
-        label={t(`status.${STATUSES.includes(filters.status) ? filters.status : 'for_rent'}`)}
-        active
-      >
-        {(close) => (
-          <div className="w-48 py-1">
-            {STATUSES.map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => {
-                  onChange({ status: value })
-                  close()
-                }}
-                className={`flex w-full items-center justify-between px-4 py-2.5 text-left transition hover:bg-brand-50 ${
-                  filters.status === value ? 'font-bold text-brand-700' : ''
-                }`}
-              >
-                {t(`status.${value}`)}
-                {filters.status === value && <Check size={16} />}
-              </button>
-            ))}
-          </div>
-        )}
-      </Dropdown>
 
       <Dropdown label={t('filter.price')} active={Boolean(priceActive)}>
         {(close) => <PricePanel filters={filters} onChange={onChange} close={close} />}
@@ -140,7 +115,7 @@ function SearchBox({ initial, onSearch }) {
         e.preventDefault()
         onSearch(text.trim())
       }}
-      className="flex h-11 w-full items-center rounded-lg border border-slate-400 bg-white pl-4 pr-1 sm:h-12 transition focus-within:border-brand-600 focus-within:ring-1 focus-within:ring-brand-600 sm:w-80 lg:w-[26rem]"
+      className="flex h-11 w-full items-center rounded-lg border border-slate-400 bg-white pl-4 pr-1 sm:h-12 sm:w-80 lg:w-[26rem]"
     >
       <input
         value={text}
@@ -257,7 +232,7 @@ function PricePanel({ filters, onChange, close }) {
   const [draft, setDraft] = useState({
     min_price: filters.min_price,
     max_price: filters.max_price,
-    max_key_money: filters.max_key_money,
+    max_key_money_months: filters.max_key_money_months,
   })
   const set = (field) => (value) => setDraft((d) => ({ ...d, [field]: value }))
   const { t } = useLanguage()
@@ -282,14 +257,24 @@ function PricePanel({ filters, onChange, close }) {
         <NumberField label={t('filter.maximum')} value={draft.max_price} onChange={set('max_price')} placeholder={t('filter.noMax')} />
       </div>
       <p className="mb-2 mt-4 font-bold">{t('filter.keyMoney')}</p>
-      <NumberField
-        label={t('filter.maxKeyMoney')}
-        value={draft.max_key_money}
-        onChange={set('max_key_money')}
-        placeholder={t('filter.anyAmount')}
-      />
+      <label className="block">
+        <span className="mb-1 block text-xs font-bold text-slate-600">{t('filter.maxKeyMoney')}</span>
+        <select
+          value={draft.max_key_money_months}
+          onChange={(e) => set('max_key_money_months')(e.target.value)}
+          className={inputClass}
+        >
+          <option value="">{t('common.any')}</option>
+          <option value="0">{t('card.noKeyMoney')}</option>
+          {KEY_MONEY_MONTHS.map((n) => (
+            <option key={n} value={n}>
+              {n === '1' ? t('keyMoney.upToOne') : t('keyMoney.upTo', { count: n })}
+            </option>
+          ))}
+        </select>
+      </label>
       <PanelFooter
-        onReset={() => apply({ min_price: '', max_price: '', max_key_money: '' })}
+        onReset={() => apply({ min_price: '', max_price: '', max_key_money_months: '' })}
         onApply={() => apply(draft)}
       />
     </form>

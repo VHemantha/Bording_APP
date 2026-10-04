@@ -34,7 +34,7 @@ class PropertyListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'home_type', 'status', 'key_money', 'parking_slots',
+            'sqft', 'home_type', 'status', 'key_money_months', 'parking_slots',
             'stories', 'furnishing', 'primary_image_url',
         ]
 
@@ -49,7 +49,7 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'home_type', 'status', 'key_money', 'parking_slots',
+            'sqft', 'home_type', 'status', 'key_money_months', 'parking_slots',
             'stories', 'furnishing', 'description',
             'year_built', 'primary_image_url', 'listed_date', 'images',
             'contact_name', 'contact_phone', 'can_edit',
@@ -90,7 +90,7 @@ class PropertyWriteSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'home_type', 'status', 'key_money', 'parking_slots',
+            'sqft', 'home_type', 'status', 'key_money_months', 'parking_slots',
             'stories', 'furnishing', 'description',
             'year_built', 'primary_image_url', 'listed_date', 'images',
             'contact_name', 'contact_phone',

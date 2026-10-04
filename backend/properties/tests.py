@@ -19,7 +19,7 @@ def listing_payload(**overrides):
     data = {
         'address': '12 Temple Rd', 'city': 'Colombo', 'latitude': 6.9, 'longitude': 79.86,
         'price': 50000, 'beds': 2, 'baths': 1, 'sqft': 900, 'home_type': 'annex',
-        'status': 'for_rent', 'key_money': 300000, 'parking_slots': 1, 'stories': 1,
+        'status': 'for_rent', 'key_money_months': 6, 'parking_slots': 1, 'stories': 1,
         'furnishing': 'furnished', 'description': 'Quiet annex near the station.',
         'primary_image_url': 'https://example.com/a.jpg', 'images': ['https://example.com/a.jpg'],
         'contact_name': 'Nimal', 'contact_phone': '+94 77 123 4567',

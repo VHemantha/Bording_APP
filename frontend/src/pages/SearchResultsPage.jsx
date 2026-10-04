@@ -22,7 +22,7 @@ const FILTER_KEYS = [
   'status',
   'min_price',
   'max_price',
-  'max_key_money',
+  'max_key_money_months',
   'min_beds',
   'min_baths',
   'home_type',
@@ -40,7 +40,7 @@ const SORTS = {
   price_asc: (a, b) => a.price - b.price,
   price_desc: (a, b) => b.price - a.price,
   sqft_desc: (a, b) => b.sqft - a.sqft,
-  key_money_asc: (a, b) => a.key_money - b.key_money,
+  key_money_asc: (a, b) => a.key_money_months - b.key_money_months,
 }
 
 const SAVED_KEY = 'nestwell.savedSearches'
@@ -78,7 +78,8 @@ export default function SearchResultsPage() {
     FILTER_KEYS.forEach((key) => {
       values[key] = searchParams.get(key) || ''
     })
-    values.status ||= DEFAULT_STATUS
+    // Rentals only for now: a status in the URL (old links, AI search) is ignored.
+    values.status = DEFAULT_STATUS
     return values
   }, [searchParams])
   const search = searchParams.get('search') || ''
@@ -130,7 +131,7 @@ export default function SearchResultsPage() {
 
   function applyAiFilters(aiFilters, meta) {
     const params = filtersToSearchParams(aiFilters)
-    if (!params.get('status')) params.set('status', filters.status)
+    params.set('status', DEFAULT_STATUS)
     setSearchParams(params)
     setAiReply(meta?.reply || null)
   }

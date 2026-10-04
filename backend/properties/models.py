@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.conf import settings
+from django.core.validators import MaxValueValidator
 from django.db import models
 
 
@@ -11,6 +12,7 @@ class Property(models.Model):
         ANNEX = 'annex', 'Annex'
         LAND = 'land', 'Land'
         UPPER_FLOOR_HOUSE = 'upper_floor_house', 'Upper floor house'
+        SHOP = 'shop', 'Shop'
 
     class Stories(models.IntegerChoices):
         SINGLE = 1, 'Single story'
@@ -43,9 +45,10 @@ class Property(models.Model):
     baths = models.FloatField()
     sqft = models.PositiveIntegerField()
     home_type = models.CharField(max_length=20, choices=HomeType.choices, default=HomeType.HOUSE)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.FOR_SALE)
-    # Key money: the advance payment a landlord asks for up front. 0 = none asked.
-    key_money = models.PositiveIntegerField(default=0)
+    # The site lists rentals only for now; the sale option is kept so it can come back.
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.FOR_RENT)
+    # Key money: the advance a landlord asks for up front, as a number of months' rent (0-12).
+    key_money_months = models.PositiveSmallIntegerField(default=0, validators=[MaxValueValidator(12)])
     parking_slots = models.PositiveSmallIntegerField(default=0)
     # Blank for listings where it doesn't apply (land).
     stories = models.PositiveSmallIntegerField(choices=Stories.choices, null=True, blank=True)

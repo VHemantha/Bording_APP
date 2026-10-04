@@ -1,4 +1,4 @@
-import { Building2, Home, KeyRound, Plus, Tag, Wand2 } from 'lucide-react'
+import { Building2, Home, Plus, Sofa, Tag, Wand2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -36,9 +36,9 @@ export default function AdminDashboardPage() {
 
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard icon={Home} label={t('admin.total')} value={stats.total} />
-        <StatCard icon={KeyRound} label={t('status.for_sale')} value={stats.forSale} />
         <StatCard icon={Building2} label={t('status.for_rent')} value={stats.forRent} />
-        <StatCard icon={Tag} label={t('admin.avgSalePrice')} value={stats.avgPrice} />
+        <StatCard icon={Sofa} label={t('furnishing.furnished')} value={stats.furnished} />
+        <StatCard icon={Tag} label={t('admin.avgRent')} value={stats.avgRent} />
       </div>
 
       <div className="mt-8 rounded-2xl border border-slate-200 bg-white">
@@ -70,16 +70,15 @@ export default function AdminDashboardPage() {
 
 function summarise(properties) {
   if (!properties || properties.length === 0) {
-    return { total: properties ? 0 : '—', forSale: '—', forRent: '—', avgPrice: '—' }
+    return { total: properties ? 0 : '—', forRent: '—', furnished: '—', avgRent: '—' }
   }
-  // Sale prices only: averaging them with monthly rents would give a meaningless number.
-  const sales = properties.filter((p) => p.status === 'for_sale')
-  const avg = sales.length ? Math.round(sales.reduce((s, p) => s + p.price, 0) / sales.length) : null
+  const rentals = properties.filter((p) => p.status === 'for_rent')
+  const avg = rentals.length ? Math.round(rentals.reduce((s, p) => s + p.price, 0) / rentals.length) : null
   return {
     total: properties.length,
-    forSale: sales.length,
-    forRent: properties.length - sales.length,
-    avgPrice: avg === null ? '—' : formatPrice(avg, 'for_sale'),
+    forRent: rentals.length,
+    furnished: properties.filter((p) => p.furnishing === 'furnished').length,
+    avgRent: avg === null ? '—' : formatPrice(avg),
   }
 }
 
