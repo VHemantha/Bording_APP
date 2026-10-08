@@ -2,13 +2,17 @@ import { Check, ChevronDown, Globe } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { useLanguage } from '../context/LanguageContext'
+import useKeepInViewport from './useKeepInViewport'
 import { LANGUAGES } from '../i18n/translations'
 
-/** Globe dropdown (navbar) or, with `inline`, a row of buttons (mobile menu). */
-export default function LanguageSwitcher({ inline = false, onChange }) {
+/** Globe dropdown (navbar) or, with `inline`, a row of buttons (mobile menu). `compact`
+ *  shows a short code (EN / SI / TA) so it fits a phone's top bar. */
+export default function LanguageSwitcher({ inline = false, compact = false, onChange }) {
   const { lang, setLang, t } = useLanguage()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+  const menuRef = useRef(null)
+  useKeepInViewport(menuRef, open)
 
   useEffect(() => {
     if (!open) return
@@ -68,14 +72,15 @@ export default function LanguageSwitcher({ inline = false, onChange }) {
         className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
       >
         <Globe size={16} />
-        <span lang={current.code}>{current.label}</span>
+        {compact ? <span>{current.short}</span> : <span lang={current.code}>{current.label}</span>}
         <ChevronDown size={14} className={`transition ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
         <div
+          ref={menuRef}
           role="menu"
-          className="absolute right-0 mt-2 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lift"
+          className="absolute right-0 z-50 mt-2 w-40 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lift"
         >
           {LANGUAGES.map((l) => (
             <button

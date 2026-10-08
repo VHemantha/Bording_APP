@@ -32,9 +32,9 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/95 backdrop-blur-md">
       {/* Logo on the left, account actions on the right. */}
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 md:h-20">
-        <Link to="/" className="shrink-0" aria-label="Rent House.lk">
-          <Logo className="h-10 md:h-12" />
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:h-20">
+        <Link to="/" className="min-w-0 shrink" aria-label="Rent House.lk">
+          <Logo className="h-9 max-w-full min-[380px]:h-10 md:h-12" />
         </Link>
 
         <nav
@@ -80,8 +80,8 @@ export default function Navbar() {
         </nav>
 
         {/* Phones: the language picker stays in the bar, outside the collapsible menu. */}
-        <div className="flex items-center gap-2 md:hidden">
-          <LanguageSwitcher />
+        <div className="flex shrink-0 items-center gap-1.5 md:hidden">
+          <LanguageSwitcher compact />
           <button
             type="button"
             className="rounded-lg p-2 text-slate-700"

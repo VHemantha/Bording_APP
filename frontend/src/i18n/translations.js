@@ -8,9 +8,9 @@ import { placesTranslations } from './places'
 import { postingTranslations } from './posting'
 
 export const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'si', label: 'සිංහල' },
-  { code: 'ta', label: 'தமிழ்' },
+  { code: 'en', label: 'English', short: 'EN' },
+  { code: 'si', label: 'සිංහල', short: 'SI' },
+  { code: 'ta', label: 'தமிழ்', short: 'TA' },
 ]
 
 // `name` is what the search API is queried with, so it stays in English in every language.

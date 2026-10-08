@@ -2,6 +2,7 @@ import { ChevronDown, Loader2, MapPinned } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { useLanguage } from '../context/LanguageContext'
+import useKeepInViewport from './useKeepInViewport'
 import { PLACE_CATEGORIES } from './placeCategories'
 
 /**
@@ -12,6 +13,8 @@ export default function PlacesMenu({ selected, onChange, status }) {
   const { t } = useLanguage()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+  const panelRef = useRef(null)
+  useKeepInViewport(panelRef, open)
 
   useEffect(() => {
     if (!open) return
@@ -43,8 +46,9 @@ export default function PlacesMenu({ selected, onChange, status }) {
           : null
 
   return (
-    // z-[1000] sits above the map library's own layers inside the map's stacking context.
-    <div ref={ref} className="absolute left-14 top-3 z-[1000] flex flex-col items-start gap-2">
+    // z-[1000] sits above the map library's own layers inside the map's stacking context. The
+    // wrapper spans the map's width but lets touches through, so only its children catch them.
+    <div ref={ref} className="pointer-events-none absolute left-12 right-3 top-3 z-[1000] flex flex-col items-start gap-2 sm:left-14 [&>*]:pointer-events-auto">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -67,7 +71,7 @@ export default function PlacesMenu({ selected, onChange, status }) {
       </button>
 
       {open && (
-        <div role="dialog" aria-label={t('places.menu')} className="w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-lift">
+        <div ref={panelRef} role="dialog" aria-label={t('places.menu')} className="w-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-lift">
           {PLACE_CATEGORIES.map(({ key, icon: Icon, color }) => (
             <label key={key} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-slate-50">
               <input

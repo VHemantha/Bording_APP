@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { useLanguage } from '../context/LanguageContext'
+import useKeepInViewport from './useKeepInViewport'
 import { HOME_TYPE_LABELS, STORIES_LABELS } from '../utils/format'
 
 // Key money options: any, none, or up to N months' rent.
@@ -173,6 +174,8 @@ function SearchBox({ initial, onSearch }) {
 function Dropdown({ label, icon, active, alignRight, className = '', children }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+  const panelRef = useRef(null)
+  useKeepInViewport(panelRef, open)
 
   useEffect(() => {
     if (!open) return
@@ -205,9 +208,10 @@ function Dropdown({ label, icon, active, alignRight, className = '', children })
       </button>
       {open && (
         <div
+          ref={panelRef}
           role="dialog"
           aria-label={typeof label === 'string' ? label : undefined}
-          className={`absolute top-full z-40 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lift ${
+          className={`absolute top-full z-40 mt-2 overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200 bg-white shadow-lift ${
             alignRight ? 'right-0' : 'left-0'
           }`}
         >

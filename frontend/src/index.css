@@ -43,6 +43,13 @@ body,
   height: 100%;
 }
 
+/* Nothing may make the page wider than the screen (phones would then scroll sideways).
+   "clip" rather than "hidden" so the sticky header and in-page scrolling keep working. */
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   margin: 0;
   font-family: var(--font-sans);
