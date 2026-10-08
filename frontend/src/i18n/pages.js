@@ -4,6 +4,7 @@
 
 export const pageTranslations = {
   en: {
+    'filter.showResults': 'Show results',
     'type.shop': 'Shop',
     'keyMoney.oneMonth': '1 month',
     'keyMoney.months': '{count} months',
@@ -194,6 +195,7 @@ export const pageTranslations = {
   },
 
   si: {
+    'filter.showResults': 'ප්‍රතිඵල පෙන්වන්න',
     'type.shop': 'වෙළඳසැල',
     'keyMoney.oneMonth': 'මාස 1',
     'keyMoney.months': 'මාස {count}',
@@ -384,6 +386,7 @@ export const pageTranslations = {
   },
 
   ta: {
+    'filter.showResults': 'முடிவுகளைக் காட்டு',
     'type.shop': 'கடை',
     'keyMoney.oneMonth': '1 மாதம்',
     'keyMoney.months': '{count} மாதங்கள்',

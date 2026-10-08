@@ -84,7 +84,7 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-4 pt-16 pb-8">
         <h2 className="text-2xl font-extrabold text-brand-900 sm:text-3xl">{t('cities.title')}</h2>
         <p className="mt-1 text-sm text-slate-500">{t('cities.subtitle')}</p>
-        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {CITIES.map((c, i) => (
             // The reveal animation lives on a wrapper: framer-motion sets an inline transform,
             // which would override the tile's CSS hover lift if both were on the button.
