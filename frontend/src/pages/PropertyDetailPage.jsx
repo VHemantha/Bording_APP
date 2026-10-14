@@ -21,7 +21,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { addFavorite, fetchFavorites, removeFavorite } from '../api/auth'
 import { fetchProperty } from '../api/properties'
 import ContactOwnerCard from '../components/ContactOwnerCard'
-import MapView from '../components/MapView'
+import GoogleMapView from '../components/GoogleMapView'
 import PageLoader from '../components/PageLoader'
 import PhotoCollage from '../components/PhotoCollage'
 import PlacesMenu from '../components/PlacesMenu'
@@ -261,7 +261,7 @@ export default function PropertyDetailPage() {
             <p className="mt-1 text-slate-600">{address}</p>
             <p className="mt-1 text-sm text-slate-500">{t('detail.neighborhoodHint')}</p>
             <div className="relative isolate mt-4 h-[28rem] overflow-hidden rounded-2xl border border-slate-200">
-              <MapView properties={mapProperties} places={nearby.places} onBoundsChange={setMapBounds} />
+              <GoogleMapView properties={mapProperties} places={nearby.places} onBoundsChange={setMapBounds} maxFitZoom={16} />
               <PlacesMenu selected={placeCategories} onChange={setPlaceCategories} status={nearby.status} />
             </div>
           </section>

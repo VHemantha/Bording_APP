@@ -1,7 +1,7 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { LocateFixed } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
@@ -9,42 +9,19 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 
 import { useLanguage } from '../context/LanguageContext'
-
-const pinIcon = L.icon({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-})
-
-const SRI_LANKA = [7.8731, 80.7718]
-
-function ClickToPlace({ onPick }) {
-  useMapEvents({
-    click: (e) => onPick({ lat: e.latlng.lat, lng: e.latlng.lng }),
-  })
-  return null
-}
-
-/** Moves the map when `focus` changes (a city was chosen, or "use my location"). */
-function FlyTo({ focus }) {
-  const map = useMap()
-  useEffect(() => {
-    if (focus) map.setView([focus.lat, focus.lng], focus.zoom ?? 15)
-  }, [focus, map])
-  return null
-}
+import { SRI_LANKA, useGoogleMaps } from './googleMaps'
 
 /**
- * Map for choosing a listing's exact location: click to drop the pin, drag to adjust.
- * `value` is { lat, lng } or null; `focus` ({ lat, lng, zoom }) recentres the map.
+ * Map for choosing a listing's exact location: click to drop the pin, drag to adjust, or use
+ * the device's location. `value` is { lat, lng } or null; `focus` ({ lat, lng, zoom })
+ * recentres the map (e.g. when a city is chosen). Google Maps, with the OpenStreetMap map as
+ * a fallback when there's no API key or Google rejects it.
  */
 export default function LocationPicker({ value, onChange, focus, invalid }) {
   const { t } = useLanguage()
+  const { maps, failed } = useGoogleMaps()
   const [locating, setLocating] = useState(false)
   const [localFocus, setLocalFocus] = useState(null)
-  const start = value ? [value.lat, value.lng] : SRI_LANKA
 
   function useMyLocation() {
     if (!navigator.geolocation) return
@@ -61,6 +38,8 @@ export default function LocationPicker({ value, onChange, focus, invalid }) {
     )
   }
 
+  const mapProps = { value, onChange, focus: localFocus ?? focus }
+
   return (
     <div>
       <div
@@ -68,27 +47,13 @@ export default function LocationPicker({ value, onChange, focus, invalid }) {
           invalid ? 'border-red-400 ring-2 ring-red-100' : 'border-slate-300'
         }`}
       >
-        <MapContainer center={start} zoom={value ? 16 : 8} className="h-full w-full">
-          <TileLayer
-            attribution="&copy; OpenStreetMap contributors"
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <ClickToPlace onPick={onChange} />
-          <FlyTo focus={localFocus ?? focus} />
-          {value && (
-            <Marker
-              position={[value.lat, value.lng]}
-              icon={pinIcon}
-              draggable
-              eventHandlers={{
-                dragend: (e) => {
-                  const { lat, lng } = e.target.getLatLng()
-                  onChange({ lat, lng })
-                },
-              }}
-            />
-          )}
-        </MapContainer>
+        {failed ? (
+          <LeafletPickerMap {...mapProps} />
+        ) : maps ? (
+          <GooglePickerMap maps={maps} {...mapProps} />
+        ) : (
+          <div className="h-full w-full bg-slate-200" aria-hidden />
+        )}
       </div>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
         <p className={invalid ? 'font-medium text-red-600' : 'text-slate-500'}>
@@ -106,5 +71,122 @@ export default function LocationPicker({ value, onChange, focus, invalid }) {
         )}
       </div>
     </div>
+  )
+}
+
+function GooglePickerMap({ maps, value, onChange, focus }) {
+  const containerRef = useRef(null)
+  const mapRef = useRef(null)
+  const markerRef = useRef(null)
+  const onChangeRef = useRef(onChange)
+
+  useEffect(() => {
+    onChangeRef.current = onChange
+  }, [onChange])
+
+  // Create the map once.
+  useEffect(() => {
+    if (mapRef.current || !containerRef.current) return
+    const map = new maps.Map(containerRef.current, {
+      center: value ?? SRI_LANKA,
+      zoom: value ? 16 : 8,
+      streetViewControl: false,
+      fullscreenControl: false,
+      // Satellite view makes it much easier to put the pin on the right building.
+      mapTypeControl: true,
+      mapTypeControlOptions: {
+        style: maps.MapTypeControlStyle.DROPDOWN_MENU,
+        position: maps.ControlPosition.TOP_RIGHT,
+      },
+      // Inside a scrolling form: one finger scrolls the page, two fingers move the map.
+      gestureHandling: 'cooperative',
+      clickableIcons: false,
+      draggableCursor: 'crosshair',
+    })
+    map.addListener('click', (e) => onChangeRef.current({ lat: e.latLng.lat(), lng: e.latLng.lng() }))
+    mapRef.current = map
+    // `value` only seeds the first view; later changes are handled below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maps])
+
+  // Keep the draggable pin in sync with the chosen location.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    if (!value) {
+      markerRef.current?.setMap(null)
+      markerRef.current = null
+      return
+    }
+    if (!markerRef.current) {
+      markerRef.current = new maps.Marker({ map, position: value, draggable: true })
+      markerRef.current.addListener('dragend', (e) =>
+        onChangeRef.current({ lat: e.latLng.lat(), lng: e.latLng.lng() })
+      )
+    } else {
+      markerRef.current.setPosition(value)
+    }
+  }, [maps, value])
+
+  // Recentre when a city is chosen or the device location arrives.
+  useEffect(() => {
+    if (focus && mapRef.current) {
+      mapRef.current.setCenter({ lat: focus.lat, lng: focus.lng })
+      mapRef.current.setZoom(focus.zoom ?? 15)
+    }
+  }, [focus])
+
+  return <div ref={containerRef} className="h-full w-full bg-slate-200" />
+}
+
+// ---- OpenStreetMap fallback (no Google key, or Google rejected it) ----
+
+const pinIcon = L.icon({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+})
+
+function ClickToPlace({ onPick }) {
+  useMapEvents({
+    click: (e) => onPick({ lat: e.latlng.lat, lng: e.latlng.lng }),
+  })
+  return null
+}
+
+function FlyTo({ focus }) {
+  const map = useMap()
+  useEffect(() => {
+    if (focus) map.setView([focus.lat, focus.lng], focus.zoom ?? 15)
+  }, [focus, map])
+  return null
+}
+
+function LeafletPickerMap({ value, onChange, focus }) {
+  const start = value ? [value.lat, value.lng] : [SRI_LANKA.lat, SRI_LANKA.lng]
+  return (
+    <MapContainer center={start} zoom={value ? 16 : 8} className="h-full w-full">
+      <TileLayer
+        attribution="&copy; OpenStreetMap contributors"
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      <ClickToPlace onPick={onChange} />
+      <FlyTo focus={focus} />
+      {value && (
+        <Marker
+          position={[value.lat, value.lng]}
+          icon={pinIcon}
+          draggable
+          eventHandlers={{
+            dragend: (e) => {
+              const { lat, lng } = e.target.getLatLng()
+              onChange({ lat, lng })
+            },
+          }}
+        />
+      )}
+    </MapContainer>
   )
 }

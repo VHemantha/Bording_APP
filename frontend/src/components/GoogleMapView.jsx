@@ -1,32 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { useLanguage } from '../context/LanguageContext'
 import { formatCompactPrice, formatPrice } from '../utils/format'
+import { SRI_LANKA, useGoogleMaps } from './googleMaps'
 import MapView from './MapView'
 import { PLACE_MARKER_SIZE, placeMarkerSvg } from './placeCategories'
-
-// Public browser key (restrict it by HTTP referrer in Google Cloud). Baked in at build time.
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-
-const SRI_LANKA = { lat: 7.8731, lng: 80.7718 }
-
-let mapsPromise
-
-function loadGoogleMaps() {
-  if (window.google?.maps?.Map) return Promise.resolve(window.google.maps)
-  mapsPromise ??= new Promise((resolve, reject) => {
-    window.__nestwellMapsReady = () => resolve(window.google.maps)
-    // Google calls this global when the key is invalid, restricted, or billing is off.
-    window.gm_authFailure = () => reject(new Error('Google Maps rejected the API key'))
-    const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(API_KEY)}&v=weekly&loading=async&callback=__nestwellMapsReady`
-    script.async = true
-    script.onerror = () => reject(new Error('Google Maps failed to load'))
-    document.head.appendChild(script)
-  })
-  return mapsPromise
-}
 
 /** Rounded price pill, drawn as an SVG so the marker needs no extra Google library. */
 function pillIcon(maps, text, active) {
@@ -42,12 +21,21 @@ function pillIcon(maps, text, active) {
 }
 
 /**
- * Listings on a Google map. Falls back to the OpenStreetMap view (MapView) when no API key
- * is configured or Google rejects it, so the page never shows a broken map.
+ * Listings on a Google map: price markers (hovering a card highlights its marker and vice
+ * versa), a popup with a link per listing, Nearby-places icons, and the visible area reported
+ * through onBoundsChange. Used by the search page and the property page. Falls back to the
+ * OpenStreetMap view (MapView) when there's no API key or Google rejects it, so the page
+ * never shows a broken map.
  */
-export default function GoogleMapView({ properties, highlightedId, onMarkerHover, places = [], onBoundsChange }) {
-  const [failed, setFailed] = useState(!API_KEY)
-  const [maps, setMaps] = useState(null)
+export default function GoogleMapView({
+  properties,
+  highlightedId,
+  onMarkerHover,
+  places = [],
+  onBoundsChange,
+  maxFitZoom = 15,
+}) {
+  const { maps, failed } = useGoogleMaps()
   const containerRef = useRef(null)
   const mapRef = useRef(null)
   const infoRef = useRef(null)
@@ -62,25 +50,6 @@ export default function GoogleMapView({ properties, highlightedId, onMarkerHover
     hoverRef.current = onMarkerHover
     boundsRef.current = onBoundsChange
   }, [onMarkerHover, onBoundsChange])
-
-  useEffect(() => {
-    if (failed) return
-    let cancelled = false
-    loadGoogleMaps()
-      .then((m) => {
-        if (!cancelled) setMaps(m)
-      })
-      .catch(() => {
-        if (!cancelled) setFailed(true)
-      })
-    // An invalid key is only reported after the script has loaded.
-    const previous = window.gm_authFailure
-    window.gm_authFailure = () => setFailed(true)
-    return () => {
-      cancelled = true
-      window.gm_authFailure = previous
-    }
-  }, [failed])
 
   useEffect(() => {
     if (!maps || failed || mapRef.current || !containerRef.current) return
@@ -198,10 +167,10 @@ export default function GoogleMapView({ properties, highlightedId, onMarkerHover
       map.fitBounds(bounds, 56)
       // A single listing would otherwise zoom in to street level.
       maps.event.addListenerOnce(map, 'idle', () => {
-        if (map.getZoom() > 15) map.setZoom(15)
+        if (map.getZoom() > maxFitZoom) map.setZoom(maxFitZoom)
       })
     }
-  }, [maps, failed, properties, navigate, t])
+  }, [maps, failed, properties, navigate, t, maxFitZoom])
 
   // Emphasise the marker of the card being hovered.
   useEffect(() => {
