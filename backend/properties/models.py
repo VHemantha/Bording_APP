@@ -114,3 +114,32 @@ class Inquiry(models.Model):
 
     def __str__(self):
         return f'{self.name} about {self.property_id}'
+
+
+class Place(models.Model):
+    """A point of interest for the map's "Nearby places" menu, copied from OpenStreetMap
+    (see places.py) so visitors never wait on the slow public Overpass service."""
+
+    osm_id = models.CharField(max_length=24, unique=True)  # e.g. "n123", "w456"
+    category = models.CharField(max_length=16)
+    name = models.CharField(max_length=200, blank=True)
+    lat = models.FloatField()
+    lng = models.FloatField()
+
+    class Meta:
+        indexes = [models.Index(fields=['category', 'lat', 'lng'])]
+
+    def __str__(self):
+        return f'{self.category}: {self.name or self.osm_id}'
+
+
+class PlaceTile(models.Model):
+    """One square of the places grid and when its places were last downloaded."""
+
+    key = models.CharField(max_length=24, unique=True)  # "<row>:<col>" on places.TILE grid
+    fetched_at = models.DateTimeField(null=True, blank=True)
+    requested_at = models.DateTimeField()  # last time a download was started
+    failed_at = models.DateTimeField(null=True, blank=True)  # last download that failed
+
+    def __str__(self):
+        return self.key

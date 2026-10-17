@@ -1,6 +1,6 @@
 import shutil
 import tempfile
-from io import BytesIO
+from io import BytesIO, StringIO
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -198,12 +198,9 @@ class InquiryTests(APITestCase):
         self.assertEqual(response.data[0]['name'], 'Kamala')
 
 
+@override_settings(PLACES_FETCH_IN_BACKGROUND=False)
 class NearbyPlacesTests(APITestCase):
     URL = '/api/places/?south=6.88&west=79.84&north=6.94&east=79.90&categories='
-
-    def setUp(self):
-        from django.core.cache import cache
-        cache.clear()
 
     @staticmethod
     def overpass_reply(elements):
@@ -213,21 +210,34 @@ class NearbyPlacesTests(APITestCase):
         response.__enter__.return_value = BytesIO(json.dumps({'elements': elements}).encode())
         return response
 
-    def test_groups_places_by_category_and_caches_them(self):
+    ELEMENTS = [
+        {'type': 'node', 'id': 1, 'lat': 6.9, 'lon': 79.86, 'tags': {'shop': 'supermarket', 'name': 'Keells Super'}},
+        {'type': 'way', 'id': 2, 'center': {'lat': 6.91, 'lon': 79.87}, 'tags': {'shop': 'supermarket', 'name': 'Cargills Food City'}},
+        {'type': 'node', 'id': 3, 'lat': 6.92, 'lon': 79.88, 'tags': {'shop': 'supermarket', 'name': 'Arpico'}},
+        {'type': 'node', 'id': 4, 'lat': 6.93, 'lon': 79.85, 'tags': {'amenity': 'school', 'name': 'Royal College'}},
+    ]
+
+    def test_first_view_downloads_and_later_views_come_from_the_database(self):
         from unittest import mock
-        elements = [
-            {'type': 'node', 'id': 1, 'lat': 6.9, 'lon': 79.86, 'tags': {'shop': 'supermarket', 'name': 'Keells Super'}},
-            {'type': 'way', 'id': 2, 'center': {'lat': 6.91, 'lon': 79.87}, 'tags': {'shop': 'supermarket', 'name': 'Cargills Food City'}},
-            {'type': 'node', 'id': 3, 'lat': 6.92, 'lon': 79.88, 'tags': {'shop': 'supermarket', 'name': 'Arpico'}},
-        ]
-        with mock.patch('urllib.request.urlopen', return_value=self.overpass_reply(elements)) as urlopen:
+        with mock.patch('urllib.request.urlopen', return_value=self.overpass_reply(self.ELEMENTS)) as urlopen:
             first = self.client.get(self.URL + 'keells,foodcity').data
             again = self.client.get(self.URL + 'keells,foodcity').data
-        self.assertEqual(urlopen.call_count, 1)  # second answer came from the cache
+            schools = self.client.get(self.URL + 'school').data  # every category was stored at once
+        self.assertEqual(urlopen.call_count, 1)
         self.assertEqual(first, again)
         self.assertEqual({p['category'] for p in first['places']}, {'keells', 'foodcity'})
-        self.assertEqual(first['unavailable'], [])
         self.assertEqual(len(first['places']), 2)  # the non-chain supermarket is left out
+        self.assertEqual((first['unavailable'], first['pending']), ([], False))
+        self.assertEqual([p['name'] for p in schools['places']], ['Royal College'])
+
+    def test_download_in_progress_is_reported_as_pending(self):
+        from unittest import mock
+        with self.settings(PLACES_FETCH_IN_BACKGROUND=True), mock.patch('threading.Thread') as thread:
+            first = self.client.get(self.URL + 'school').data
+            again = self.client.get(self.URL + 'school').data
+        self.assertEqual(thread.call_count, 1)  # the second view doesn't start a second download
+        self.assertEqual(first, {'places': [], 'unavailable': [], 'pending': True})
+        self.assertTrue(again['pending'])
 
     def test_too_large_an_area_asks_to_zoom_in(self):
         response = self.client.get('/api/places/?categories=school&south=6&west=79&north=8&east=81')
@@ -240,10 +250,23 @@ class NearbyPlacesTests(APITestCase):
         with mock.patch('urllib.request.urlopen', side_effect=urllib.error.URLError('down')), mock.patch('time.sleep'):
             response = self.client.get(self.URL + 'school')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {'places': [], 'unavailable': ['school']})
+        self.assertEqual(response.data, {'places': [], 'unavailable': ['school'], 'pending': False})
 
     def test_unknown_categories_are_ignored(self):
-        self.assertEqual(self.client.get(self.URL + 'casino').data, {'places': [], 'unavailable': []})
+        self.assertEqual(self.client.get(self.URL + 'casino').data, {'places': [], 'unavailable': [], 'pending': False})
+
+    def test_warm_places_downloads_around_cities(self):
+        from unittest import mock
+        from django.core.management import call_command
+        from properties.management.commands import warm_places
+        from properties.models import Place
+        with mock.patch.object(warm_places, 'CITIES', [{'city': 'Colombo', 'lat': 6.9, 'lng': 79.86}]), \
+                mock.patch('urllib.request.urlopen', return_value=self.overpass_reply(self.ELEMENTS)) as urlopen, \
+                mock.patch('time.sleep'):
+            call_command('warm_places', stdout=StringIO())
+            call_command('warm_places', stdout=StringIO())  # already stored: nothing downloaded
+        self.assertEqual(urlopen.call_count, 1)
+        self.assertEqual(Place.objects.count(), 3)
 
 
 class SharedBathroomTests(APITestCase):

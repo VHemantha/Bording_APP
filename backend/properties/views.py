@@ -116,8 +116,9 @@ class PlacesThrottle(AIRateThrottle):
 class NearbyPlacesView(APIView):
     """GET /api/places/?categories=school,keells&south=..&west=..&north=..&east=..
 
-    Points of interest for the map's "Nearby places" menu: {places: [...], unavailable: [...]}
-    where `unavailable` lists categories the data service couldn't provide just now. 400 with
+    Points of interest for the map's "Nearby places" menu: {places, unavailable, pending}
+    where `unavailable` lists categories the data service couldn't provide just now and
+    `pending` means part of the area is still downloading (ask again shortly). 400 with
     code "zoom" when the area is too big to query (the map then asks the user to zoom in).
     """
 
@@ -127,7 +128,7 @@ class NearbyPlacesView(APIView):
     def get(self, request):
         categories = [c for c in request.query_params.get('categories', '').split(',') if c in CATEGORIES]
         if not categories:
-            return Response({'places': [], 'unavailable': []})
+            return Response({'places': [], 'unavailable': [], 'pending': False})
         try:
             south, west, north, east = (
                 float(request.query_params[k]) for k in ('south', 'west', 'north', 'east')
@@ -138,7 +139,7 @@ class NearbyPlacesView(APIView):
             return Response({'detail': 'Invalid map area.'}, status=400)
 
         try:
-            places, unavailable = nearby_places(categories, south, west, north, east)
+            places, unavailable, pending = nearby_places(categories, south, west, north, east)
         except ValueError:
             return Response({'detail': 'Zoom in to see places.', 'code': 'zoom'}, status=400)
-        return Response({'places': places, 'unavailable': unavailable})
+        return Response({'places': places, 'unavailable': unavailable, 'pending': pending})

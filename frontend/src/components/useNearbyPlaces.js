@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react'
 import client from '../api/client'
 import { MAX_PLACES_SPAN } from './placeCategories'
 
+const POLL_MS = 4000
+const MAX_POLLS = 45
+
 /**
  * Loads points of interest for the selected categories inside the map's current view.
  * `bounds` is { south, west, north, east } (or null before the map has reported it).
@@ -29,16 +32,31 @@ export default function useNearbyPlaces(categories, bounds) {
     }
 
     let cancelled = false
-    const timer = setTimeout(() => {
-      setState((s) => ({ ...s, status: 'loading' }))
+    let timer
+    let tries = 0
+    const load = () => {
       client
         .get('/places/', { params: { categories: categoryKey, south, west, north, east } })
         .then(({ data }) => {
-          if (!cancelled) setState({ places: data.places, status: data.unavailable.length ? 'partial' : 'ready' })
+          if (cancelled) return
+          // `pending`: the server is still downloading part of this area. Show what it has
+          // and ask again shortly (for up to about three minutes).
+          if (data.pending && tries < MAX_POLLS) {
+            tries += 1
+            setState({ places: data.places, status: 'loading' })
+            timer = setTimeout(load, POLL_MS)
+            return
+          }
+          const failed = data.unavailable.length || data.pending
+          setState({ places: data.places, status: failed ? 'partial' : 'ready' })
         })
         .catch((err) => {
           if (!cancelled) setState({ places: [], status: err?.response?.data?.code === 'zoom' ? 'zoom' : 'error' })
         })
+    }
+    timer = setTimeout(() => {
+      setState((s) => ({ ...s, status: 'loading' }))
+      load()
     }, 400) // wait for the map to settle after a pan/zoom
     return () => {
       cancelled = true
