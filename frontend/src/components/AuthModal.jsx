@@ -8,13 +8,17 @@ import { useAuthModal } from '../context/AuthModalContext'
 import { useLanguage } from '../context/LanguageContext'
 import GoogleButton from './GoogleButton'
 
+// Google sign-in is switched off for now; set to true to bring the button back.
+const SHOW_GOOGLE_SIGN_IN = false
+
 export default function AuthModal() {
   const { open, mode, closeAuth, setMode } = useAuthModal()
   const { login, register, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
   const { t } = useLanguage()
 
-  const [email, setEmail] = useState('')
+  // An email address or a phone number.
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -48,13 +52,15 @@ export default function AuthModal() {
     try {
       const user =
         mode === 'register'
-          ? await register({ username: email, email, password })
-          : await login({ username: email, password })
+          ? await register({ identifier, password })
+          : await login({ username: identifier, password })
       finish(user)
     } catch (err) {
       const data = err?.response?.data
       setError(
-        data
+        mode !== 'register' && err?.response?.status === 401
+          ? t('auth.errLogin')
+          : data
           ? Object.values(data).flat().join(' ')
           : mode === 'register'
             ? t('auth.errCreate')
@@ -117,21 +123,25 @@ export default function AuthModal() {
                 : t('auth.signInSub')}
             </p>
 
-            <div className="mt-6">
-              <GoogleButton onCredential={handleGoogle} onError={setError} />
-            </div>
+            {SHOW_GOOGLE_SIGN_IN && (
+              <>
+                <div className="mt-6">
+                  <GoogleButton onCredential={handleGoogle} onError={setError} />
+                </div>
+                <div className="my-5 flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-slate-400">
+                  <span className="h-px flex-1 bg-slate-200" /> {t('common.or')} <span className="h-px flex-1 bg-slate-200" />
+                </div>
+              </>
+            )}
 
-            <div className="my-5 flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-slate-400">
-              <span className="h-px flex-1 bg-slate-200" /> {t('common.or')} <span className="h-px flex-1 bg-slate-200" />
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className={`space-y-4 ${SHOW_GOOGLE_SIGN_IN ? '' : 'mt-6'}`}>
               <Field
-                label={isRegister ? t('auth.email') : t('auth.emailOrUsername')}
-                type={isRegister ? 'email' : 'text'}
-                value={email}
-                onChange={setEmail}
-                autoComplete={isRegister ? 'email' : 'username'}
+                label={t('auth.emailOrPhone')}
+                type="text"
+                value={identifier}
+                onChange={setIdentifier}
+                autoComplete="username"
+                placeholder={t('auth.identifierHint')}
                 autoFocus // keyboard focus moves into the dialog when it opens
               />
               <Field
@@ -177,7 +187,7 @@ export default function AuthModal() {
   )
 }
 
-function Field({ label, type, value, onChange, autoComplete, autoFocus }) {
+function Field({ label, type, value, onChange, autoComplete, autoFocus, placeholder }) {
   return (
     <label className="block">
       <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
@@ -187,6 +197,7 @@ function Field({ label, type, value, onChange, autoComplete, autoFocus }) {
         required
         autoComplete={autoComplete}
         autoFocus={autoFocus}
+        placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
       />

@@ -26,7 +26,10 @@ export default function PropertyCard({
   // Land has no rooms, so those chips are left out rather than showing "0 bd".
   const chips = [
     property.beds > 0 && [property.beds, t('unit.bd')],
-    property.baths > 0 && [formatBaths(property.baths), t('unit.ba')],
+    property.baths > 0 && [
+      formatBaths(property.baths),
+      property.shared_bathroom ? `${t('unit.ba')} (${t('bath.shared')})` : t('unit.ba'),
+    ],
     [property.sqft.toLocaleString(), t('unit.sqft')],
   ].filter(Boolean)
 

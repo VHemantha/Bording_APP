@@ -13,8 +13,9 @@ const EMPTY = {
   latitude: '',
   longitude: '',
   price: '',
-  beds: '',
-  baths: '',
+  beds: '1',
+  baths: '1',
+  shared_bathroom: false,
   sqft: '',
   home_type: 'house',
   status: 'for_rent',
@@ -96,8 +97,22 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
       <Section title={t('admin.details')}>
         <Grid>
           <Text label={t('admin.priceUsd')} type="number" value={values.price} onChange={(v) => set('price', v)} required />
-          <Text label={t('filter.bedrooms')} type="number" value={values.beds} onChange={(v) => set('beds', v)} required />
-          <Text label={t('filter.bathrooms')} type="number" step="0.5" value={values.baths} onChange={(v) => set('baths', v)} required />
+          <Select label={t('filter.bedrooms')} value={String(values.beds)} onChange={(v) => set('beds', v)} options={roomOptions(values.beds)} />
+          <div>
+            <Select label={t('filter.bathrooms')} value={values.shared_bathroom ? '1' : String(values.baths)} onChange={(v) => set('baths', v)} options={roomOptions(values.baths)} />
+            <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={Boolean(values.shared_bathroom)}
+                onChange={(e) => {
+                  set('shared_bathroom', e.target.checked)
+                  if (e.target.checked) set('baths', '1')
+                }}
+                className="h-4 w-4 accent-brand-600"
+              />
+              {t('post.sharedBathroom')}
+            </label>
+          </div>
           <Text label={t('filter.sqft')} type="number" value={values.sqft} onChange={(v) => set('sqft', v)} required />
           <Select label={t('detail.homeType')} value={values.home_type} onChange={(v) => set('home_type', v)} options={Object.keys(HOME_TYPE_LABELS).map((key) => [key, t(`type.${key}`)])} />
           <Select label={t('admin.keyMoneyUsd')} value={String(values.key_money_months ?? 0)} onChange={(v) => set('key_money_months', v)} options={Array.from({ length: 13 }, (_, n) => [String(n), n === 0 ? t('card.noKeyMoney') : formatKeyMoney(n, t)])} />
@@ -208,4 +223,13 @@ function Select({ label, value, onChange, options }) {
       </select>
     </label>
   )
+}
+
+// Bedrooms / bathrooms: 1-7, plus the listing's current value if it's outside that (older listings).
+function roomOptions(current) {
+  const values = ['1', '2', '3', '4', '5', '6', '7']
+  if (current !== '' && current !== null && current !== undefined && !values.includes(String(current))) {
+    values.unshift(String(current))
+  }
+  return values.map((v) => [v, v])
 }

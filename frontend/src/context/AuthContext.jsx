@@ -49,7 +49,7 @@ export function AuthProvider({ children }) {
 
   async function register(details) {
     await registerUser(details)
-    return login({ username: details.username, password: details.password })
+    return login({ username: details.identifier, password: details.password })
   }
 
   function logout() {

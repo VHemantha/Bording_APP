@@ -54,6 +54,7 @@ class ListingDraft(BaseModel):
     status: Literal['for_sale', 'for_rent'] = 'for_rent'
     key_money_months: int = Field(0, ge=0, le=12, description="Key money (advance) as a number of months' rent, 0-12. 0 if none.")
     parking_slots: int = 0
+    shared_bathroom: bool = Field(False, description='True if the only bathroom is shared with others.')
     stories: Optional[Literal[1, 2, 3]] = Field(None, description='Number of stories; leave blank for land.')
     furnishing: Literal['furnished', 'unfurnished'] = 'unfurnished'
     description: str = Field(description='A polished 2-4 sentence marketing description.')

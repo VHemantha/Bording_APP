@@ -4,6 +4,10 @@
 
 export const pageTranslations = {
   en: {
+    'auth.emailOrPhone': 'Email or phone number',
+    'auth.identifierHint': 'you@example.com or 077 123 4567',
+    'post.sharedBathroom': 'Only one shared bathroom',
+    'bath.shared': 'shared',
     'filter.showResults': 'Show results',
     'type.shop': 'Shop',
     'keyMoney.oneMonth': '1 month',
@@ -36,6 +40,8 @@ export const pageTranslations = {
     'unit.sqft': 'sqft',
     'unit.beds': 'beds',
     'unit.baths': 'baths',
+    'unit.bed': 'bed',
+    'unit.bath': 'bath',
     'unit.perMonth': '/mo',
 
     'filter.price': 'Price',
@@ -118,7 +124,7 @@ export const pageTranslations = {
     'auth.createAnAccount': 'Create an account',
     'auth.terms': 'By continuing you agree to the Rent House.lk Terms of Use and acknowledge the Privacy Policy.',
     'auth.errCreate': 'Could not create your account.',
-    'auth.errLogin': 'Incorrect email or password.',
+    'auth.errLogin': 'Incorrect email, phone number or password.',
     'auth.errGoogle': 'Google sign-in failed.',
     'auth.google': 'Continue with Google',
     'auth.googleNotConfigured': "Google sign-in isn't configured yet. Add VITE_GOOGLE_CLIENT_ID to enable it.",
@@ -195,6 +201,10 @@ export const pageTranslations = {
   },
 
   si: {
+    'auth.emailOrPhone': 'ඊමේල් හෝ දුරකථන අංකය',
+    'auth.identifierHint': 'you@example.com හෝ 077 123 4567',
+    'post.sharedBathroom': 'හවුලේ භාවිත කරන එක් නාන කාමරයක් පමණි',
+    'bath.shared': 'හවුල්',
     'filter.showResults': 'ප්‍රතිඵල පෙන්වන්න',
     'type.shop': 'වෙළඳසැල',
     'keyMoney.oneMonth': 'මාස 1',
@@ -310,7 +320,7 @@ export const pageTranslations = {
     'auth.terms':
       'ඉදිරියට යාමෙන් ඔබ Rent House.lk භාවිත නියමවලට එකඟ වන අතර පෞද්ගලිකත්ව ප්‍රතිපත්තිය පිළිගනී.',
     'auth.errCreate': 'ඔබේ ගිණුම සෑදිය නොහැකි විය.',
-    'auth.errLogin': 'ඊමේල් හෝ මුරපදය වැරදියි.',
+    'auth.errLogin': 'ඊමේල්, දුරකථන අංකය හෝ මුරපදය වැරදියි.',
     'auth.errGoogle': 'Google පිවිසුම අසාර්ථක විය.',
     'auth.google': 'Google සමඟ ඉදිරියට යන්න',
     'auth.googleNotConfigured': 'Google පිවිසුම තවම සකසා නැත.',
@@ -386,6 +396,10 @@ export const pageTranslations = {
   },
 
   ta: {
+    'auth.emailOrPhone': 'மின்னஞ்சல் அல்லது தொலைபேசி எண்',
+    'auth.identifierHint': 'you@example.com அல்லது 077 123 4567',
+    'post.sharedBathroom': 'பகிரப்பட்ட ஒரே ஒரு குளியலறை மட்டும்',
+    'bath.shared': 'பகிரப்பட்டது',
     'filter.showResults': 'முடிவுகளைக் காட்டு',
     'type.shop': 'கடை',
     'keyMoney.oneMonth': '1 மாதம்',
@@ -501,7 +515,7 @@ export const pageTranslations = {
     'auth.terms':
       'தொடர்வதன் மூலம் Rent House.lk பயன்பாட்டு விதிமுறைகளை ஏற்று, தனியுரிமைக் கொள்கையை ஒப்புக்கொள்கிறீர்கள்.',
     'auth.errCreate': 'உங்கள் கணக்கை உருவாக்க முடியவில்லை.',
-    'auth.errLogin': 'மின்னஞ்சல் அல்லது கடவுச்சொல் தவறானது.',
+    'auth.errLogin': 'மின்னஞ்சல், தொலைபேசி எண் அல்லது கடவுச்சொல் தவறானது.',
     'auth.errGoogle': 'Google உள்நுழைவு தோல்வியடைந்தது.',
     'auth.google': 'Google மூலம் தொடரவும்',
     'auth.googleNotConfigured': 'Google உள்நுழைவு இன்னும் அமைக்கப்படவில்லை.',

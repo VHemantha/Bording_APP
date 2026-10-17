@@ -128,8 +128,8 @@ export default function PropertyDetailPage() {
   // The tiles under the title (Zillow's icon fact grid).
   const highlights = [
     [Building2, t(`type.${p.home_type}`)],
-    !land && [BedDouble, `${p.beds} ${t('unit.beds')}`],
-    !land && [Bath, `${formatBaths(p.baths)} ${t('unit.baths')}`],
+    !land && [BedDouble, `${p.beds} ${t(p.beds === 1 ? 'unit.bed' : 'unit.beds')}`],
+    !land && [Bath, `${formatBaths(p.baths)} ${t(p.baths === 1 ? 'unit.bath' : 'unit.baths')}${p.shared_bathroom ? ` (${t('bath.shared')})` : ''}`],
     [Ruler, sqft],
     [Sofa, t(`furnishing.${p.furnishing}`)],
     [Car, `${t('filter.parking')}: ${p.parking_slots}`],
@@ -147,7 +147,7 @@ export default function PropertyDetailPage() {
     ]],
     !land && [t('detail.groupRooms'), [
       [t('filter.bedrooms'), p.beds],
-      [t('filter.bathrooms'), formatBaths(p.baths)],
+      [t('filter.bathrooms'), `${formatBaths(p.baths)}${p.shared_bathroom ? ` (${t('bath.shared')})` : ''}`],
     ]],
     [t('detail.groupFeatures'), [
       [t('filter.furnishing'), t(`furnishing.${p.furnishing}`)],

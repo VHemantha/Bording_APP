@@ -1,7 +1,8 @@
 import client from './client'
 
-export async function registerUser({ username, email, password }) {
-  const { data } = await client.post('/auth/register/', { username, email, password })
+/** `identifier` is an email address or a phone number. */
+export async function registerUser({ identifier, password }) {
+  const { data } = await client.post('/auth/register/', { identifier, password })
   return data
 }
 

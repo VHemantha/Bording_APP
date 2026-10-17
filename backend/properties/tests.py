@@ -244,3 +244,16 @@ class NearbyPlacesTests(APITestCase):
 
     def test_unknown_categories_are_ignored(self):
         self.assertEqual(self.client.get(self.URL + 'casino').data, {'places': [], 'unavailable': []})
+
+
+class SharedBathroomTests(APITestCase):
+    def test_shared_bathroom_means_one_bathroom(self):
+        from django.contrib.auth import get_user_model
+        user = get_user_model().objects.create_user('sharer', 's@example.com', 'pw-123456')
+        self.client.force_authenticate(user)
+        response = self.client.post(
+            '/api/properties/', listing_payload(baths=3, shared_bathroom=True), format='json'
+        )
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertTrue(response.data['shared_bathroom'])
+        self.assertEqual(response.data['baths'], 1)

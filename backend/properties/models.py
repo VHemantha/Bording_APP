@@ -43,6 +43,8 @@ class Property(models.Model):
     price = models.PositiveIntegerField()
     beds = models.PositiveSmallIntegerField()
     baths = models.FloatField()
+    # The listing has one bathroom, shared with others (e.g. the owner's family or other tenants).
+    shared_bathroom = models.BooleanField(default=False)
     sqft = models.PositiveIntegerField()
     home_type = models.CharField(max_length=20, choices=HomeType.choices, default=HomeType.HOUSE)
     # The site lists rentals only for now; the sale option is kept so it can come back.

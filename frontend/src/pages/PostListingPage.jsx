@@ -19,8 +19,9 @@ const EMPTY = {
   price: '',
   key_money_months: '0',
   furnishing: 'unfurnished',
-  beds: '',
-  baths: '',
+  beds: '1',
+  baths: '1',
+  shared_bathroom: false,
   sqft: '',
   stories: '1',
   parking_slots: '0',
@@ -40,9 +41,12 @@ export default function PostListingPage() {
   const { user } = useAuth()
   const { t } = useLanguage()
 
+  // Phone accounts have the number as their username: offer it as the contact number.
+  const signedUpWithPhone = /^\+\d+$/.test(user?.username ?? '')
   const [values, setValues] = useState(() => ({
     ...EMPTY,
-    contact_name: user?.username?.split('@')[0] ?? '',
+    contact_name: signedUpWithPhone ? '' : (user?.username?.split('@')[0] ?? ''),
+    contact_phone: signedUpWithPhone ? user.username : '',
   }))
   const [location, setLocation] = useState(null)
   const [mapFocus, setMapFocus] = useState(null)
@@ -65,7 +69,10 @@ export default function PostListingPage() {
           return
         }
         const asText = (v) => (v === null || v === undefined ? '' : String(v))
-        setValues(Object.fromEntries(Object.keys(EMPTY).map((k) => [k, asText(p[k])])))
+        setValues({
+          ...Object.fromEntries(Object.keys(EMPTY).map((k) => [k, asText(p[k])])),
+          shared_bathroom: Boolean(p.shared_bathroom),
+        })
         setLocation({ lat: p.latitude, lng: p.longitude })
         const gallery = p.images?.length ? p.images.map((img) => img.image_url) : [p.primary_image_url]
         setPhotos(gallery.map((url) => ({ key: nextKey.current++, url })))
@@ -203,8 +210,33 @@ export default function PostListingPage() {
         <Section title={t('post.rooms')}>
           {!land && (
             <>
-              <Field label={t('filter.bedrooms')} type="number" min="0" required value={values.beds} onChange={(v) => set('beds', v)} error={errors.beds} />
-              <Field label={t('filter.bathrooms')} type="number" min="0" step="0.5" required value={values.baths} onChange={(v) => set('baths', v)} error={errors.baths} />
+              <Select
+                label={t('filter.bedrooms')}
+                value={values.beds}
+                onChange={(v) => set('beds', v)}
+                options={roomOptions(values.beds)}
+              />
+              <div>
+                <Select
+                  label={t('filter.bathrooms')}
+                  value={values.shared_bathroom ? '1' : values.baths}
+                  onChange={(v) => set('baths', v)}
+                  options={roomOptions(values.baths)}
+                  disabled={values.shared_bathroom}
+                />
+                <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={values.shared_bathroom}
+                    onChange={(e) => {
+                      set('shared_bathroom', e.target.checked)
+                      if (e.target.checked) set('baths', '1')
+                    }}
+                    className="h-4 w-4 accent-brand-600"
+                  />
+                  {t('post.sharedBathroom')}
+                </label>
+              </div>
             </>
           )}
           <Field label={t('filter.sqft')} type="number" min="1" required value={values.sqft} onChange={(v) => set('sqft', v)} error={errors.sqft} />
@@ -380,11 +412,23 @@ function Field({ label, value, onChange, error, hint, span2, ...inputProps }) {
   )
 }
 
-function Select({ label, value, onChange, options }) {
+// Bedrooms / bathrooms: 1-7, plus the listing's current value if it's outside that (older listings).
+function roomOptions(current) {
+  const values = ['1', '2', '3', '4', '5', '6', '7']
+  if (current && !values.includes(String(current))) values.unshift(String(current))
+  return values.map((v) => [v, v])
+}
+
+function Select({ label, value, onChange, options, disabled }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-bold text-slate-700">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className={inputClass}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className={`${inputClass} disabled:bg-slate-100 disabled:text-slate-500`}
+      >
         {options.map(([v, l]) => (
           <option key={v} value={v}>{l}</option>
         ))}

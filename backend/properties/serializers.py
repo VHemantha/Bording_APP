@@ -34,7 +34,7 @@ class PropertyListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'home_type', 'status', 'key_money_months', 'parking_slots',
+            'sqft', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'parking_slots',
             'stories', 'furnishing', 'primary_image_url',
         ]
 
@@ -49,7 +49,7 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'home_type', 'status', 'key_money_months', 'parking_slots',
+            'sqft', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'parking_slots',
             'stories', 'furnishing', 'description',
             'year_built', 'primary_image_url', 'listed_date', 'images',
             'contact_name', 'contact_phone', 'can_edit',
@@ -90,7 +90,7 @@ class PropertyWriteSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'home_type', 'status', 'key_money_months', 'parking_slots',
+            'sqft', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'parking_slots',
             'stories', 'furnishing', 'description',
             'year_built', 'primary_image_url', 'listed_date', 'images',
             'contact_name', 'contact_phone',
@@ -98,6 +98,8 @@ class PropertyWriteSerializer(serializers.ModelSerializer):
         extra_kwargs = {'listed_date': {'required': False}}
 
     def validate(self, attrs):
+        if attrs.get('shared_bathroom'):
+            attrs['baths'] = 1  # "one shared bathroom"
         for field in ('latitude', 'longitude'):
             value = attrs.get(field)
             limit = 90 if field == 'latitude' else 180
