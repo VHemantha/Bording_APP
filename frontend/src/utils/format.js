@@ -37,6 +37,7 @@ export const HOME_TYPE_LABELS = {
   land: 'Land',
   upper_floor_house: 'Upper floor house',
   shop: 'Shop',
+  commercial: 'Commercial property',
 }
 
 export const STORIES_LABELS = {

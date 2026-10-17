@@ -13,6 +13,7 @@ class Property(models.Model):
         LAND = 'land', 'Land'
         UPPER_FLOOR_HOUSE = 'upper_floor_house', 'Upper floor house'
         SHOP = 'shop', 'Shop'
+        COMMERCIAL = 'commercial', 'Commercial property'
 
     class Stories(models.IntegerChoices):
         SINGLE = 1, 'Single story'

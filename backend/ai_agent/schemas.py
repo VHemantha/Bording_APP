@@ -20,7 +20,7 @@ class PropertySearchFilters(BaseModel):
     max_price: Optional[int] = Field(None, description='Maximum monthly rent / budget ceiling in Sri Lankan rupees (LKR).')
     min_beds: Optional[int] = Field(None, description='Minimum number of bedrooms.')
     min_baths: Optional[float] = Field(None, description='Minimum number of bathrooms.')
-    home_type: Optional[Literal['house', 'apartment', 'annex', 'land', 'upper_floor_house', 'shop']] = Field(
+    home_type: Optional[Literal['house', 'apartment', 'annex', 'land', 'upper_floor_house', 'shop', 'commercial']] = Field(
         None, description='Type of home, if the user specified one.'
     )
     max_key_money_months: Optional[int] = Field(
@@ -50,7 +50,7 @@ class ListingDraft(BaseModel):
     beds: int
     baths: float
     sqft: int
-    home_type: Literal['house', 'apartment', 'annex', 'land', 'upper_floor_house', 'shop'] = 'house'
+    home_type: Literal['house', 'apartment', 'annex', 'land', 'upper_floor_house', 'shop', 'commercial'] = 'house'
     status: Literal['for_sale', 'for_rent'] = 'for_rent'
     key_money_months: int = Field(0, ge=0, le=12, description="Key money (advance) as a number of months' rent, 0-12. 0 if none.")
     parking_slots: int = 0
