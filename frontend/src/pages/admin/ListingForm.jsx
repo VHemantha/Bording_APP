@@ -2,7 +2,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { useLanguage } from '../../context/LanguageContext'
-import { formatKeyMoney, HOME_TYPE_LABELS, STORIES_LABELS } from '../../utils/format'
+import { formatKeyMoney, homeTypesFor, RENT_ONLY_TYPES, STORIES_LABELS } from '../../utils/format'
 
 
 const EMPTY = {
@@ -20,6 +20,7 @@ const EMPTY = {
   home_type: 'house',
   status: 'for_rent',
   key_money_months: '0',
+  advance_amount: '',
   parking_slots: 0,
   stories: '',
   furnishing: 'unfurnished',
@@ -67,8 +68,8 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
       beds: num(values.beds),
       baths: num(values.baths),
       sqft: num(values.sqft),
-      key_money_months: num(values.key_money_months) ?? 0,
-      status: 'for_rent', // rentals only for now
+      key_money_months: values.status === 'for_sale' ? 0 : num(values.key_money_months) ?? 0,
+      advance_amount: values.status === 'for_sale' ? num(values.advance_amount) : null,
       parking_slots: num(values.parking_slots) ?? 0,
       stories: num(values.stories),
       year_built: num(values.year_built),
@@ -96,7 +97,16 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
 
       <Section title={t('admin.details')}>
         <Grid>
-          <Text label={t('admin.priceUsd')} type="number" value={values.price} onChange={(v) => set('price', v)} required />
+          <Select
+            label={t('post.listingFor')}
+            value={values.status}
+            onChange={(v) => {
+              set('status', v)
+              if (v === 'for_sale' && RENT_ONLY_TYPES.includes(values.home_type)) set('home_type', 'house')
+            }}
+            options={['for_rent', 'for_sale'].map((key) => [key, t(`status.${key}`)])}
+          />
+          <Text label={values.status === 'for_sale' ? t('post.priceSale') : t('admin.priceUsd')} type="number" value={values.price} onChange={(v) => set('price', v)} required />
           <Select label={t('filter.bedrooms')} value={String(values.beds)} onChange={(v) => set('beds', v)} options={roomOptions(values.beds)} />
           <div>
             <Select label={t('filter.bathrooms')} value={values.shared_bathroom ? '1' : String(values.baths)} onChange={(v) => set('baths', v)} options={roomOptions(values.baths)} />
@@ -120,8 +130,12 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
             onChange={(v) => set('sqft', v)}
             required={['shop', 'commercial'].includes(values.home_type)}
           />
-          <Select label={t('detail.homeType')} value={values.home_type} onChange={(v) => set('home_type', v)} options={Object.keys(HOME_TYPE_LABELS).map((key) => [key, t(`type.${key}`)])} />
-          <Select label={t('admin.keyMoneyUsd')} value={String(values.key_money_months ?? 0)} onChange={(v) => set('key_money_months', v)} options={Array.from({ length: 13 }, (_, n) => [String(n), n === 0 ? t('card.noKeyMoney') : formatKeyMoney(n, t)])} />
+          <Select label={t('detail.homeType')} value={values.home_type} onChange={(v) => set('home_type', v)} options={homeTypesFor(values.status).map((key) => [key, t(`type.${key}`)])} />
+          {values.status === 'for_sale' ? (
+            <Text label={`${t('post.advance')} (${t('post.optional')})`} type="number" value={values.advance_amount ?? ''} onChange={(v) => set('advance_amount', v)} />
+          ) : (
+            <Select label={t('admin.keyMoneyUsd')} value={String(values.key_money_months ?? 0)} onChange={(v) => set('key_money_months', v)} options={Array.from({ length: 13 }, (_, n) => [String(n), n === 0 ? t('card.noKeyMoney') : formatKeyMoney(n, t)])} />
+          )}
           <Text label={t('filter.parking')} type="number" value={values.parking_slots} onChange={(v) => set('parking_slots', v)} />
           <Select label={t('detail.stories')} value={values.stories ?? ''} onChange={(v) => set('stories', v)} options={[['', t('admin.notApplicable')], ...Object.keys(STORIES_LABELS).map((key) => [key, t(`stories.${key}`)])]} />
           <Select label={t('filter.furnishing')} value={values.furnishing} onChange={(v) => set('furnishing', v)} options={['furnished', 'unfurnished'].map((key) => [key, t(`furnishing.${key}`)])} />

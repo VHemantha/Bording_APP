@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { useLanguage } from '../context/LanguageContext'
+import DealToggle from './DealToggle'
 import useKeepInViewport from './useKeepInViewport'
-import { HOME_TYPE_LABELS, STORIES_LABELS } from '../utils/format'
+import { ADVANCE_OPTIONS, formatCompactPrice, homeTypesFor, STORIES_LABELS } from '../utils/format'
 
 // Key money options: any, none, or up to N months' rent.
 const KEY_MONEY_MONTHS = Array.from({ length: 12 }, (_, i) => String(i + 1))
@@ -27,6 +28,7 @@ const csv = (value) => (value ? value.split(',') : [])
 export default function FilterBar({
   filters,
   onChange,
+  onDealChange,
   searchText,
   onSearch,
   saved,
@@ -35,7 +37,7 @@ export default function FilterBar({
   onToggleAi,
 }) {
   const { t } = useLanguage()
-  const priceActive = filters.min_price || filters.max_price || filters.max_key_money_months
+  const priceActive = filters.min_price || filters.max_price || filters.max_key_money_months || filters.max_advance
   const bedsActive = filters.min_beds || filters.min_baths
   const types = csv(filters.home_type)
   const moreCount =
@@ -46,7 +48,7 @@ export default function FilterBar({
   const allCount =
     moreCount +
     (filters.min_price || filters.max_price ? 1 : 0) +
-    (filters.max_key_money_months ? 1 : 0) +
+    (filters.max_key_money_months || filters.max_advance ? 1 : 0) +
     (filters.min_beds ? 1 : 0) +
     (filters.min_baths ? 1 : 0) +
     (types.length ? 1 : 0)
@@ -55,6 +57,9 @@ export default function FilterBar({
   return (
     <div className="relative z-30 flex flex-wrap items-center gap-2 border-b sm:gap-3 border-slate-200 bg-white px-4 py-2.5">
       <SearchBox key={searchText} initial={searchText} onSearch={onSearch} />
+
+      {/* Phones: a full-width row of its own (the same in every language); inline from sm up. */}
+      <DealToggle value={filters.status} onChange={onDealChange} className="w-full sm:w-auto" />
 
       <button
         type="button"
@@ -263,6 +268,7 @@ function PricePanel({ filters, onChange, close }) {
     min_price: filters.min_price,
     max_price: filters.max_price,
     max_key_money_months: filters.max_key_money_months,
+    max_advance: filters.max_advance,
   })
   const set = (field) => (value) => setDraft((d) => ({ ...d, [field]: value }))
   const { t } = useLanguage()
@@ -286,28 +292,37 @@ function PricePanel({ filters, onChange, close }) {
         <span className="pb-3 text-slate-400">–</span>
         <NumberField label={t('filter.maximum')} value={draft.max_price} onChange={set('max_price')} placeholder={t('filter.noMax')} />
       </div>
-      <p className="mb-2 mt-4 font-bold">{t('filter.keyMoney')}</p>
-      <label className="block">
-        <span className="mb-1 block text-xs font-bold text-slate-600">{t('filter.maxKeyMoney')}</span>
-        <select
-          value={draft.max_key_money_months}
-          onChange={(e) => set('max_key_money_months')(e.target.value)}
-          className={inputClass}
-        >
-          <option value="">{t('common.any')}</option>
-          <option value="0">{t('card.noKeyMoney')}</option>
-          {KEY_MONEY_MONTHS.map((n) => (
-            <option key={n} value={n}>
-              {n === '1' ? t('keyMoney.upToOne') : t('keyMoney.upTo', { count: n })}
-            </option>
-          ))}
-        </select>
-      </label>
+      <UpFrontField status={filters.status} draft={draft} set={set} className="mt-4" />
       <PanelFooter
-        onReset={() => apply({ min_price: '', max_price: '', max_key_money_months: '' })}
+        onReset={() => apply({ min_price: '', max_price: '', max_key_money_months: '', max_advance: '' })}
         onApply={() => apply(draft)}
       />
     </form>
+  )
+}
+
+/** What's paid up front: key money (months of rent) for rentals, the advance (LKR) for sales. */
+function UpFrontField({ status, draft, set, className = '' }) {
+  const { t } = useLanguage()
+  const selling = status === 'for_sale'
+  const field = selling ? 'max_advance' : 'max_key_money_months'
+  const options = selling
+    ? [['0', t('advance.none')], ...ADVANCE_OPTIONS.map((n) => [String(n), t('advance.upTo', { amount: formatCompactPrice(n) })])]
+    : [['0', t('card.noKeyMoney')], ...KEY_MONEY_MONTHS.map((n) => [n, n === '1' ? t('keyMoney.upToOne') : t('keyMoney.upTo', { count: n })])]
+
+  return (
+    <div className={className}>
+      <p className="mb-2 font-bold">{t(selling ? 'filter.advance' : 'filter.keyMoney')}</p>
+      <label className="block">
+        <span className="mb-1 block text-xs font-bold text-slate-600">{t(selling ? 'filter.maxAdvance' : 'filter.maxKeyMoney')}</span>
+        <select value={draft[field]} onChange={(e) => set(field)(e.target.value)} className={inputClass}>
+          <option value="">{t('common.any')}</option>
+          {options.map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+      </label>
+    </div>
   )
 }
 
@@ -391,7 +406,7 @@ function TypePanel({ filters, onChange, close }) {
     <div className="w-64 p-4">
       <p className="mb-2 font-bold">{t('filter.propertyType')}</p>
       <CheckList
-        options={Object.keys(HOME_TYPE_LABELS).map((key) => [key, t(`type.${key}`)])}
+        options={homeTypesFor(filters.status).map((key) => [key, t(`type.${key}`)])}
         selected={selected}
         onToggle={(value) => setSelected((list) => toggleIn(list, value))}
       />
@@ -463,6 +478,7 @@ function AllFiltersSheet({ filters, onChange, onClose }) {
     min_price: filters.min_price,
     max_price: filters.max_price,
     max_key_money_months: filters.max_key_money_months,
+    max_advance: filters.max_advance,
     min_beds: filters.min_beds,
     min_baths: filters.min_baths,
     home_type: csv(filters.home_type),
@@ -502,7 +518,7 @@ function AllFiltersSheet({ filters, onChange, onClose }) {
 
   function reset() {
     apply({
-      min_price: '', max_price: '', max_key_money_months: '', min_beds: '', min_baths: '',
+      min_price: '', max_price: '', max_key_money_months: '', max_advance: '', min_beds: '', min_baths: '',
       home_type: [], min_parking: '', min_sqft: '', max_sqft: '', stories: [], furnishing: [],
     })
   }
@@ -539,25 +555,7 @@ function AllFiltersSheet({ filters, onChange, onClose }) {
           </div>
         </section>
 
-        <section>
-          <p className="mb-2 font-bold">{t('filter.keyMoney')}</p>
-          <label className="block">
-            <span className="mb-1 block text-xs font-bold text-slate-600">{t('filter.maxKeyMoney')}</span>
-            <select
-              value={draft.max_key_money_months}
-              onChange={(e) => set('max_key_money_months')(e.target.value)}
-              className={inputClass}
-            >
-              <option value="">{t('common.any')}</option>
-              <option value="0">{t('card.noKeyMoney')}</option>
-              {KEY_MONEY_MONTHS.map((n) => (
-                <option key={n} value={n}>
-                  {n === '1' ? t('keyMoney.upToOne') : t('keyMoney.upTo', { count: n })}
-                </option>
-              ))}
-            </select>
-          </label>
-        </section>
+        <UpFrontField status={filters.status} draft={draft} set={set} />
 
         <MinPicker label={t('filter.bedrooms')} value={draft.min_beds} onChange={set('min_beds')} />
         <MinPicker label={t('filter.bathrooms')} value={draft.min_baths} onChange={set('min_baths')} />
@@ -565,7 +563,7 @@ function AllFiltersSheet({ filters, onChange, onClose }) {
         <section>
           <p className="mb-2 font-bold">{t('filter.propertyType')}</p>
           <CheckList
-            options={Object.keys(HOME_TYPE_LABELS).map((key) => [key, t(`type.${key}`)])}
+            options={homeTypesFor(filters.status).map((key) => [key, t(`type.${key}`)])}
             selected={draft.home_type}
             onToggle={toggle('home_type')}
           />

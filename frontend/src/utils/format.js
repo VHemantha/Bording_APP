@@ -40,6 +40,18 @@ export const HOME_TYPE_LABELS = {
   commercial: 'Commercial property',
 }
 
+// Property types that are only ever rented out, never sold (matches Property.RENT_ONLY_TYPES).
+export const RENT_ONLY_TYPES = ['annex', 'upper_floor_house']
+
+/** The property types that can be listed or searched for 'for_sale' / 'for_rent'. */
+export function homeTypesFor(status) {
+  const all = Object.keys(HOME_TYPE_LABELS)
+  return status === 'for_sale' ? all.filter((key) => !RENT_ONLY_TYPES.includes(key)) : all
+}
+
+/** Choices for the most a buyer can pay as an advance, in LKR. */
+export const ADVANCE_OPTIONS = [500000, 1000000, 2500000, 5000000, 10000000]
+
 export const STORIES_LABELS = {
   1: 'Single story',
   2: 'Two story',

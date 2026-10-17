@@ -102,8 +102,12 @@ class Command(BaseCommand):
         created = 0
         for i in range(count):
             city_info = random.choice(CITIES)
-            home_type = random.choice(HOME_TYPES)
-            status = Property.Status.FOR_RENT  # the site lists rentals only
+            # About a third are for sale. Annexes and upper floor houses are only ever rented.
+            status = Property.Status.FOR_SALE if random.random() < 0.35 else Property.Status.FOR_RENT
+            selling = status == Property.Status.FOR_SALE
+            home_type = random.choice(
+                [t for t in HOME_TYPES if t not in Property.RENT_ONLY_TYPES] if selling else HOME_TYPES
+            )
 
             beds = random.randint(1, 5)
             baths = random.choice([1, 1.5, 2, 2.5, 3, 3.5])
@@ -114,10 +118,17 @@ class Command(BaseCommand):
                 # Bare land: nothing built on it yet.
                 beds, baths, stories = 0, 0, None
 
-            # Monthly rent in LKR, rounded to the nearest 500.
-            price = round(sqft * random.uniform(25, 80) / 500) * 500
-            # Rentals usually ask for some months of rent up front; sales don't.
-            key_money_months = random.choice([0, 0, 1, 2, 3, 6, 6, 10, 12])
+            if selling:
+                # Sale price in LKR, rounded to the nearest 100,000; the advance (if any) is
+                # 5-10% of it, rounded to the nearest 50,000.
+                price = round(sqft * random.uniform(9000, 30000) / 100_000) * 100_000
+                advance_amount = random.choice([None, round(price * random.uniform(0.05, 0.1) / 50_000) * 50_000])
+                key_money_months = 0
+            else:
+                # Monthly rent in LKR, rounded to the nearest 500, and key money in months.
+                price = round(sqft * random.uniform(25, 80) / 500) * 500
+                advance_amount = None
+                key_money_months = random.choice([0, 0, 1, 2, 3, 6, 6, 10, 12])
 
             lat = city_info['lat'] + random.uniform(-0.012, 0.012)
             lng = city_info['lng'] + random.uniform(-0.012, 0.012)
@@ -146,6 +157,7 @@ class Command(BaseCommand):
                 home_type=home_type,
                 status=status,
                 key_money_months=key_money_months,
+                advance_amount=advance_amount,
                 parking_slots=parking_slots,
                 stories=stories,
                 furnishing=random.choice(['furnished', 'unfurnished']),

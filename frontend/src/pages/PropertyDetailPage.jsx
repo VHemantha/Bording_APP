@@ -183,12 +183,20 @@ export default function PropertyDetailPage() {
             <p className="mt-1 text-lg text-slate-700">{address}</p>
 
             <div className="mt-5 flex flex-wrap items-end gap-x-6 gap-y-2">
+              <p className="w-full text-sm font-bold uppercase tracking-wide text-slate-500">
+                {t(p.status === 'for_sale' ? 'price.sale' : 'price.rent')}
+              </p>
               <p className="text-3xl font-extrabold text-brand-900">
                 {formatPrice(p.price, p.status, t('unit.perMonth'))}
               </p>
               {p.status === 'for_rent' && (
                 <p className="pb-1 font-medium text-slate-600">
                   <Tag size={16} className="mr-1 inline" /> {t('filter.keyMoney')}: <span className="font-bold text-brand-900">{keyMoney}</span>
+                </p>
+              )}
+              {p.status === 'for_sale' && p.advance_amount > 0 && (
+                <p className="pb-1 font-medium text-slate-600">
+                  <Tag size={16} className="mr-1 inline" /> {t('filter.advance')}: <span className="font-bold text-brand-900">{formatPrice(p.advance_amount)}</span>
                 </p>
               )}
             </div>

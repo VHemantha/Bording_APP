@@ -17,6 +17,8 @@ class Property(models.Model):
 
     # Types whose listings must give a floor area.
     SQFT_REQUIRED_TYPES = ('shop', 'commercial')
+    # Types that are only ever rented out, never sold on their own.
+    RENT_ONLY_TYPES = ('annex', 'upper_floor_house')
 
     class Stories(models.IntegerChoices):
         SINGLE = 1, 'Single story'
@@ -52,10 +54,12 @@ class Property(models.Model):
     # Floor area. Required for shops and commercial properties only (see the write serializer).
     sqft = models.PositiveIntegerField(null=True, blank=True)
     home_type = models.CharField(max_length=20, choices=HomeType.choices, default=HomeType.HOUSE)
-    # The site lists rentals only for now; the sale option is kept so it can come back.
+    # Rent or sale. For a sale, `price` is the sale price; for a rental, the monthly rent.
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.FOR_RENT)
-    # Key money: the advance a landlord asks for up front, as a number of months' rent (0-12).
+    # Rentals: key money, the advance a landlord asks for up front, in months' rent (0-12).
     key_money_months = models.PositiveSmallIntegerField(default=0, validators=[MaxValueValidator(12)])
+    # Sales: the advance (deposit) the buyer pays to reserve the property, in LKR. Blank if none.
+    advance_amount = models.PositiveIntegerField(null=True, blank=True)
     parking_slots = models.PositiveSmallIntegerField(default=0)
     # Blank for listings where it doesn't apply (land).
     stories = models.PositiveSmallIntegerField(choices=Stories.choices, null=True, blank=True)

@@ -16,16 +16,17 @@ class PropertySearchFilters(BaseModel):
 
     city: Optional[str] = Field(None, description="Sri Lankan city name if mentioned, e.g. 'Colombo'.")
     zip_code: Optional[str] = Field(None, description='5-digit ZIP code if mentioned.')
-    min_price: Optional[int] = Field(None, description='Minimum monthly rent in Sri Lankan rupees (LKR).')
-    max_price: Optional[int] = Field(None, description='Maximum monthly rent / budget ceiling in Sri Lankan rupees (LKR).')
+    min_price: Optional[int] = Field(None, description='Minimum price in LKR: monthly rent for rentals, sale price when buying.')
+    max_price: Optional[int] = Field(None, description='Maximum price / budget in LKR: monthly rent for rentals, sale price when buying.')
     min_beds: Optional[int] = Field(None, description='Minimum number of bedrooms.')
     min_baths: Optional[float] = Field(None, description='Minimum number of bathrooms.')
     home_type: Optional[Literal['house', 'apartment', 'annex', 'land', 'upper_floor_house', 'shop', 'commercial']] = Field(
-        None, description='Type of home, if the user specified one.'
+        None, description='Type of home, if the user specified one. Annexes and upper floor houses are rentals only.'
     )
     max_key_money_months: Optional[int] = Field(
-        None, ge=0, le=12, description="Most months of rent the user will pay as key money (advance), 0-12."
+        None, ge=0, le=12, description="Rentals only: most months of rent the user will pay as key money, 0-12."
     )
+    max_advance: Optional[int] = Field(None, description='Buying only: largest advance (deposit) in LKR the user can pay.')
     min_parking: Optional[int] = Field(None, description='Minimum number of parking slots.')
     min_sqft: Optional[int] = Field(None, description='Minimum floor area in square feet.')
     max_sqft: Optional[int] = Field(None, description='Maximum floor area in square feet.')
@@ -46,13 +47,14 @@ class ListingDraft(BaseModel):
     city: str
     state: str = Field(description='Two-letter state code, e.g. TX.')
     zip_code: str
-    price: int = Field(description='Monthly rent in Sri Lankan rupees (LKR), digits only.')
+    price: int = Field(description='LKR, digits only: the monthly rent, or the sale price if the property is for sale.')
     beds: int
     baths: float
     sqft: Optional[int] = Field(None, description='Floor area in square feet, if given.')
     home_type: Literal['house', 'apartment', 'annex', 'land', 'upper_floor_house', 'shop', 'commercial'] = 'house'
     status: Literal['for_sale', 'for_rent'] = 'for_rent'
-    key_money_months: int = Field(0, ge=0, le=12, description="Key money (advance) as a number of months' rent, 0-12. 0 if none.")
+    key_money_months: int = Field(0, ge=0, le=12, description="Rentals: key money as a number of months' rent, 0-12. 0 if none.")
+    advance_amount: Optional[int] = Field(None, description='Sales: the advance (deposit) asked from the buyer, in LKR, if given.')
     parking_slots: int = 0
     shared_bathroom: bool = Field(False, description='True if the only bathroom is shared with others.')
     stories: Optional[Literal[1, 2, 3]] = Field(None, description='Number of stories; leave blank for land.')

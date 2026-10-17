@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { mediaUrl } from '../api/client'
 import { useLanguage } from '../context/LanguageContext'
 import { cityName } from '../i18n/translations'
-import { formatBaths, formatKeyMoney, formatPrice } from '../utils/format'
+import { formatBaths, formatCompactPrice, formatKeyMoney, formatPrice } from '../utils/format'
 
 export default function PropertyCard({
   property,
@@ -33,10 +33,14 @@ export default function PropertyCard({
     property.sqft && [property.sqft.toLocaleString(), t('unit.sqft')],
   ].filter(Boolean)
 
+  // In bold first: key money for a rental, the advance (if any) for a sale.
+  const lead =
+    property.status === 'for_sale'
+      ? property.advance_amount > 0 && t('card.advance', { amount: formatCompactPrice(property.advance_amount) })
+      : property.key_money_months > 0
+        ? t('card.keyMoney', { amount: formatKeyMoney(property.key_money_months, t) })
+        : t('card.noKeyMoney')
   const extras = [
-    property.key_money_months > 0
-      ? t('card.keyMoney', { amount: formatKeyMoney(property.key_money_months, t) })
-      : t('card.noKeyMoney'),
     property.parking_slots > 0 && t('card.parking', { count: property.parking_slots }),
     property.stories && t(`stories.${property.stories}`),
     property.furnishing && t(`furnishing.${property.furnishing}`),
@@ -108,9 +112,9 @@ export default function PropertyCard({
             ))}
           </div>
           <p className="mt-3 truncate text-sm text-slate-600">
-            <span className="font-bold text-brand-900">{extras[0]}</span>
-            {extras.slice(1).map((text) => (
-              <span key={text}> &bull; {text}</span>
+            {lead && <span className="font-bold text-brand-900">{lead}</span>}
+            {extras.map((text, i) => (
+              <span key={text}>{lead || i > 0 ? ' \u2022 ' : ''}{text}</span>
             ))}
           </p>
         </div>

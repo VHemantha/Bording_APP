@@ -13,8 +13,10 @@ import useNearbyPlaces from '../components/useNearbyPlaces'
 import PropertyCard, { PropertyCardSkeleton } from '../components/PropertyCard'
 import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
+import { DEALS, useDeal } from '../context/DealContext'
 import { useLanguage } from '../context/LanguageContext'
 import { cityName } from '../i18n/translations'
+import { RENT_ONLY_TYPES } from '../utils/format'
 import { filtersToSearchParams } from '../utils/searchParams'
 
 // Every filter the toolbar edits; each is a query-string parameter the API understands.
@@ -23,6 +25,7 @@ const FILTER_KEYS = [
   'min_price',
   'max_price',
   'max_key_money_months',
+  'max_advance',
   'min_beds',
   'min_baths',
   'home_type',
@@ -32,7 +35,9 @@ const FILTER_KEYS = [
   'stories',
   'furnishing',
 ]
-const DEFAULT_STATUS = 'for_rent'
+// Prices, key money and the advance mean different things for rent and sale, so these
+// filters are cleared when the visitor switches between the two.
+const DEAL_SPECIFIC_FILTERS = ['min_price', 'max_price', 'max_key_money_months', 'max_advance']
 
 // Labels come from the translations: t(`sort.${key}`).
 const SORTS = {
@@ -41,6 +46,12 @@ const SORTS = {
   price_desc: (a, b) => b.price - a.price,
   sqft_desc: (a, b) => (b.sqft ?? 0) - (a.sqft ?? 0),
   key_money_asc: (a, b) => a.key_money_months - b.key_money_months,
+  advance_asc: (a, b) => (a.advance_amount ?? 0) - (b.advance_amount ?? 0),
+}
+// Key money is for rentals and the advance for sales.
+const SORTS_FOR = {
+  for_rent: Object.keys(SORTS).filter((key) => key !== 'advance_asc'),
+  for_sale: Object.keys(SORTS).filter((key) => key !== 'key_money_asc'),
 }
 
 const SAVED_KEY = 'nestwell.savedSearches'
@@ -59,6 +70,7 @@ export default function SearchResultsPage() {
   const { user } = useAuth()
   const { openAuth } = useAuthModal()
   const { lang, t } = useLanguage()
+  const { deal, setDeal } = useDeal()
 
   const [properties, setProperties] = useState([])
   const [loading, setLoading] = useState(true)
@@ -78,10 +90,16 @@ export default function SearchResultsPage() {
     FILTER_KEYS.forEach((key) => {
       values[key] = searchParams.get(key) || ''
     })
-    // Rentals only for now: a status in the URL (old links, AI search) is ignored.
-    values.status = DEFAULT_STATUS
+    // Sale or rent: from the link if it says, otherwise the visitor's last choice.
+    if (!DEALS.includes(values.status)) values.status = deal
     return values
-  }, [searchParams])
+  }, [searchParams, deal])
+
+  // A link that names sale or rent (a shared search, a city tile) becomes the site-wide choice.
+  const linkedDeal = searchParams.get('status')
+  useEffect(() => {
+    if (DEALS.includes(linkedDeal)) setDeal(linkedDeal)
+  }, [linkedDeal, setDeal])
   const search = searchParams.get('search') || ''
   const city = searchParams.get('city') || ''
 
@@ -120,6 +138,21 @@ export default function SearchResultsPage() {
     setSearchParams(params)
   }
 
+  function changeDeal(next) {
+    if (next === filters.status) return
+    const params = new URLSearchParams(searchParams)
+    params.set('status', next)
+    DEAL_SPECIFIC_FILTERS.forEach((key) => params.delete(key))
+    if (next === 'for_sale') {
+      // Annexes and upper floor houses are never for sale.
+      const types = (params.get('home_type') || '').split(',').filter((v) => v && !RENT_ONLY_TYPES.includes(v))
+      if (types.length) params.set('home_type', types.join(','))
+      else params.delete('home_type')
+    }
+    setDeal(next)
+    setSearchParams(params)
+  }
+
   function updateSearch(text) {
     const params = new URLSearchParams(searchParams)
     // Typed text replaces a city chosen from the home page's tiles.
@@ -131,7 +164,7 @@ export default function SearchResultsPage() {
 
   function applyAiFilters(aiFilters, meta) {
     const params = filtersToSearchParams(aiFilters)
-    params.set('status', DEFAULT_STATUS)
+    params.set('status', DEALS.includes(aiFilters?.status) ? aiFilters.status : filters.status)
     setSearchParams(params)
     setAiReply(meta?.reply || null)
   }
@@ -182,10 +215,12 @@ export default function SearchResultsPage() {
     [user, favoriteIds, openAuth]
   )
 
+  const sortKeys = SORTS_FOR[filters.status]
+  const activeSort = sortKeys.includes(sort) ? sort : 'recommended'
   const sorted = useMemo(() => {
-    const compare = SORTS[sort]
+    const compare = SORTS[activeSort]
     return compare ? [...properties].sort(compare) : properties
-  }, [properties, sort])
+  }, [properties, activeSort])
 
   const renting = filters.status === 'for_rent'
   const place = cityName(city || search, lang) || t('search.sriLanka')
@@ -198,6 +233,7 @@ export default function SearchResultsPage() {
       <FilterBar
         filters={filters}
         onChange={updateFilters}
+        onDealChange={changeDeal}
         searchText={city || search}
         onSearch={updateSearch}
         saved={isSaved}
@@ -253,11 +289,11 @@ export default function SearchResultsPage() {
             <label className="relative flex items-center text-lg font-bold text-brand-600">
               {t('search.sort')}:&nbsp;
               <select
-                value={sort}
+                value={activeSort}
                 onChange={(e) => setSort(e.target.value)}
                 className="cursor-pointer appearance-none bg-transparent pr-7 font-bold outline-none [field-sizing:content]"
               >
-                {Object.keys(SORTS).map((value) => (
+                {sortKeys.map((value) => (
                   <option key={value} value={value}>{t(`sort.${value}`)}</option>
                 ))}
               </select>

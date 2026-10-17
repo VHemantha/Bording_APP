@@ -4,12 +4,14 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import { mediaUrl } from '../api/client'
 import { createProperty, fetchProperty, updateProperty, uploadPhoto } from '../api/properties'
+import DealToggle from '../components/DealToggle'
 import LocationPicker from '../components/LocationPicker'
 import PageLoader from '../components/PageLoader'
 import { useAuth } from '../context/AuthContext'
+import { useDeal } from '../context/DealContext'
 import { useLanguage } from '../context/LanguageContext'
 import { CITIES } from '../i18n/translations'
-import { formatKeyMoney, HOME_TYPE_LABELS, STORIES_LABELS } from '../utils/format'
+import { formatKeyMoney, homeTypesFor, RENT_ONLY_TYPES, STORIES_LABELS } from '../utils/format'
 
 const MAX_PHOTOS = 20
 // Property types whose listings must give the floor area (matches the backend).
@@ -20,6 +22,7 @@ const EMPTY = {
   home_type: 'house',
   price: '',
   key_money_months: '0',
+  advance_amount: '',
   furnishing: 'unfurnished',
   beds: '1',
   baths: '1',
@@ -42,11 +45,13 @@ export default function PostListingPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { t } = useLanguage()
+  const { deal } = useDeal()
 
   // Phone accounts have the number as their username: offer it as the contact number.
   const signedUpWithPhone = /^\+\d+$/.test(user?.username ?? '')
   const [values, setValues] = useState(() => ({
     ...EMPTY,
+    status: deal, // a new listing starts on whatever the visitor was browsing
     contact_name: signedUpWithPhone ? '' : (user?.username?.split('@')[0] ?? ''),
     contact_phone: signedUpWithPhone ? user.username : '',
   }))
@@ -86,6 +91,12 @@ export default function PostListingPage() {
   function set(field, value) {
     setValues((v) => ({ ...v, [field]: value }))
     setErrors((e) => ({ ...e, [field]: undefined }))
+  }
+
+  function chooseDeal(status) {
+    set('status', status)
+    // Annexes and upper floor houses can't be sold.
+    if (status === 'for_sale' && RENT_ONLY_TYPES.includes(values.home_type)) set('home_type', 'house')
   }
 
   function chooseCity(name) {
@@ -133,11 +144,12 @@ export default function PostListingPage() {
 
     const num = (x) => (x === '' ? null : Number(x))
     const land = values.home_type === 'land'
+    const selling = values.status === 'for_sale'
     const payload = {
       ...values,
       price: num(values.price),
-      key_money_months: num(values.key_money_months) ?? 0,
-      status: 'for_rent', // rentals only for now
+      key_money_months: selling ? 0 : num(values.key_money_months) ?? 0,
+      advance_amount: selling ? num(values.advance_amount) : null,
       beds: land ? 0 : num(values.beds),
       baths: land ? 0 : num(values.baths),
       sqft: num(values.sqft),
@@ -170,6 +182,7 @@ export default function PostListingPage() {
   }
 
   const land = values.home_type === 'land'
+  const selling = values.status === 'for_sale'
   const uploading = photos.some((p) => p.uploading)
 
   return (
@@ -181,11 +194,17 @@ export default function PostListingPage() {
 
       <form onSubmit={handleSubmit} noValidate={false} className="mt-8 space-y-6">
         <Section title={t('post.basics')}>
+          <div className="sm:col-span-2">
+            <span className="mb-1.5 block text-sm font-bold text-slate-700">{t('post.listingFor')}</span>
+            <DealToggle value={values.status} onChange={chooseDeal} className="w-full sm:w-80" />
+          </div>
           <Select
             label={t('filter.propertyType')}
             value={values.home_type}
             onChange={(v) => set('home_type', v)}
-            options={Object.keys(HOME_TYPE_LABELS).map((k) => [k, t(`type.${k}`)])}
+            options={homeTypesFor(values.status).map((k) => [k, t(`type.${k}`)])}
+            hint={selling ? t('post.rentOnlyTypes') : undefined}
+            error={errors.home_type}
           />
           <Select
             label={t('filter.furnishing')}
@@ -194,19 +213,28 @@ export default function PostListingPage() {
             options={['unfurnished', 'furnished'].map((k) => [k, t(`furnishing.${k}`)])}
           />
           <Field
-            label={t('post.priceRent')}
+            label={t(selling ? 'post.priceSale' : 'post.priceRent')}
             type="number" min="1" required
             value={values.price} onChange={(v) => set('price', v)} error={errors.price}
           />
-          <Select
-            label={t('post.keyMoney')}
-            value={values.key_money_months}
-            onChange={(v) => set('key_money_months', v)}
-            options={Array.from({ length: 13 }, (_, n) => [
-              String(n),
-              n === 0 ? t('card.noKeyMoney') : formatKeyMoney(n, t),
-            ])}
-          />
+          {selling ? (
+            <Field
+              label={`${t('post.advance')} (${t('post.optional')})`}
+              type="number" min="0"
+              value={values.advance_amount} onChange={(v) => set('advance_amount', v)}
+              error={errors.advance_amount} hint={t('post.advanceHint')}
+            />
+          ) : (
+            <Select
+              label={t('post.keyMoney')}
+              value={values.key_money_months}
+              onChange={(v) => set('key_money_months', v)}
+              options={Array.from({ length: 13 }, (_, n) => [
+                String(n),
+                n === 0 ? t('card.noKeyMoney') : formatKeyMoney(n, t),
+              ])}
+            />
+          )}
         </Section>
 
         <Section title={t('post.rooms')}>
@@ -425,7 +453,7 @@ function roomOptions(current) {
   return values.map((v) => [v, v])
 }
 
-function Select({ label, value, onChange, options, disabled }) {
+function Select({ label, value, onChange, options, disabled, hint, error }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-bold text-slate-700">{label}</span>
@@ -433,12 +461,15 @@ function Select({ label, value, onChange, options, disabled }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className={`${inputClass} disabled:bg-slate-100 disabled:text-slate-500`}
+        className={`${inputClass} disabled:bg-slate-100 disabled:text-slate-500 ${error ? errorClass : ''}`}
       >
         {options.map(([v, l]) => (
           <option key={v} value={v}>{l}</option>
         ))}
       </select>
+      {(error || hint) && (
+        <span className={`mt-1 block text-xs ${error ? 'text-red-600' : 'text-slate-500'}`}>{error || hint}</span>
+      )}
     </label>
   )
 }

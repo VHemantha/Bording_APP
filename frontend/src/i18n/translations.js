@@ -74,6 +74,12 @@ export const CITIES = [
 
 const landingTranslations = {
   en: {
+    'deal.label': 'Looking to buy or rent',
+    'deal.sale': 'Sale',
+    'deal.rent': 'Rent',
+    'hero.titleSale': 'Find a property to call your own',
+    'hero.subtitleSale': 'Houses, apartments, land, shops and commercial property for sale across Sri Lanka.',
+    'cities.subtitleSale': 'Properties for sale in Sri Lanka’s main cities.',
     'nav.rent': 'Rent',
     'nav.browse': 'Browse all',
     'nav.saved': 'Saved',
@@ -93,7 +99,7 @@ const landingTranslations = {
     'hero.search': 'Search',
 
     'cities.title': 'Explore by city',
-    'cities.subtitle': "Homes across Sri Lanka's main cities.",
+    'cities.subtitle': "Rentals across Sri Lanka's main cities.",
     'cities.showAll': 'Show all {count} cities',
     'cities.showLess': 'Show fewer cities',
 
@@ -110,6 +116,12 @@ const landingTranslations = {
   },
 
   si: {
+    'deal.label': 'මිලදී ගැනීමට හෝ කුලියට',
+    'deal.sale': 'විකිණීමට',
+    'deal.rent': 'කුලියට',
+    'hero.titleSale': 'ඔබටම අයිති දේපළක් සොයාගන්න',
+    'hero.subtitleSale': 'ශ්\u200dරී ලංකාව පුරා විකිණීමට ඇති නිවාස, මහල් නිවාස, ඉඩම්, වෙළඳසැල් සහ වාණිජ දේපළ.',
+    'cities.subtitleSale': 'ශ්\u200dරී ලංකාවේ ප්\u200dරධාන නගරවල විකිණීමට ඇති දේපළ.',
     'nav.rent': 'කුලියට',
     'nav.browse': 'සියල්ල බලන්න',
     'nav.saved': 'සුරැකි',
@@ -129,7 +141,7 @@ const landingTranslations = {
     'hero.search': 'සොයන්න',
 
     'cities.title': 'නගරය අනුව සොයන්න',
-    'cities.subtitle': 'ශ්‍රී ලංකාවේ ප්‍රධාන නගරවල නිවාස.',
+    'cities.subtitle': 'ශ්‍රී ලංකාවේ ප්‍රධාන නගරවල කුලී නිවාස.',
     'cities.showAll': 'නගර {count} ම පෙන්වන්න',
     'cities.showLess': 'නගර අඩුවෙන් පෙන්වන්න',
 
@@ -146,6 +158,12 @@ const landingTranslations = {
   },
 
   ta: {
+    'deal.label': 'வாங்க அல்லது வாடகைக்கு',
+    'deal.sale': 'விற்பனை',
+    'deal.rent': 'வாடகை',
+    'hero.titleSale': 'உங்களுக்கே சொந்தமான சொத்தைக் கண்டறியுங்கள்',
+    'hero.subtitleSale': 'இலங்கை முழுவதும் விற்பனைக்கான வீடுகள், அடுக்குமாடி வீடுகள், நிலங்கள், கடைகள் மற்றும் வணிகச் சொத்துகள்.',
+    'cities.subtitleSale': 'இலங்கையின் முக்கிய நகரங்களில் விற்பனைக்கான சொத்துகள்.',
     'nav.rent': 'வாடகை',
     'nav.browse': 'அனைத்தையும் பார்க்க',
     'nav.saved': 'சேமித்தவை',
@@ -165,7 +183,7 @@ const landingTranslations = {
     'hero.search': 'தேடு',
 
     'cities.title': 'நகரம் வாரியாகத் தேடுங்கள்',
-    'cities.subtitle': 'இலங்கையின் முக்கிய நகரங்களில் உள்ள வீடுகள்.',
+    'cities.subtitle': 'இலங்கையின் முக்கிய நகரங்களில் வாடகை வீடுகள்.',
     'cities.showAll': 'அனைத்து {count} நகரங்களையும் காட்டு',
     'cities.showLess': 'குறைவான நகரங்களைக் காட்டு',
 

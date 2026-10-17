@@ -3,6 +3,8 @@ import { Search } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import DealToggle from '../components/DealToggle'
+import { useDeal } from '../context/DealContext'
 import { useLanguage } from '../context/LanguageContext'
 import { CITIES } from '../i18n/translations'
 
@@ -17,10 +19,12 @@ export default function HomePage() {
   const [allCities, setAllCities] = useState(false)
   const navigate = useNavigate()
   const { lang, t } = useLanguage()
+  const { deal, setDeal } = useDeal()
+  const selling = deal === 'for_sale'
 
   function search(e) {
     e.preventDefault()
-    const params = new URLSearchParams()
+    const params = new URLSearchParams({ status: deal })
     if (query.trim()) params.set('search', query.trim())
     navigate(`/search?${params.toString()}`)
   }
@@ -50,10 +54,22 @@ export default function HomePage() {
                     : 'text-3xl leading-[1.3] sm:text-5xl lg:text-6xl'
                 }`}
               >
-                {t('hero.title')}
+                {t(selling ? 'hero.titleSale' : 'hero.title')}
               </h1>
-              <p className="mt-4 max-w-xl text-lg text-white/90 drop-shadow">{t('hero.subtitle')}</p>
+              <p className="mt-4 max-w-xl text-lg text-white/90 drop-shadow">
+                {t(selling ? 'hero.subtitleSale' : 'hero.subtitle')}
+              </p>
             </div>
+          </motion.div>
+
+          {/* Sale or Rent: switches the whole site (search results, filters, prices). */}
+          <motion.div
+            initial={{ opacity: 0, y: 22 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className="mt-10 w-full max-w-[37.5rem]"
+          >
+            <DealToggle value={deal} onChange={setDeal} variant="hero" className="w-full sm:w-auto" />
           </motion.div>
 
           <motion.form
@@ -61,7 +77,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12 }}
-            className="mt-10 flex h-16 w-full max-w-[37.5rem] items-center rounded-xl border border-slate-300 bg-white pl-5 pr-2 shadow-lift sm:h-[5.5rem] sm:pl-6 sm:pr-3"
+            className="mt-3 flex h-16 w-full max-w-[37.5rem] items-center rounded-xl border border-slate-300 bg-white pl-5 pr-2 shadow-lift sm:h-[5.5rem] sm:pl-6 sm:pr-3"
           >
             <input
               value={query}
@@ -83,7 +99,7 @@ export default function HomePage() {
       {/* Explore by city */}
       <section className="mx-auto max-w-7xl px-4 pt-16 pb-8">
         <h2 className="text-2xl font-extrabold text-brand-900 sm:text-3xl">{t('cities.title')}</h2>
-        <p className="mt-1 text-sm text-slate-500">{t('cities.subtitle')}</p>
+        <p className="mt-1 text-sm text-slate-500">{t(selling ? 'cities.subtitleSale' : 'cities.subtitle')}</p>
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {CITIES.map((c, i) => (
             // The reveal animation lives on a wrapper: framer-motion sets an inline transform,
@@ -98,7 +114,7 @@ export default function HomePage() {
             >
               <button
                 type="button"
-                onClick={() => navigate(`/search?city=${encodeURIComponent(c.name)}`)}
+                onClick={() => navigate(`/search?status=${deal}&city=${encodeURIComponent(c.name)}`)}
                 className="city-tile"
               >
                 {c[lang] || c.name}

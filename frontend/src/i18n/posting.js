@@ -3,6 +3,11 @@
 
 export const postingTranslations = {
   en: {
+    'post.listingFor': 'Listing type',
+    'post.priceSale': 'Sale price (LKR)',
+    'post.advance': 'Advance amount (LKR)',
+    'post.advanceHint': 'The deposit a buyer pays to reserve the property.',
+    'post.rentOnlyTypes': 'Annexes and upper floor houses can only be listed for rent.',
     'nav.postListing': 'Post a listing',
     'nav.myListings': 'My listings',
     'furnishing.furnished': 'Furnished',
@@ -59,6 +64,11 @@ export const postingTranslations = {
   },
 
   si: {
+    'post.listingFor': 'දැන්වීම් වර්ගය',
+    'post.priceSale': 'විකුණුම් මිල (LKR)',
+    'post.advance': 'අත්තිකාරම් මුදල (LKR)',
+    'post.advanceHint': 'දේපළ වෙන් කර ගැනීමට ගැනුම්කරු ගෙවන තැන්පතුව.',
+    'post.rentOnlyTypes': 'ඇනෙක්සි සහ ඉහළ මහල් නිවාස කුලියට පමණක් දැන්විය හැක.',
     'nav.postListing': 'දැන්වීමක් පළ කරන්න',
     'nav.myListings': 'මගේ දැන්වීම්',
     'furnishing.furnished': 'ගෘහ භාණ්ඩ සහිත',
@@ -115,6 +125,11 @@ export const postingTranslations = {
   },
 
   ta: {
+    'post.listingFor': 'விளம்பர வகை',
+    'post.priceSale': 'விற்பனை விலை (LKR)',
+    'post.advance': 'முன்பணத் தொகை (LKR)',
+    'post.advanceHint': 'சொத்தை முன்பதிவு செய்ய வாங்குபவர் செலுத்தும் வைப்புத்தொகை.',
+    'post.rentOnlyTypes': 'இணைப்பு வீடுகள் மற்றும் மேல் மாடி வீடுகளை வாடகைக்கு மட்டுமே பட்டியலிட முடியும்.',
     'nav.postListing': 'விளம்பரம் இடுங்கள்',
     'nav.myListings': 'எனது விளம்பரங்கள்',
     'furnishing.furnished': 'தளபாடங்களுடன்',

@@ -34,7 +34,8 @@ class PropertyListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'parking_slots',
+            'sqft', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
+            'parking_slots',
             'stories', 'furnishing', 'primary_image_url',
         ]
 
@@ -49,7 +50,8 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'parking_slots',
+            'sqft', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
+            'parking_slots',
             'stories', 'furnishing', 'description',
             'year_built', 'primary_image_url', 'listed_date', 'images',
             'contact_name', 'contact_phone', 'can_edit',
@@ -90,7 +92,8 @@ class PropertyWriteSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'parking_slots',
+            'sqft', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
+            'parking_slots',
             'stories', 'furnishing', 'description',
             'year_built', 'primary_image_url', 'listed_date', 'images',
             'contact_name', 'contact_phone',
@@ -102,6 +105,14 @@ class PropertyWriteSerializer(serializers.ModelSerializer):
         sqft = attrs.get('sqft', getattr(self.instance, 'sqft', None))
         if home_type in Property.SQFT_REQUIRED_TYPES and not sqft:
             raise serializers.ValidationError({'sqft': 'Square feet is required for shops and commercial properties.'})
+        status = attrs.get('status', getattr(self.instance, 'status', Property.Status.FOR_RENT))
+        if status == Property.Status.FOR_SALE and home_type in Property.RENT_ONLY_TYPES:
+            raise serializers.ValidationError({'home_type': 'Annexes and upper floor houses can only be rented out.'})
+        # Key money belongs to rentals and the advance to sales: drop whichever doesn't apply.
+        if status == Property.Status.FOR_SALE:
+            attrs['key_money_months'] = 0
+        else:
+            attrs['advance_amount'] = None
         if attrs.get('shared_bathroom'):
             attrs['baths'] = 1  # "one shared bathroom"
         for field in ('latitude', 'longitude'):

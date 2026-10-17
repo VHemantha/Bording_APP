@@ -72,7 +72,8 @@ def make_search_properties_tool(filters_sink: list):
     ) -> str:
         """Search live property listings. `status` is 'for_sale' or 'for_rent',
         `home_type` is one of house/apartment/annex/land/upper_floor_house/shop/commercial.
-        Prices are monthly rents in Sri Lankan rupees (LKR). Returns a short
+        Prices are in Sri Lankan rupees (LKR): monthly rent for rentals, the sale price for
+        sales. Annexes and upper floor houses are only rented out. Returns a short
         text summary of matching homes (not the full data).
         """
         filters = {

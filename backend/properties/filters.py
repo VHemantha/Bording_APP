@@ -21,6 +21,8 @@ class PropertyFilter(django_filters.FilterSet):
     # One value or several (the search page's "Property type" checkboxes).
     home_type = CharInFilter(field_name='home_type', lookup_expr='in')
     max_key_money_months = django_filters.NumberFilter(field_name='key_money_months', lookup_expr='lte')
+    # Sales: listings asking no advance always fit the budget.
+    max_advance = django_filters.NumberFilter(method='filter_max_advance')
     min_parking = django_filters.NumberFilter(field_name='parking_slots', lookup_expr='gte')
     min_sqft = django_filters.NumberFilter(field_name='sqft', lookup_expr='gte')
     max_sqft = django_filters.NumberFilter(field_name='sqft', lookup_expr='lte')
@@ -39,9 +41,13 @@ class PropertyFilter(django_filters.FilterSet):
         model = Property
         fields = [
             'city', 'zip_code', 'min_price', 'max_price', 'min_beds',
-            'min_baths', 'home_type', 'max_key_money_months', 'min_parking', 'min_sqft',
+            'min_baths', 'home_type', 'max_key_money_months', 'max_advance', 'min_parking', 'min_sqft',
             'max_sqft', 'stories', 'furnishing', 'status', 'min_lat', 'max_lat', 'min_lng', 'max_lng',
         ]
+
+    def filter_max_advance(self, queryset, name, value):
+        from django.db.models import Q
+        return queryset.filter(Q(advance_amount__lte=value) | Q(advance_amount__isnull=True))
 
     def filter_search(self, queryset, name, value):
         from django.db.models import Q

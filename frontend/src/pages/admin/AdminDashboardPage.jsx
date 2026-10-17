@@ -1,4 +1,4 @@
-import { Building2, Home, Plus, Sofa, Tag, Wand2 } from 'lucide-react'
+import { Building2, Home, Plus, Tag, Wand2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -37,7 +37,7 @@ export default function AdminDashboardPage() {
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard icon={Home} label={t('admin.total')} value={stats.total} />
         <StatCard icon={Building2} label={t('status.for_rent')} value={stats.forRent} />
-        <StatCard icon={Sofa} label={t('furnishing.furnished')} value={stats.furnished} />
+        <StatCard icon={Tag} label={t('status.for_sale')} value={stats.forSale} />
         <StatCard icon={Tag} label={t('admin.avgRent')} value={stats.avgRent} />
       </div>
 
@@ -70,14 +70,14 @@ export default function AdminDashboardPage() {
 
 function summarise(properties) {
   if (!properties || properties.length === 0) {
-    return { total: properties ? 0 : '—', forRent: '—', furnished: '—', avgRent: '—' }
+    return { total: properties ? 0 : '—', forRent: '—', forSale: '—', avgRent: '—' }
   }
   const rentals = properties.filter((p) => p.status === 'for_rent')
   const avg = rentals.length ? Math.round(rentals.reduce((s, p) => s + p.price, 0) / rentals.length) : null
   return {
     total: properties.length,
     forRent: rentals.length,
-    furnished: properties.filter((p) => p.furnishing === 'furnished').length,
+    forSale: properties.filter((p) => p.status === 'for_sale').length,
     avgRent: avg === null ? '—' : formatPrice(avg),
   }
 }

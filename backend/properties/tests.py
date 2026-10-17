@@ -301,3 +301,42 @@ class SquareFeetRuleTests(APITestCase):
         for home_type in ('shop', 'commercial'):
             self.assertEqual(self.post(home_type=home_type, sqft=None).status_code, 400, home_type)
             self.assertEqual(self.post(home_type=home_type, sqft=1200).status_code, 201, home_type)
+
+
+class SaleListingTests(APITestCase):
+    def setUp(self):
+        self.client.force_authenticate(User.objects.create_user('seller', 'sell@example.com', 'pw-123456'))
+
+    def test_sale_listing_keeps_advance_and_drops_key_money(self):
+        response = self.client.post('/api/properties/', listing_payload(
+            status='for_sale', home_type='house', price=25_000_000, advance_amount=2_500_000, key_money_months=6,
+        ), format='json')
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual((response.data['advance_amount'], response.data['key_money_months']), (2_500_000, 0))
+
+    def test_rental_drops_advance(self):
+        response = self.client.post('/api/properties/', listing_payload(advance_amount=100_000), format='json')
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertIsNone(response.data['advance_amount'])
+        self.assertEqual(response.data['key_money_months'], 6)
+
+    def test_annex_and_upper_floor_cannot_be_sold(self):
+        for home_type in ('annex', 'upper_floor_house'):
+            response = self.client.post('/api/properties/', listing_payload(status='for_sale', home_type=home_type), format='json')
+            self.assertEqual(response.status_code, 400, home_type)
+            self.assertIn('home_type', response.data)
+
+    def test_filters_by_status_and_max_advance(self):
+        def post(**kw):
+            self.client.post('/api/properties/', listing_payload(status='for_sale', home_type='house', **kw), format='json')
+        post(price=20_000_000, advance_amount=1_000_000)
+        post(price=30_000_000, advance_amount=5_000_000)
+        post(price=40_000_000)  # no advance asked
+        self.client.post('/api/properties/', listing_payload(), format='json')  # a rental
+        self.client.force_authenticate(None)
+        sales = self.client.get('/api/properties/?status=for_sale').data
+        sales = sales.get('results', sales) if isinstance(sales, dict) else sales
+        self.assertEqual(len(sales), 3)
+        cheap = self.client.get('/api/properties/?status=for_sale&max_advance=2000000').data
+        cheap = cheap.get('results', cheap) if isinstance(cheap, dict) else cheap
+        self.assertEqual(sorted(p['price'] for p in cheap), [20_000_000, 40_000_000])
