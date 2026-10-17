@@ -49,7 +49,7 @@ class ListingDraft(BaseModel):
     price: int = Field(description='Monthly rent in Sri Lankan rupees (LKR), digits only.')
     beds: int
     baths: float
-    sqft: int
+    sqft: Optional[int] = Field(None, description='Floor area in square feet, if given.')
     home_type: Literal['house', 'apartment', 'annex', 'land', 'upper_floor_house', 'shop', 'commercial'] = 'house'
     status: Literal['for_sale', 'for_rent'] = 'for_rent'
     key_money_months: int = Field(0, ge=0, le=12, description="Key money (advance) as a number of months' rent, 0-12. 0 if none.")

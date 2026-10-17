@@ -257,3 +257,26 @@ class SharedBathroomTests(APITestCase):
         self.assertEqual(response.status_code, 201, response.data)
         self.assertTrue(response.data['shared_bathroom'])
         self.assertEqual(response.data['baths'], 1)
+
+
+class SquareFeetRuleTests(APITestCase):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        self.client.force_authenticate(get_user_model().objects.create_user('sq', 'sq@example.com', 'pw-123456'))
+
+    def post(self, **overrides):
+        payload = listing_payload(**overrides)
+        if overrides.get('sqft', 0) is None:
+            payload.pop('sqft')
+        return self.client.post('/api/properties/', payload, format='json')
+
+    def test_optional_for_houses_annexes_and_others(self):
+        for home_type in ('house', 'annex', 'apartment', 'land', 'upper_floor_house'):
+            response = self.post(home_type=home_type, sqft=None)
+            self.assertEqual(response.status_code, 201, (home_type, response.data))
+            self.assertIsNone(response.data['sqft'])
+
+    def test_required_for_shops_and_commercial(self):
+        for home_type in ('shop', 'commercial'):
+            self.assertEqual(self.post(home_type=home_type, sqft=None).status_code, 400, home_type)
+            self.assertEqual(self.post(home_type=home_type, sqft=1200).status_code, 201, home_type)

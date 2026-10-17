@@ -5,8 +5,8 @@ import Logo, { APP_NAME } from './Logo'
 
 const COLUMNS = [
   { title: 'footer.explore', links: [['nav.browse', '/search'], ['nav.postListing', '/post']] },
-  { title: 'footer.company', links: [['footer.about', '/'], ['footer.careers', '/'], ['footer.press', '/']] },
-  { title: 'footer.support', links: [['footer.help', '/'], ['footer.contact', '/'], ['footer.privacy', '/']] },
+  { title: 'footer.company', links: [['footer.about', '/about']] },
+  { title: 'footer.support', links: [['footer.contact', '/about#contact'], ['footer.privacy', '/privacy']] },
 ]
 
 export default function Footer() {

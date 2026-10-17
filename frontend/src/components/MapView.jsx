@@ -117,7 +117,7 @@ export default function MapView({ properties, highlightedId, onMarkerHover, plac
           <Popup>
             <div className="text-sm">
               <p className="font-bold">{formatPrice(p.price, p.status, t('unit.perMonth'))}</p>
-              <p>{p.beds} {t('unit.bd')} | {p.baths} {t('unit.ba')} | {p.sqft.toLocaleString()} {t('unit.sqft')}</p>
+              <p>{p.beds} {t('unit.bd')} | {p.baths} {t('unit.ba')}{p.sqft ? ` | ${p.sqft.toLocaleString()} ${t('unit.sqft')}` : ''}</p>
               <p className="text-gray-500">{p.address}</p>
               <Link to={`/property/${p.id}`} className="text-blue-600 underline">
                 {t('map.viewDetails')}

@@ -39,7 +39,7 @@ const SORTS = {
   recommended: null,
   price_asc: (a, b) => a.price - b.price,
   price_desc: (a, b) => b.price - a.price,
-  sqft_desc: (a, b) => b.sqft - a.sqft,
+  sqft_desc: (a, b) => (b.sqft ?? 0) - (a.sqft ?? 0),
   key_money_asc: (a, b) => a.key_money_months - b.key_money_months,
 }
 

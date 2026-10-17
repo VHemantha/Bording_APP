@@ -56,7 +56,7 @@ def _validate(state: ListingState) -> ListingState:
             warnings.append(f'Missing {field.replace("_", " ")}.')
     if not listing.get('price'):
         warnings.append('Could not determine a price - set it manually.')
-    if not listing.get('sqft'):
+    if listing.get('home_type') in ('shop', 'commercial') and not listing.get('sqft'):
         warnings.append('Square footage missing.')
     if listing.get('latitude') in (None, 0) or listing.get('longitude') in (None, 0):
         warnings.append('Map location not set - drop a pin or enter latitude/longitude.')

@@ -98,6 +98,10 @@ class PropertyWriteSerializer(serializers.ModelSerializer):
         extra_kwargs = {'listed_date': {'required': False}}
 
     def validate(self, attrs):
+        home_type = attrs.get('home_type', getattr(self.instance, 'home_type', None))
+        sqft = attrs.get('sqft', getattr(self.instance, 'sqft', None))
+        if home_type in Property.SQFT_REQUIRED_TYPES and not sqft:
+            raise serializers.ValidationError({'sqft': 'Square feet is required for shops and commercial properties.'})
         if attrs.get('shared_bathroom'):
             attrs['baths'] = 1  # "one shared bathroom"
         for field in ('latitude', 'longitude'):

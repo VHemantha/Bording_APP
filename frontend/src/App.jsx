@@ -13,6 +13,7 @@ import AdminLayout from './pages/admin/AdminLayout'
 import AdminListingFormPage from './pages/admin/AdminListingFormPage'
 import AdminListingsPage from './pages/admin/AdminListingsPage'
 import HomePage from './pages/HomePage'
+import InfoPage from './pages/InfoPage'
 import LoginPage from './pages/LoginPage'
 import MyListingsPage from './pages/MyListingsPage'
 import PostListingPage from './pages/PostListingPage'
@@ -34,12 +35,14 @@ function SkipLink() {
 }
 
 function PublicLayout() {
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
 
-  // A new page starts at the top instead of inheriting the previous page's scroll position.
+  // A new page starts at the top instead of inheriting the previous page's scroll position,
+  // unless the link points at a section of it (e.g. /about#contact).
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
+    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView()
+    else window.scrollTo(0, 0)
+  }, [pathname, hash])
 
   // The search page fills the screen exactly (fixed map, scrolling list), so it has no footer:
   // one below it would let the whole window scroll and drag the map along.
@@ -65,6 +68,8 @@ function App() {
         <Route element={<PublicLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchResultsPage />} />
+          <Route path="/about" element={<InfoPage page="about" />} />
+          <Route path="/privacy" element={<InfoPage page="privacy" />} />
           <Route path="/property/:id" element={<PropertyDetailPage />} />
           <Route path="/login" element={<LoginPage mode="login" />} />
           <Route path="/register" element={<LoginPage mode="register" />} />

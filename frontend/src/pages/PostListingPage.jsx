@@ -12,6 +12,8 @@ import { CITIES } from '../i18n/translations'
 import { formatKeyMoney, HOME_TYPE_LABELS, STORIES_LABELS } from '../utils/format'
 
 const MAX_PHOTOS = 20
+// Property types whose listings must give the floor area (matches the backend).
+const SQFT_REQUIRED = ['shop', 'commercial']
 
 const EMPTY = {
   status: 'for_rent',
@@ -239,7 +241,11 @@ export default function PostListingPage() {
               </div>
             </>
           )}
-          <Field label={t('filter.sqft')} type="number" min="1" required value={values.sqft} onChange={(v) => set('sqft', v)} error={errors.sqft} />
+          <Field
+            label={SQFT_REQUIRED.includes(values.home_type) ? t('filter.sqft') : `${t('filter.sqft')} (${t('post.optional')})`}
+            type="number" min="1" required={SQFT_REQUIRED.includes(values.home_type)}
+            value={values.sqft} onChange={(v) => set('sqft', v)} error={errors.sqft}
+          />
           {!land && (
             <Select
               label={t('filter.stories')}

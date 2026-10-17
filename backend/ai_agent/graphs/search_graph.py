@@ -59,7 +59,7 @@ def _compose_reply(state: SearchState) -> SearchState:
     llm = get_llm(temperature=0.4)
     preview = [
         f"- {r['address']}, {r['city']} {r['state']} - LKR {r['price']:,} "
-        f"({r['beds']}bd/{r['baths']}ba, {r['sqft']:,} sqft)"
+        f"({r['beds']}bd/{r['baths']}ba" + (f", {r['sqft']:,} sqft)" if r['sqft'] else ")")
         for r in state.get('results', [])[:PREVIEW_COUNT]
     ]
     prompt = (

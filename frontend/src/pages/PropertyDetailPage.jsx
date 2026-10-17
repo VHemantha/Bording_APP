@@ -8,7 +8,7 @@ import {
   Heart,
   KeyRound,
   Layers,
-  MessageSquare,
+  MessageCircle,
   Phone,
   Ruler,
   Share2,
@@ -20,7 +20,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { addFavorite, fetchFavorites, removeFavorite } from '../api/auth'
 import { fetchProperty } from '../api/properties'
-import ContactOwnerCard from '../components/ContactOwnerCard'
+import ContactOwnerCard, { whatsappUrl } from '../components/ContactOwnerCard'
 import GoogleMapView from '../components/GoogleMapView'
 import PageLoader from '../components/PageLoader'
 import PhotoCollage from '../components/PhotoCollage'
@@ -34,7 +34,6 @@ import { formatBaths, formatKeyMoney, formatPrice } from '../utils/format'
 
 const SECTIONS = [
   ['overview', 'detail.tabOverview'],
-  ['facts', 'detail.tabFacts'],
   ['neighborhood', 'detail.tabNeighborhood'],
 ]
 
@@ -121,7 +120,7 @@ export default function PropertyDetailPage() {
   const city = cityName(p.city, lang)
   const photos = p.images?.length ? p.images.map((img) => img.image_url) : [p.primary_image_url].filter(Boolean)
   const address = [p.address, city, `${p.state} ${p.zip_code}`.trim()].filter(Boolean).join(', ')
-  const sqft = `${p.sqft.toLocaleString()} ${t('unit.sqft')}`
+  const sqft = p.sqft ? `${p.sqft.toLocaleString()} ${t('unit.sqft')}` : null
   const keyMoney = formatKeyMoney(p.key_money_months, t)
   const stories = p.stories ? t(`stories.${p.stories}`) : null
 
@@ -130,35 +129,12 @@ export default function PropertyDetailPage() {
     [Building2, t(`type.${p.home_type}`)],
     !land && [BedDouble, `${p.beds} ${t(p.beds === 1 ? 'unit.bed' : 'unit.beds')}`],
     !land && [Bath, `${formatBaths(p.baths)} ${t(p.baths === 1 ? 'unit.bath' : 'unit.baths')}${p.shared_bathroom ? ` (${t('bath.shared')})` : ''}`],
-    [Ruler, sqft],
+    sqft && [Ruler, sqft],
     [Sofa, t(`furnishing.${p.furnishing}`)],
     [Car, `${t('filter.parking')}: ${p.parking_slots}`],
     stories && [Layers, stories],
     p.status === 'for_rent' && [KeyRound, `${t('filter.keyMoney')}: ${keyMoney}`],
     [CalendarDays, `${t('detail.listed')}: ${p.listed_date}`],
-  ].filter(Boolean)
-
-  const factGroups = [
-    [t('detail.groupProperty'), [
-      [t('detail.homeType'), t(`type.${p.home_type}`)],
-      [t('filter.sqft'), sqft],
-      [t('detail.stories'), stories || '—'],
-      [t('detail.yearBuilt'), p.year_built || '—'],
-    ]],
-    !land && [t('detail.groupRooms'), [
-      [t('filter.bedrooms'), p.beds],
-      [t('filter.bathrooms'), `${formatBaths(p.baths)}${p.shared_bathroom ? ` (${t('bath.shared')})` : ''}`],
-    ]],
-    [t('detail.groupFeatures'), [
-      [t('filter.furnishing'), t(`furnishing.${p.furnishing}`)],
-      [t('filter.parking'), p.parking_slots],
-    ]],
-    [t('detail.groupTerms'), [
-      [t('detail.status'), t(`status.${p.status}`)],
-      [t('filter.price'), formatPrice(p.price, p.status, t('unit.perMonth'))],
-      [t('filter.keyMoney'), keyMoney],
-      [t('detail.listed'), p.listed_date],
-    ]],
   ].filter(Boolean)
 
   return (
@@ -235,27 +211,6 @@ export default function PropertyDetailPage() {
 
           <hr className="my-10 border-slate-200" />
 
-          <section id="facts" className="scroll-mt-40">
-            <h2 className="text-2xl font-extrabold text-brand-900">{t('detail.factsTitle')}</h2>
-            <div className="mt-6 grid gap-x-10 gap-y-8 sm:grid-cols-2">
-              {factGroups.map(([title, rows]) => (
-                <div key={title}>
-                  <h3 className="mb-2 text-lg font-bold text-brand-900">{title}</h3>
-                  <dl className="divide-y divide-slate-100">
-                    {rows.map(([label, value]) => (
-                      <div key={label} className="flex justify-between gap-4 py-2">
-                        <dt className="text-slate-600">{label}</dt>
-                        <dd className="text-right font-bold text-brand-900">{value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <hr className="my-10 border-slate-200" />
-
           <section id="neighborhood" className="scroll-mt-40">
             <h2 className="text-2xl font-extrabold text-brand-900">{t('detail.tabNeighborhood')}</h2>
             <p className="mt-1 text-slate-600">{address}</p>
@@ -274,7 +229,7 @@ export default function PropertyDetailPage() {
 
       {/* Phones: the contact card sits at the very bottom, so keep the main actions pinned
           (like Zillow's mobile bar). Right padding leaves room for the assistant button. */}
-      {!p.can_edit && (
+      {!p.can_edit && p.contact_phone && (
         <div className="fixed inset-x-0 bottom-0 z-[80] flex gap-2 border-t border-slate-200 bg-white py-3 pl-4 pr-24 shadow-lift lg:hidden">
           {p.contact_phone && (
             <a
@@ -284,20 +239,23 @@ export default function PropertyDetailPage() {
               <Phone size={18} /> {t('contact.callShort')}
             </a>
           )}
-          <button
-            type="button"
-            onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg border-2 border-brand-600 font-bold text-brand-600"
-          >
-            <MessageSquare size={18} /> {t('contact.message')}
-          </button>
+          {p.contact_phone && (
+            <a
+              href={whatsappUrl(p.contact_phone)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg border-2 border-brand-600 font-bold text-brand-600"
+            >
+              <MessageCircle size={18} /> WhatsApp
+            </a>
+          )}
         </div>
       )}
     </div>
   )
 }
 
-/** Overview / Facts / Neighborhood tabs that stick under the navbar and underline the
+/** Overview / Neighborhood tabs that stick under the navbar and underline the
  *  section currently in view. */
 function SectionTabs({ t }) {
   const [active, setActive] = useState('overview')

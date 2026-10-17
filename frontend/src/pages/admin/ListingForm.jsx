@@ -113,7 +113,13 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
               {t('post.sharedBathroom')}
             </label>
           </div>
-          <Text label={t('filter.sqft')} type="number" value={values.sqft} onChange={(v) => set('sqft', v)} required />
+          <Text
+            label={['shop', 'commercial'].includes(values.home_type) ? t('filter.sqft') : `${t('filter.sqft')} (${t('post.optional')})`}
+            type="number"
+            value={values.sqft}
+            onChange={(v) => set('sqft', v)}
+            required={['shop', 'commercial'].includes(values.home_type)}
+          />
           <Select label={t('detail.homeType')} value={values.home_type} onChange={(v) => set('home_type', v)} options={Object.keys(HOME_TYPE_LABELS).map((key) => [key, t(`type.${key}`)])} />
           <Select label={t('admin.keyMoneyUsd')} value={String(values.key_money_months ?? 0)} onChange={(v) => set('key_money_months', v)} options={Array.from({ length: 13 }, (_, n) => [String(n), n === 0 ? t('card.noKeyMoney') : formatKeyMoney(n, t)])} />
           <Text label={t('filter.parking')} type="number" value={values.parking_slots} onChange={(v) => set('parking_slots', v)} />

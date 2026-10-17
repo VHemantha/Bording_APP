@@ -4,6 +4,7 @@
 
 export const pageTranslations = {
   en: {
+    'contact.noPhone': 'The owner hasn’t added a phone number.',
     'auth.emailOrPhone': 'Email or phone number',
     'auth.identifierHint': 'you@example.com or 077 123 4567',
     'post.sharedBathroom': 'Only one shared bathroom',
@@ -202,6 +203,7 @@ export const pageTranslations = {
   },
 
   si: {
+    'contact.noPhone': 'අයිතිකරු දුරකථන අංකයක් එක් කර නැත.',
     'auth.emailOrPhone': 'ඊමේල් හෝ දුරකථන අංකය',
     'auth.identifierHint': 'you@example.com හෝ 077 123 4567',
     'post.sharedBathroom': 'හවුලේ භාවිත කරන එක් නාන කාමරයක් පමණි',
@@ -398,6 +400,7 @@ export const pageTranslations = {
   },
 
   ta: {
+    'contact.noPhone': 'உரிமையாளர் தொலைபேசி எண்ணைச் சேர்க்கவில்லை.',
     'auth.emailOrPhone': 'மின்னஞ்சல் அல்லது தொலைபேசி எண்',
     'auth.identifierHint': 'you@example.com அல்லது 077 123 4567',
     'post.sharedBathroom': 'பகிரப்பட்ட ஒரே ஒரு குளியலறை மட்டும்',

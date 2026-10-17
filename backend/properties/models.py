@@ -15,6 +15,9 @@ class Property(models.Model):
         SHOP = 'shop', 'Shop'
         COMMERCIAL = 'commercial', 'Commercial property'
 
+    # Types whose listings must give a floor area.
+    SQFT_REQUIRED_TYPES = ('shop', 'commercial')
+
     class Stories(models.IntegerChoices):
         SINGLE = 1, 'Single story'
         TWO = 2, 'Two story'
@@ -46,7 +49,8 @@ class Property(models.Model):
     baths = models.FloatField()
     # The listing has one bathroom, shared with others (e.g. the owner's family or other tenants).
     shared_bathroom = models.BooleanField(default=False)
-    sqft = models.PositiveIntegerField()
+    # Floor area. Required for shops and commercial properties only (see the write serializer).
+    sqft = models.PositiveIntegerField(null=True, blank=True)
     home_type = models.CharField(max_length=20, choices=HomeType.choices, default=HomeType.HOUSE)
     # The site lists rentals only for now; the sale option is kept so it can come back.
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.FOR_RENT)

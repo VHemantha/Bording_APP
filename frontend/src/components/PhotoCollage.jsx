@@ -55,13 +55,22 @@ export default function PhotoCollage({ photos, alt }) {
   )
 }
 
+// The whole photo is shown (object-contain), never cropped. A blurred, enlarged copy of the
+// same photo fills the rest of the frame so portrait/odd-shaped photos don't sit in empty bars.
 function Tile({ src, alt, label, onClick, className = '' }) {
+  const url = mediaUrl(src)
   return (
-    <button type="button" onClick={onClick} aria-label={label} className={`group h-full min-h-0 overflow-hidden bg-slate-100 ${className}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className={`group relative h-full min-h-0 overflow-hidden bg-slate-800 ${className}`}
+    >
+      <img src={url} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl" />
       <img
-        src={mediaUrl(src)}
+        src={url}
         alt={alt}
-        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+        className="relative h-full w-full object-contain transition duration-500 group-hover:scale-[1.02]"
       />
     </button>
   )

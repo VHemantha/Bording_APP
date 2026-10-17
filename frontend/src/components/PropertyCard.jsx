@@ -30,7 +30,7 @@ export default function PropertyCard({
       formatBaths(property.baths),
       property.shared_bathroom ? `${t('unit.ba')} (${t('bath.shared')})` : t('unit.ba'),
     ],
-    [property.sqft.toLocaleString(), t('unit.sqft')],
+    property.sqft && [property.sqft.toLocaleString(), t('unit.sqft')],
   ].filter(Boolean)
 
   const extras = [
