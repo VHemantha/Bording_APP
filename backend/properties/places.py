@@ -1,12 +1,13 @@
 """Nearby places (schools, supermarkets, hospitals, ...) for the map's "Nearby places" menu.
 
-Data comes from OpenStreetMap through the public Overpass API, which is free and needs no
-key but is slow (often 30 s or more per query) and rate-limited. So visitors never wait on
-it: places are kept in our own database (`Place`), downloaded one grid square (`PlaceTile`)
-at a time. A map view is answered straight from the database; squares that have never been
-downloaded are fetched in a background thread and the reply says `pending` so the browser
-asks again a few seconds later. `manage.py warm_places` downloads the areas around every
-city ahead of time.
+Data comes from OpenStreetMap. Visitors never wait on an outside service: places are kept in
+our own database (`Place`), one grid square (`PlaceTile`) at a time.
+- All of Sri Lanka ships with the app (properties/data/places_lk.json.gz, built from the
+  Geofabrik download by scripts/build_places_data.py) and `manage.py load_places` loads it
+  on every deploy.
+- Squares outside it, or older than REFRESH_AFTER, are downloaded from the public Overpass
+  API (slow, often down) in a background thread. A never-downloaded square makes the reply
+  say `pending`, and the browser asks again a few seconds later.
 """
 import json
 import logging
@@ -23,10 +24,11 @@ from django.db import close_old_connections, connections, transaction
 from django.utils import timezone
 
 from .models import Place, PlaceTile
+from .osm_categories import classify
 
 logger = logging.getLogger(__name__)
 
-# One Overpass filter per category. `classify` below must agree with these.
+# One Overpass filter per category. `classify` (osm_categories.py) must agree with these.
 CATEGORY_QUERIES = {
     'school': ['nwr["amenity"~"^(school|college)$"]'],
     'foodcity': ['nwr["shop"="supermarket"]["name"~"food ?city|cargills",i]'],
@@ -44,7 +46,7 @@ CATEGORIES = tuple(CATEGORY_QUERIES)
 MAX_SPAN_DEGREES = 0.25
 PER_CATEGORY_LIMIT = 150  # the ones nearest the middle of the view are returned
 TILE = 0.05  # grid square size in degrees (about 5.5 km)
-REFRESH_AFTER = timedelta(days=30)  # places change slowly; older squares are re-downloaded
+REFRESH_AFTER = timedelta(days=90)  # places change slowly; older squares are re-downloaded
 RETRY_AFTER = timedelta(minutes=3)  # a download in progress (or failed) isn't restarted sooner
 QUERY_TIMEOUT = 90  # seconds Overpass may spend on the query
 HTTP_TIMEOUT = 120
@@ -52,29 +54,6 @@ HTTP_TIMEOUT = 120
 
 class PlacesError(Exception):
     pass
-
-
-def classify(tags):
-    name = f"{tags.get('name', '')} {tags.get('brand', '')}".lower()
-    if tags.get('shop') == 'supermarket':
-        if 'keells' in name:
-            return 'keells'
-        if 'cargills' in name or 'food city' in name or 'foodcity' in name:
-            return 'foodcity'
-        return None
-    if tags.get('amenity') in ('school', 'college'):
-        return 'school'
-    if tags.get('tourism') == 'hotel':
-        return 'hotel'
-    if tags.get('amenity') == 'hospital':
-        return 'hospital'
-    if tags.get('leisure') == 'fitness_centre' or tags.get('amenity') == 'gym':
-        return 'gym'
-    if tags.get('amenity') == 'restaurant':
-        return 'restaurant'
-    if tags.get('shop') in ('hairdresser', 'beauty'):
-        return 'salon'
-    return None
 
 
 # ---------- grid ----------

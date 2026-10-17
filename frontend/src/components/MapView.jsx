@@ -1,7 +1,7 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useEffect } from 'react'
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
+import { useEffect, useRef } from 'react'
+import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import { Link } from 'react-router-dom'
 
 import { useLanguage } from '../context/LanguageContext'
@@ -71,13 +71,19 @@ function report(map, onChange) {
 
 /** Tells the parent which area is visible (for the "Nearby places" lookup). */
 function BoundsReporter({ onChange }) {
-  const map = useMapEvents({
-    moveend: () => report(map, onChange),
-  })
-  // Also report the starting view (FitBounds may have already moved the map).
+  const map = useMap()
+  const onChangeRef = useRef(onChange)
   useEffect(() => {
-    report(map, onChange)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    onChangeRef.current = onChange
+  })
+  // One listener for the map's whole life. (useMapEvents re-subscribes on every render, and
+  // a fitBounds made while it is between subscriptions, as when the listings arrive, went
+  // unnoticed: the page kept the first, whole-country view and asked the user to zoom in.)
+  useEffect(() => {
+    const handler = () => report(map, onChangeRef.current)
+    map.on('moveend', handler)
+    handler() // the starting view (FitBounds may have already moved the map)
+    return () => map.off('moveend', handler)
   }, [map])
   return null
 }

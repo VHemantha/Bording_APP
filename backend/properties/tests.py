@@ -255,18 +255,16 @@ class NearbyPlacesTests(APITestCase):
     def test_unknown_categories_are_ignored(self):
         self.assertEqual(self.client.get(self.URL + 'casino').data, {'places': [], 'unavailable': [], 'pending': False})
 
-    def test_warm_places_downloads_around_cities(self):
+    def test_bundled_places_load_without_any_download(self):
         from unittest import mock
         from django.core.management import call_command
-        from properties.management.commands import warm_places
-        from properties.models import Place
-        with mock.patch.object(warm_places, 'CITIES', [{'city': 'Colombo', 'lat': 6.9, 'lng': 79.86}]), \
-                mock.patch('urllib.request.urlopen', return_value=self.overpass_reply(self.ELEMENTS)) as urlopen, \
-                mock.patch('time.sleep'):
-            call_command('warm_places', stdout=StringIO())
-            call_command('warm_places', stdout=StringIO())  # already stored: nothing downloaded
-        self.assertEqual(urlopen.call_count, 1)
-        self.assertEqual(Place.objects.count(), 3)
+        call_command('load_places', stdout=StringIO())
+        call_command('load_places', stdout=StringIO())  # every deploy runs it again
+        with mock.patch('urllib.request.urlopen') as urlopen:
+            data = self.client.get(self.URL + 'school,hospital').data
+        urlopen.assert_not_called()
+        self.assertFalse(data['pending'])
+        self.assertGreater(len(data['places']), 20)  # central Colombo
 
 
 class SharedBathroomTests(APITestCase):

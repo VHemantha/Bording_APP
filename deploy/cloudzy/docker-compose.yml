@@ -47,7 +47,7 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_SSLMODE: disable        # the database is only reachable on the private network, so no TLS needed
     # One server = one copy of the app, so migrating at start-up cannot race with another instance.
-    command: ['sh', '-c', 'python manage.py migrate --noinput && exec gunicorn zillow_clone.wsgi']
+    command: ['sh', '-c', 'python manage.py migrate --noinput && python manage.py load_places && exec gunicorn zillow_clone.wsgi']
     volumes:
       - media:/app/media         # photos users upload with their listings; kept across rebuilds
     depends_on:
