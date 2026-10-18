@@ -109,6 +109,43 @@ class PropertyViewSet(viewsets.ModelViewSet):
         return super().get_throttles()
 
 
+class LocationsView(APIView):
+    """GET /api/locations/?status=for_rent|for_sale
+
+    Every district with its cities and towns (names in en/si/ta) and how many listings each
+    has, for the home page's district cards and the listing form's district/town choices.
+    Without `status`, all listings are counted.
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        from django.db.models.functions import Lower
+
+        from .locations import DISTRICTS
+
+        listings = Property.objects.all()
+        status_filter = request.query_params.get('status')
+        if status_filter in Property.Status.values:
+            listings = listings.filter(status=status_filter)
+        by_district = dict(listings.values_list('district').annotate(n=Count('id')))
+        by_city = dict(listings.annotate(c=Lower('city')).values_list('c').annotate(n=Count('id')))
+
+        districts = []
+        for key, name, si, ta, province, (lat, lng), towns in DISTRICTS:
+            town_rows = [
+                {'name': t_name, 'si': t_si, 'ta': t_ta, 'count': by_city.get(t_name.lower(), 0)}
+                for t_name, t_si, t_ta in towns
+            ]
+            # Busiest first; towns with the same count keep the list's (size) order.
+            town_rows.sort(key=lambda row: -row['count'])
+            districts.append({
+                'key': key, 'name': name, 'si': si, 'ta': ta, 'province': province,
+                'lat': lat, 'lng': lng, 'count': by_district.get(key, 0), 'towns': town_rows,
+            })
+        return Response({'districts': districts})
+
+
 class PlacesThrottle(AIRateThrottle):
     scope = 'places'
 

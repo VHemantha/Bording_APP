@@ -13,6 +13,7 @@ class NumberInFilter(django_filters.BaseInFilter, django_filters.NumberFilter):
 
 class PropertyFilter(django_filters.FilterSet):
     city = django_filters.CharFilter(field_name='city', lookup_expr='iexact')
+    district = django_filters.CharFilter(field_name='district', lookup_expr='iexact')
     zip_code = django_filters.CharFilter(field_name='zip_code', lookup_expr='exact')
     min_price = django_filters.NumberFilter(field_name='price', lookup_expr='gte')
     max_price = django_filters.NumberFilter(field_name='price', lookup_expr='lte')
@@ -47,7 +48,7 @@ class PropertyFilter(django_filters.FilterSet):
     class Meta:
         model = Property
         fields = [
-            'city', 'zip_code', 'min_price', 'max_price', 'min_beds',
+            'city', 'district', 'zip_code', 'min_price', 'max_price', 'min_beds',
             'min_baths', 'home_type', 'max_key_money_months', 'max_advance', 'min_parking', 'min_sqft',
             'max_sqft', 'stories', 'furnishing', 'shared_bathroom', 'min_land_size', 'max_land_size', 'land_unit',
             'status', 'min_lat', 'max_lat', 'min_lng', 'max_lng',

@@ -406,3 +406,39 @@ class SearchFilterTests(APITestCase):
     def test_shared_bathroom(self):
         self.assertEqual(self.prices('home_type=house&shared_bathroom=true'), [3])
         self.assertEqual(self.prices('home_type=house&shared_bathroom=false'), [4])
+
+
+class DistrictTests(APITestCase):
+    def setUp(self):
+        self.client.force_authenticate(User.objects.create_user('district', 'd@example.com', 'pw-123456'))
+
+    def post(self, **kw):
+        return self.client.post('/api/properties/', listing_payload(**kw), format='json')
+
+    def test_district_comes_from_a_known_town_or_the_owners_choice(self):
+        self.assertEqual(self.post(city='Maharagama').data['district'], 'colombo')
+        self.assertEqual(self.post(city='nittambuwa').data['district'], 'gampaha')
+        self.assertEqual(self.post(city='Some Village', district='kandy').data['district'], 'kandy')
+        self.assertEqual(self.post(city='Some Village').data['district'], '')
+        self.assertEqual(self.post(district='atlantis').status_code, 400)
+
+    def test_locations_count_listings_per_district_and_town(self):
+        self.post(city='Maharagama')
+        self.post(city='Maharagama')
+        self.post(city='Negombo', status='for_sale', home_type='house', land_size=10)
+        self.client.force_authenticate(None)
+        rent = {d['key']: d for d in self.client.get('/api/locations/?status=for_rent').data['districts']}
+        self.assertEqual(len(rent), 25)
+        self.assertEqual(rent['colombo']['count'], 2)
+        self.assertEqual(rent['colombo']['towns'][0], {'name': 'Maharagama', 'si': 'මහරගම', 'ta': 'மகரகம', 'count': 2})
+        self.assertEqual(rent['gampaha']['count'], 0)
+        sale = {d['key']: d for d in self.client.get('/api/locations/?status=for_sale').data['districts']}
+        self.assertEqual((sale['gampaha']['count'], sale['colombo']['count']), (1, 0))
+
+    def test_search_by_district(self):
+        self.post(city='Maharagama', price=1)
+        self.post(city='Negombo', price=2)
+        self.client.force_authenticate(None)
+        data = self.client.get('/api/properties/?district=colombo').data
+        data = data.get('results', data) if isinstance(data, dict) else data
+        self.assertEqual([p['price'] for p in data], [1])

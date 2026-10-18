@@ -32,7 +32,7 @@ class PropertyListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Property
         fields = [
-            'id', 'address', 'city', 'state', 'zip_code',
+            'id', 'address', 'city', 'district', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
             'sqft', 'land_size', 'land_unit', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
             'parking_slots',
@@ -48,7 +48,7 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Property
         fields = [
-            'id', 'address', 'city', 'state', 'zip_code',
+            'id', 'address', 'city', 'district', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
             'sqft', 'land_size', 'land_unit', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
             'parking_slots',
@@ -90,7 +90,7 @@ class PropertyWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Property
         fields = [
-            'id', 'address', 'city', 'state', 'zip_code',
+            'id', 'address', 'city', 'district', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
             'sqft', 'land_size', 'land_unit', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
             'parking_slots',

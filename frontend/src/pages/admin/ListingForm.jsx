@@ -1,6 +1,7 @@
 import { Plus, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
+import { districtLabel, fetchLocations } from '../../api/locations'
 import { useLanguage } from '../../context/LanguageContext'
 import { formatKeyMoney, homeTypesFor, landSizeApplies, RENT_ONLY_TYPES, STORIES_LABELS } from '../../utils/format'
 
@@ -8,6 +9,7 @@ import { formatKeyMoney, homeTypesFor, landSizeApplies, RENT_ONLY_TYPES, STORIES
 const EMPTY = {
   address: '',
   city: '',
+  district: '',
   state: '',
   zip_code: '',
   latitude: '',
@@ -42,8 +44,12 @@ export function blankListing() {
 /** Controlled listing form shared by the manual "Add listing" flow and the
  *  AI-import review screen. Calls `onSubmit(payload)` with server-ready values. */
 export default function ListingForm({ initial, onSubmit, submitting, submitLabel }) {
-  const { t } = useLanguage()
+  const { lang, t } = useLanguage()
   const [values, setValues] = useState({ ...EMPTY, ...initial })
+  const [districts, setDistricts] = useState([])
+  useEffect(() => {
+    fetchLocations().then(setDistricts).catch(() => {})
+  }, [])
   const [formError, setFormError] = useState(null)
 
   function set(field, value) {
@@ -93,6 +99,12 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
         <Grid>
           <Text label={t('admin.street')} value={values.address} onChange={(v) => set('address', v)} required span2 />
           <Text label={t('admin.city')} value={values.city} onChange={(v) => set('city', v)} required />
+          <Select
+            label={t('post.district')}
+            value={values.district || ''}
+            onChange={(v) => set('district', v)}
+            options={[['', t('post.districtFromCity')], ...districts.map((d) => [d.key, districtLabel(d, lang)])]}
+          />
           <Text label={t('admin.state')} value={values.state} onChange={(v) => set('state', v.toUpperCase().slice(0, 2))} />
           <Text label={t('admin.zip')} value={values.zip_code} onChange={(v) => set('zip_code', v)} />
           <Text label={t('admin.latitude')} type="number" step="any" value={values.latitude} onChange={(v) => set('latitude', v)} required />

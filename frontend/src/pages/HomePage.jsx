@@ -4,17 +4,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import DealToggle from '../components/DealToggle'
+import DistrictExplorer from '../components/DistrictExplorer'
 import HeroCarousel from '../components/HeroCarousel'
 import { useDeal } from '../context/DealContext'
 import { useLanguage } from '../context/LanguageContext'
-import { CITIES } from '../i18n/translations'
-
-// Phones show this many cities until "Show all" is pressed (54 tiles is a very long scroll).
-const PHONE_CITY_LIMIT = 12
 
 export default function HomePage() {
   const [query, setQuery] = useState('')
-  const [allCities, setAllCities] = useState(false)
   const navigate = useNavigate()
   const { lang, t } = useLanguage()
   const { deal, setDeal } = useDeal()
@@ -94,41 +90,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Explore by city */}
-      <section className="mx-auto max-w-7xl px-4 pt-16 pb-8">
-        <h2 className="text-2xl font-extrabold text-brand-900 sm:text-3xl">{t('cities.title')}</h2>
-        <p className="mt-1 text-sm text-slate-500">{t(selling ? 'cities.subtitleSale' : 'cities.subtitle')}</p>
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-          {CITIES.map((c, i) => (
-            // The reveal animation lives on a wrapper: framer-motion sets an inline transform,
-            // which would override the tile's CSS hover lift if both were on the button.
-            <motion.div
-              key={c.name}
-              className={!allCities && i >= PHONE_CITY_LIMIT ? 'hidden sm:block' : ''}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: (i % 6) * 0.04 }}
-            >
-              <button
-                type="button"
-                onClick={() => navigate(`/search?status=${deal}&city=${encodeURIComponent(c.name)}`)}
-                className="city-tile"
-              >
-                {c[lang] || c.name}
-              </button>
-            </motion.div>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={() => setAllCities((v) => !v)}
-          aria-expanded={allCities}
-          className="mt-5 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 font-bold text-brand-900 transition hover:bg-slate-50 sm:hidden"
-        >
-          {allCities ? t('cities.showLess') : t('cities.showAll', { count: CITIES.length })}
-        </button>
-      </section>
+      <DistrictExplorer deal={deal} />
 
     </div>
   )

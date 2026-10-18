@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { mediaUrl } from '../api/client'
+import { districtLabel, fetchLocations } from '../api/locations'
 import { createProperty, fetchProperty, updateProperty, uploadPhoto } from '../api/properties'
 import DealToggle from '../components/DealToggle'
 import LocationPicker from '../components/LocationPicker'
@@ -33,6 +34,7 @@ const EMPTY = {
   stories: '1',
   parking_slots: '0',
   address: '',
+  district: '',
   city: '',
   zip_code: '',
   description: '',
@@ -46,8 +48,12 @@ export default function PostListingPage() {
   const editing = Boolean(id)
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { t } = useLanguage()
+  const { lang, t } = useLanguage()
   const { deal } = useDeal()
+  const [districts, setDistricts] = useState([])
+  useEffect(() => {
+    fetchLocations().then(setDistricts).catch(() => {})
+  }, [])
 
   // Phone accounts have the number as their username: offer it as the contact number.
   const signedUpWithPhone = /^\+\d+$/.test(user?.username ?? '')
@@ -101,9 +107,20 @@ export default function PostListingPage() {
     if (status === 'for_sale' && RENT_ONLY_TYPES.includes(values.home_type)) set('home_type', 'house')
   }
 
+  function chooseDistrict(key) {
+    set('district', key)
+    const district = districts.find((d) => d.key === key)
+    // Jump the map to the district so finding the spot starts nearby.
+    if (district && !location) setMapFocus({ lat: district.lat, lng: district.lng, zoom: 11 })
+  }
+
   function chooseCity(name) {
     set('city', name)
-    const city = CITIES.find((c) => c.name.toLowerCase() === name.trim().toLowerCase())
+    const typed = name.trim().toLowerCase()
+    // A known town also fills in its district when none was chosen yet.
+    const owner = districts.find((d) => d.towns.some((town) => town.name.toLowerCase() === typed))
+    if (owner && !values.district) set('district', owner.key)
+    const city = CITIES.find((c) => c.name.toLowerCase() === typed)
     // Jump the map to the city so the owner only has to fine-tune the pin.
     if (city && !location) setMapFocus({ lat: city.lat, lng: city.lng, zoom: 13 })
   }
@@ -308,9 +325,19 @@ export default function PostListingPage() {
 
         <Section title={t('admin.location')}>
           <Field label={t('admin.street')} required value={values.address} onChange={(v) => set('address', v)} error={errors.address} span2 />
-          <Field label={t('admin.city')} required list="post-cities" value={values.city} onChange={chooseCity} error={errors.city} />
+          <Select
+            label={t('post.district')}
+            value={values.district}
+            onChange={chooseDistrict}
+            options={[['', t('post.chooseDistrict')], ...districts.map((d) => [d.key, districtLabel(d, lang)])]}
+            required
+            error={errors.district}
+          />
+          <Field label={t('post.cityTown')} required list="post-cities" value={values.city} onChange={chooseCity} error={errors.city} hint={t('post.cityTownHint')} />
           <datalist id="post-cities">
-            {CITIES.map((c) => <option key={c.name} value={c.name} />)}
+            {(districts.find((d) => d.key === values.district)?.towns ?? CITIES).map((town) => (
+              <option key={town.name} value={town.name}>{town[lang] && town[lang] !== town.name ? town[lang] : null}</option>
+            ))}
           </datalist>
           <Field
             label={`${t('admin.zip')} (${t('post.optional')})`}
@@ -505,7 +532,7 @@ function roomOptions(current) {
   return values.map((v) => [v, v])
 }
 
-function Select({ label, value, onChange, options, disabled, hint, error }) {
+function Select({ label, value, onChange, options, disabled, hint, error, required }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-bold text-slate-700">{label}</span>
@@ -513,6 +540,7 @@ function Select({ label, value, onChange, options, disabled, hint, error }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
+        required={required}
         className={`${inputClass} disabled:bg-slate-100 disabled:text-slate-500 ${error ? errorClass : ''}`}
       >
         {options.map(([v, l]) => (

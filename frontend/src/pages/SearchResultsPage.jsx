@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { addFavorite, fetchFavorites, removeFavorite } from '../api/auth'
+import { districtLabel, fetchLocations } from '../api/locations'
 import { fetchProperties } from '../api/properties'
 import AiSearchBar from '../components/AiSearchBar'
 import FilterBar from '../components/FilterBar'
@@ -106,6 +107,13 @@ export default function SearchResultsPage() {
   }, [linkedDeal, setDeal])
   const search = searchParams.get('search') || ''
   const city = searchParams.get('city') || ''
+  // A district's listings page: /search?district=colombo (optionally with a city in it).
+  const district = searchParams.get('district') || ''
+  const [districts, setDistricts] = useState([])
+  useEffect(() => {
+    if (district) fetchLocations().then(setDistricts).catch(() => {})
+  }, [district])
+  const districtName = districtLabel(districts.find((d) => d.key === district), lang) || district
 
   useEffect(() => {
     setLoading(true)
@@ -113,6 +121,7 @@ export default function SearchResultsPage() {
     const params = { ...filters }
     if (search) params.search = search
     if (city) params.city = city
+    if (district) params.district = district
     Object.keys(params).forEach((key) => {
       if (params[key] === '') delete params[key]
     })
@@ -121,7 +130,7 @@ export default function SearchResultsPage() {
       .then(setProperties)
       .catch(() => setError('search.loadError'))
       .finally(() => setLoading(false))
-  }, [filters, search, city])
+  }, [filters, search, city, district])
 
   useEffect(() => {
     if (!user) {
@@ -159,8 +168,9 @@ export default function SearchResultsPage() {
 
   function updateSearch(text) {
     const params = new URLSearchParams(searchParams)
-    // Typed text replaces a city chosen from the home page's tiles.
+    // Typed text replaces a district or city chosen on the home page.
     params.delete('city')
+    params.delete('district')
     if (text) params.set('search', text)
     else params.delete('search')
     setSearchParams(params)
@@ -227,7 +237,11 @@ export default function SearchResultsPage() {
   }, [properties, activeSort])
 
   const renting = filters.status === 'for_rent'
-  const place = cityName(city || search, lang) || t('search.sriLanka')
+  const place =
+    cityName(city, lang) ||
+    (district && t('districts.district', { district: districtName })) ||
+    cityName(search, lang) ||
+    t('search.sriLanka')
   const countKey = `search.${renting ? 'rentals' : 'homes'}${properties.length === 1 ? 'One' : 'Other'}`
 
   return (
@@ -238,7 +252,7 @@ export default function SearchResultsPage() {
         filters={filters}
         onChange={updateFilters}
         onDealChange={changeDeal}
-        searchText={city || search}
+        searchText={city || districtName || search}
         onSearch={updateSearch}
         saved={isSaved}
         onToggleSaved={toggleSaved}

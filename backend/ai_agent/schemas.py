@@ -15,6 +15,9 @@ class PropertySearchFilters(BaseModel):
     """
 
     city: Optional[str] = Field(None, description="Sri Lankan city name if mentioned, e.g. 'Colombo'.")
+    district: Optional[str] = Field(
+        None, description="District key if the user names a district rather than a town, e.g. 'gampaha', 'nuwara_eliya'."
+    )
     zip_code: Optional[str] = Field(None, description='5-digit ZIP code if mentioned.')
     min_price: Optional[int] = Field(None, description='Minimum price in LKR: monthly rent for rentals, sale price when buying.')
     max_price: Optional[int] = Field(None, description='Maximum price / budget in LKR: monthly rent for rentals, sale price when buying.')

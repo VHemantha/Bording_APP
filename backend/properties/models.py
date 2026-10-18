@@ -4,6 +4,8 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator
 from django.db import models
 
+from .locations import DISTRICT_CHOICES, district_for_city
+
 
 class Property(models.Model):
     class HomeType(models.TextChoices):
@@ -47,6 +49,9 @@ class Property(models.Model):
 
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=100)
+    # One of the 25 districts (properties/locations.py). Filled in from `city` when it's a town
+    # we know and the owner didn't choose one.
+    district = models.CharField(max_length=20, choices=DISTRICT_CHOICES, blank=True, db_index=True)
     state = models.CharField(max_length=2, blank=True)  # province code, e.g. WP
     zip_code = models.CharField(max_length=10, blank=True)
     latitude = models.FloatField()
@@ -94,6 +99,11 @@ class Property(models.Model):
 
     def __str__(self):
         return f'{self.address}, {self.city}'
+
+    def save(self, *args, **kwargs):
+        if not self.district:
+            self.district = district_for_city(self.city)
+        super().save(*args, **kwargs)
 
     @classmethod
     def land_size_applies(cls, status, home_type):

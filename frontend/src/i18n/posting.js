@@ -3,6 +3,11 @@
 
 export const postingTranslations = {
   en: {
+    'post.district': "District",
+    'post.chooseDistrict': "Choose a district",
+    'post.cityTown': "City or town",
+    'post.cityTownHint': "Pick from the list or type the name.",
+    'post.districtFromCity': "Work it out from the city",
     'post.landSize': 'Land size',
     'post.landUnit': 'Unit',
     'post.landSizeHint': '1 acre = 160 perches',
@@ -67,6 +72,11 @@ export const postingTranslations = {
   },
 
   si: {
+    'post.district': "දිස්ත්‍රික්කය",
+    'post.chooseDistrict': "දිස්ත්‍රික්කයක් තෝරන්න",
+    'post.cityTown': "නගරය හෝ ප්‍රදේශය",
+    'post.cityTownHint': "ලැයිස්තුවෙන් තෝරන්න හෝ නම ටයිප් කරන්න.",
+    'post.districtFromCity': "නගරයෙන් හඳුනා ගන්න",
     'post.landSize': 'ඉඩමේ ප්‍රමාණය',
     'post.landUnit': 'ඒකකය',
     'post.landSizeHint': 'අක්කර 1 = පර්චස් 160',
@@ -131,6 +141,11 @@ export const postingTranslations = {
   },
 
   ta: {
+    'post.district': "மாவட்டம்",
+    'post.chooseDistrict': "மாவட்டத்தைத் தேர்ந்தெடுக்கவும்",
+    'post.cityTown': "நகரம் அல்லது ஊர்",
+    'post.cityTownHint': "பட்டியலிலிருந்து தேர்வுசெய்யவும் அல்லது பெயரைத் தட்டச்சு செய்யவும்.",
+    'post.districtFromCity': "நகரத்திலிருந்து கண்டறி",
     'post.landSize': 'நிலப் பரப்பு',
     'post.landUnit': 'அலகு',
     'post.landSizeHint': '1 ஏக்கர் = 160 பேர்ச்சஸ்',

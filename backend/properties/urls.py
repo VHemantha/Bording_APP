@@ -1,12 +1,13 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-from .views import NearbyPlacesView, PropertyViewSet
+from .views import LocationsView, NearbyPlacesView, PropertyViewSet
 
 router = DefaultRouter()
 router.register('properties', PropertyViewSet, basename='property')
 
 urlpatterns = [
     path('places/', NearbyPlacesView.as_view(), name='nearby-places'),
+    path('locations/', LocationsView.as_view(), name='locations'),
     *router.urls,
 ]

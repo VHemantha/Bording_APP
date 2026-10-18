@@ -74,11 +74,30 @@ export const CITIES = [
 
 const landingTranslations = {
   en: {
+    'districts.title': "Explore by district",
+    'districts.subtitle': "Choose a district to see its cities and towns.",
+    'districts.townsTitle': "Cities and towns in {district}",
+    'districts.townsSubtitle': "Choose a city or town to see its ads.",
+    'districts.district': "{district} District",
+    'districts.viewAll': "All ads in {district}",
+    'districts.back': "All districts",
+    'districts.ads': "{count} ads",
+    'districts.adsOne': "1 ad",
+    'districts.noAds': "No ads yet",
+    'districts.loadError': "The districts couldn't be loaded. Please refresh the page.",
+    'province.WP': "Western Province",
+    'province.CP': "Central Province",
+    'province.SP': "Southern Province",
+    'province.NP': "Northern Province",
+    'province.EP': "Eastern Province",
+    'province.NW': "North Western Province",
+    'province.NC': "North Central Province",
+    'province.UP': "Uva Province",
+    'province.SG': "Sabaragamuwa Province",
     'hero.tagline': 'For Living or Business,\nFor Rent or Sale!',
     'deal.label': 'Looking to buy or rent',
     'deal.sale': 'Sale',
     'deal.rent': 'Rent',
-    'cities.subtitleSale': 'Properties for sale in Sri Lanka’s main cities.',
     'nav.rent': 'Rent',
     'nav.browse': 'Browse all',
     'nav.saved': 'Saved',
@@ -95,10 +114,6 @@ const landingTranslations = {
     'hero.search': 'Search',
     'hero.photo': 'Show photo {n} of {total}',
 
-    'cities.title': 'Explore by city',
-    'cities.subtitle': "Rentals across Sri Lanka's main cities.",
-    'cities.showAll': 'Show all {count} cities',
-    'cities.showLess': 'Show fewer cities',
 
 
 
@@ -113,11 +128,30 @@ const landingTranslations = {
   },
 
   si: {
+    'districts.title': "දිස්ත්‍රික්කය අනුව සොයන්න",
+    'districts.subtitle': "නගර සහ ප්‍රදේශ බැලීමට දිස්ත්‍රික්කයක් තෝරන්න.",
+    'districts.townsTitle': "{district} දිස්ත්‍රික්කයේ නගර සහ ප්‍රදේශ",
+    'districts.townsSubtitle': "දැන්වීම් බැලීමට නගරයක් හෝ ප්‍රදේශයක් තෝරන්න.",
+    'districts.district': "{district} දිස්ත්‍රික්කය",
+    'districts.viewAll': "{district} හි සියලු දැන්වීම්",
+    'districts.back': "සියලු දිස්ත්‍රික්ක",
+    'districts.ads': "දැන්වීම් {count}",
+    'districts.adsOne': "දැන්වීම් 1",
+    'districts.noAds': "තවම දැන්වීම් නැත",
+    'districts.loadError': "දිස්ත්‍රික්ක පූරණය කළ නොහැකි විය. කරුණාකර පිටුව නැවුම් කරන්න.",
+    'province.WP': "බස්නාහිර පළාත",
+    'province.CP': "මධ්‍යම පළාත",
+    'province.SP': "දකුණු පළාත",
+    'province.NP': "උතුරු පළාත",
+    'province.EP': "නැගෙනහිර පළාත",
+    'province.NW': "වයඹ පළාත",
+    'province.NC': "උතුරු මැද පළාත",
+    'province.UP': "ඌව පළාත",
+    'province.SG': "සබරගමුව පළාත",
     'hero.tagline': 'පදිංචියට හෝ ව්‍යාපාරයට,\nකුලියට සහ විකිණීමට!',
     'deal.label': 'මිලදී ගැනීමට හෝ කුලියට',
     'deal.sale': 'විකිණීමට',
     'deal.rent': 'කුලියට',
-    'cities.subtitleSale': 'ශ්\u200dරී ලංකාවේ ප්\u200dරධාන නගරවල විකිණීමට ඇති දේපළ.',
     'nav.rent': 'කුලියට',
     'nav.browse': 'සියල්ල බලන්න',
     'nav.saved': 'සුරැකි',
@@ -134,10 +168,6 @@ const landingTranslations = {
     'hero.search': 'සොයන්න',
     'hero.photo': 'ඡායාරූප {total} න් {n} වැන්න පෙන්වන්න',
 
-    'cities.title': 'නගරය අනුව සොයන්න',
-    'cities.subtitle': 'ශ්‍රී ලංකාවේ ප්‍රධාන නගරවල කුලී නිවාස.',
-    'cities.showAll': 'නගර {count} ම පෙන්වන්න',
-    'cities.showLess': 'නගර අඩුවෙන් පෙන්වන්න',
 
 
 
@@ -152,11 +182,30 @@ const landingTranslations = {
   },
 
   ta: {
+    'districts.title': "மாவட்டம் வாரியாகத் தேடுங்கள்",
+    'districts.subtitle': "அதன் நகரங்களையும் ஊர்களையும் பார்க்க ஒரு மாவட்டத்தைத் தேர்ந்தெடுக்கவும்.",
+    'districts.townsTitle': "{district} மாவட்டத்தின் நகரங்கள் மற்றும் ஊர்கள்",
+    'districts.townsSubtitle': "விளம்பரங்களைப் பார்க்க ஒரு நகரம் அல்லது ஊரைத் தேர்ந்தெடுக்கவும்.",
+    'districts.district': "{district} மாவட்டம்",
+    'districts.viewAll': "{district} இல் உள்ள அனைத்து விளம்பரங்களும்",
+    'districts.back': "அனைத்து மாவட்டங்களும்",
+    'districts.ads': "{count} விளம்பரங்கள்",
+    'districts.adsOne': "1 விளம்பரம்",
+    'districts.noAds': "இன்னும் விளம்பரங்கள் இல்லை",
+    'districts.loadError': "மாவட்டங்களை ஏற்ற முடியவில்லை. பக்கத்தைப் புதுப்பிக்கவும்.",
+    'province.WP': "மேல் மாகாணம்",
+    'province.CP': "மத்திய மாகாணம்",
+    'province.SP': "தென் மாகாணம்",
+    'province.NP': "வட மாகாணம்",
+    'province.EP': "கிழக்கு மாகாணம்",
+    'province.NW': "வடமேல் மாகாணம்",
+    'province.NC': "வடமத்திய மாகாணம்",
+    'province.UP': "ஊவா மாகாணம்",
+    'province.SG': "சப்ரகமுவ மாகாணம்",
     'hero.tagline': 'வசிக்கவோ வணிகத்திற்கோ,\nவாடகைக்கோ விற்பனைக்கோ!',
     'deal.label': 'வாங்க அல்லது வாடகைக்கு',
     'deal.sale': 'விற்பனை',
     'deal.rent': 'வாடகை',
-    'cities.subtitleSale': 'இலங்கையின் முக்கிய நகரங்களில் விற்பனைக்கான சொத்துகள்.',
     'nav.rent': 'வாடகை',
     'nav.browse': 'அனைத்தையும் பார்க்க',
     'nav.saved': 'சேமித்தவை',
@@ -173,10 +222,6 @@ const landingTranslations = {
     'hero.search': 'தேடு',
     'hero.photo': '{total} படங்களில் {n}-ஐக் காட்டு',
 
-    'cities.title': 'நகரம் வாரியாகத் தேடுங்கள்',
-    'cities.subtitle': 'இலங்கையின் முக்கிய நகரங்களில் வாடகை வீடுகள்.',
-    'cities.showAll': 'அனைத்து {count} நகரங்களையும் காட்டு',
-    'cities.showLess': 'குறைவான நகரங்களைக் காட்டு',
 
 
 
@@ -198,7 +243,16 @@ export const translations = {
 }
 
 /** A city's name in the given language; unknown places (typed searches) are returned as-is. */
+// Every other town's names, added once the district list arrives from the server
+// (api/locations.js), so towns beyond CITIES are translated too.
+const placeNames = new Map()
+
+export function registerPlaceNames(districts) {
+  districts.forEach((district) => district.towns.forEach((town) => placeNames.set(town.name.toLowerCase(), town)))
+}
+
 export function cityName(name, lang) {
-  const city = CITIES.find((c) => c.name.toLowerCase() === name.toLowerCase())
+  const key = (name || '').toLowerCase()
+  const city = CITIES.find((c) => c.name.toLowerCase() === key) || placeNames.get(key)
   return city?.[lang] || name
 }
