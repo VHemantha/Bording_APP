@@ -1,7 +1,7 @@
 import logo from '../assets/logo.png'
 import logoLight from '../assets/logo-light.png'
 
-export const APP_NAME = 'Place'
+export const APP_NAME = 'PlaceEka'
 
 /**
  * The "place එක!" logo (orange wordmark, Sinhala line underneath; transparent PNG, ~1.9:1).

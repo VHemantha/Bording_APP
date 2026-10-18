@@ -5,7 +5,7 @@
   --font-sans: "Manrope", "Noto Sans Sinhala", "Noto Sans Tamil", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: "Fraunces", "Manrope", "Noto Sans Sinhala", "Noto Sans Tamil", ui-serif, Georgia, serif;
 
-  /* Brand: the Place logo's orange (#fe914e = 500). Buttons use 600, which is dark enough for
+  /* Brand: the PlaceEka logo's orange (#fe914e = 500). Buttons use 600, which is dark enough for
      white text to meet WCAG AA (4.5:1). 900 is near-black, used for headings and dark surfaces
      (the logo itself is orange on black). */
   --color-brand-50: #fff4ec;
