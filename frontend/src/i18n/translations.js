@@ -74,11 +74,10 @@ export const CITIES = [
 
 const landingTranslations = {
   en: {
+    'hero.tagline': 'For Living or Business,\nFor Rent or Sale!',
     'deal.label': 'Looking to buy or rent',
     'deal.sale': 'Sale',
     'deal.rent': 'Rent',
-    'hero.titleSale': 'Find a property to call your own',
-    'hero.subtitleSale': 'Houses, apartments, land, shops and commercial property for sale across Sri Lanka.',
     'cities.subtitleSale': 'Properties for sale in Sri Lanka’s main cities.',
     'nav.rent': 'Rent',
     'nav.browse': 'Browse all',
@@ -92,9 +91,6 @@ const landingTranslations = {
     'nav.language': 'Language',
     'nav.menu': 'Menu',
 
-    'hero.title': 'Find a home that fits your life',
-    'hero.subtitle':
-      "Search houses, annexes, apartments and shops for rent across Sri Lanka — or just tell our assistant what you're picturing.",
     'hero.placeholder': 'Enter Cities',
     'hero.search': 'Search',
     'hero.photo': 'Show photo {n} of {total}',
@@ -117,11 +113,10 @@ const landingTranslations = {
   },
 
   si: {
+    'hero.tagline': 'පදිංචියට හෝ ව්‍යාපාරයට,\nකුලියට සහ විකිණීමට!',
     'deal.label': 'මිලදී ගැනීමට හෝ කුලියට',
     'deal.sale': 'විකිණීමට',
     'deal.rent': 'කුලියට',
-    'hero.titleSale': 'ඔබටම අයිති දේපළක් සොයාගන්න',
-    'hero.subtitleSale': 'ශ්\u200dරී ලංකාව පුරා විකිණීමට ඇති නිවාස, මහල් නිවාස, ඉඩම්, වෙළඳසැල් සහ වාණිජ දේපළ.',
     'cities.subtitleSale': 'ශ්\u200dරී ලංකාවේ ප්\u200dරධාන නගරවල විකිණීමට ඇති දේපළ.',
     'nav.rent': 'කුලියට',
     'nav.browse': 'සියල්ල බලන්න',
@@ -135,9 +130,6 @@ const landingTranslations = {
     'nav.language': 'භාෂාව',
     'nav.menu': 'මෙනුව',
 
-    'hero.title': 'ඔබේ ජීවිතයට ගැළපෙන නිවසක් සොයාගන්න',
-    'hero.subtitle':
-      'ශ්‍රී ලංකාව පුරා කුලියට ඇති නිවාස, ඇනෙක්සි, මහල් නිවාස සහ වෙළඳසැල් සොයන්න — නැතහොත් ඔබ සිතන දේ අපගේ සහායකයාට කියන්න.',
     'hero.placeholder': 'නගර ඇතුළත් කරන්න',
     'hero.search': 'සොයන්න',
     'hero.photo': 'ඡායාරූප {total} න් {n} වැන්න පෙන්වන්න',
@@ -160,11 +152,10 @@ const landingTranslations = {
   },
 
   ta: {
+    'hero.tagline': 'வசிக்கவோ வணிகத்திற்கோ,\nவாடகைக்கோ விற்பனைக்கோ!',
     'deal.label': 'வாங்க அல்லது வாடகைக்கு',
     'deal.sale': 'விற்பனை',
     'deal.rent': 'வாடகை',
-    'hero.titleSale': 'உங்களுக்கே சொந்தமான சொத்தைக் கண்டறியுங்கள்',
-    'hero.subtitleSale': 'இலங்கை முழுவதும் விற்பனைக்கான வீடுகள், அடுக்குமாடி வீடுகள், நிலங்கள், கடைகள் மற்றும் வணிகச் சொத்துகள்.',
     'cities.subtitleSale': 'இலங்கையின் முக்கிய நகரங்களில் விற்பனைக்கான சொத்துகள்.',
     'nav.rent': 'வாடகை',
     'nav.browse': 'அனைத்தையும் பார்க்க',
@@ -178,9 +169,6 @@ const landingTranslations = {
     'nav.language': 'மொழி',
     'nav.menu': 'பட்டி',
 
-    'hero.title': 'உங்கள் வாழ்க்கைக்கு ஏற்ற வீட்டைக் கண்டறியுங்கள்',
-    'hero.subtitle':
-      'இலங்கை முழுவதும் வாடகைக்கு உள்ள வீடுகள், இணைப்பு வீடுகள், அடுக்குமாடி வீடுகள் மற்றும் கடைகளைத் தேடுங்கள் — அல்லது நீங்கள் நினைப்பதை எங்கள் உதவியாளரிடம் சொல்லுங்கள்.',
     'hero.placeholder': 'நகரங்களை உள்ளிடவும்',
     'hero.search': 'தேடு',
     'hero.photo': '{total} படங்களில் {n}-ஐக் காட்டு',

@@ -41,7 +41,7 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex max-w-3xl gap-5 sm:gap-7"
+            className="flex max-w-4xl gap-5 sm:gap-7"
           >
             <span className="w-1.5 shrink-0 rounded-full bg-white" aria-hidden="true" />
             <div>
@@ -54,11 +54,9 @@ export default function HomePage() {
                     : 'text-3xl leading-[1.3] sm:text-5xl lg:text-6xl'
                 }`}
               >
-                {t(selling ? 'hero.titleSale' : 'hero.title')}
+                {/* Two lines, broken after the comma (the translations contain a line break). */}
+                <span className="whitespace-pre-line">{t('hero.tagline')}</span>
               </h1>
-              <p className="mt-4 max-w-xl text-lg text-white/90 drop-shadow">
-                {t(selling ? 'hero.subtitleSale' : 'hero.subtitle')}
-              </p>
             </div>
           </motion.div>
 
