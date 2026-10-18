@@ -51,6 +51,8 @@ class ListingDraft(BaseModel):
     beds: int
     baths: float
     sqft: Optional[int] = Field(None, description='Floor area in square feet, if given.')
+    land_size: Optional[float] = Field(None, description='Land size, if given (not for apartments).')
+    land_unit: Literal['perch', 'acre'] = Field('perch', description="Unit of land_size: 'perch' or 'acre'.")
     home_type: Literal['house', 'apartment', 'annex', 'land', 'upper_floor_house', 'shop', 'commercial'] = 'house'
     status: Literal['for_sale', 'for_rent'] = 'for_rent'
     key_money_months: int = Field(0, ge=0, le=12, description="Rentals: key money as a number of months' rent, 0-12. 0 if none.")

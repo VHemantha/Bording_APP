@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext'
 import { useDeal } from '../context/DealContext'
 import { useLanguage } from '../context/LanguageContext'
 import { CITIES } from '../i18n/translations'
-import { formatKeyMoney, homeTypesFor, RENT_ONLY_TYPES, STORIES_LABELS } from '../utils/format'
+import { formatKeyMoney, homeTypesFor, NO_LAND_SIZE_TYPES, RENT_ONLY_TYPES, STORIES_LABELS } from '../utils/format'
 
 const MAX_PHOTOS = 20
 // Property types whose listings must give the floor area (matches the backend).
@@ -28,6 +28,8 @@ const EMPTY = {
   baths: '1',
   shared_bathroom: false,
   sqft: '',
+  land_size: '',
+  land_unit: 'perch',
   stories: '1',
   parking_slots: '0',
   address: '',
@@ -153,6 +155,7 @@ export default function PostListingPage() {
       beds: land ? 0 : num(values.beds),
       baths: land ? 0 : num(values.baths),
       sqft: num(values.sqft),
+      land_size: NO_LAND_SIZE_TYPES.includes(values.home_type) ? null : num(values.land_size),
       stories: land ? null : num(values.stories),
       parking_slots: num(values.parking_slots) ?? 0,
       latitude: Number(location.lat.toFixed(6)),
@@ -268,6 +271,15 @@ export default function PostListingPage() {
                 </label>
               </div>
             </>
+          )}
+          {!NO_LAND_SIZE_TYPES.includes(values.home_type) && (
+            <LandSizeField
+              size={values.land_size}
+              unit={values.land_unit}
+              onSize={(v) => set('land_size', v)}
+              onUnit={(v) => set('land_unit', v)}
+              error={errors.land_size}
+            />
           )}
           <Field
             label={SQFT_REQUIRED.includes(values.home_type) ? t('filter.sqft') : `${t('filter.sqft')} (${t('post.optional')})`}
@@ -443,6 +455,37 @@ function Field({ label, value, onChange, error, hint, span2, ...inputProps }) {
         <span className={`mt-1 block text-xs ${error ? 'text-red-600' : 'text-slate-500'}`}>{error || hint}</span>
       )}
     </label>
+  )
+}
+
+/** Land size: a number with a Perches / Acres choice attached, read as one field. */
+function LandSizeField({ size, unit, onSize, onUnit, error }) {
+  const { t } = useLanguage()
+  return (
+    <div>
+      <label htmlFor="land-size" className="mb-1.5 block text-sm font-bold text-slate-700">{t('post.landSize')}</label>
+      <div className={`flex rounded-lg border bg-white transition focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-100 ${
+        error ? 'border-red-400 ring-2 ring-red-100' : 'border-slate-300'
+      }`}>
+        <input
+          id="land-size"
+          type="number" min="0.01" step="any" inputMode="decimal" required
+          value={size}
+          onChange={(e) => onSize(e.target.value)}
+          className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3.5 py-2.5 outline-none"
+        />
+        <select
+          value={unit}
+          onChange={(e) => onUnit(e.target.value)}
+          aria-label={t('post.landUnit')}
+          className="rounded-r-lg border-l border-slate-300 bg-slate-50 px-3 font-bold text-brand-900 outline-none"
+        >
+          <option value="perch">{t('land.unitPerch')}</option>
+          <option value="acre">{t('land.unitAcre')}</option>
+        </select>
+      </div>
+      <span className={`mt-1 block text-xs ${error ? 'text-red-600' : 'text-slate-500'}`}>{error || t('post.landSizeHint')}</span>
+    </div>
   )
 }
 

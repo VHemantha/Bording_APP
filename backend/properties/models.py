@@ -19,6 +19,12 @@ class Property(models.Model):
     SQFT_REQUIRED_TYPES = ('shop', 'commercial')
     # Types that are only ever rented out, never sold on their own.
     RENT_ONLY_TYPES = ('annex', 'upper_floor_house')
+    # Every type except these must give the land size (perches or acres).
+    NO_LAND_SIZE_TYPES = ('apartment',)
+
+    class LandUnit(models.TextChoices):
+        PERCH = 'perch', 'Perches'
+        ACRE = 'acre', 'Acres'
 
     class Stories(models.IntegerChoices):
         SINGLE = 1, 'Single story'
@@ -53,6 +59,10 @@ class Property(models.Model):
     shared_bathroom = models.BooleanField(default=False)
     # Floor area. Required for shops and commercial properties only (see the write serializer).
     sqft = models.PositiveIntegerField(null=True, blank=True)
+    # Size of the land, in perches or acres (1 acre = 160 perches). Required for every type
+    # except apartments (see the write serializer).
+    land_size = models.FloatField(null=True, blank=True)
+    land_unit = models.CharField(max_length=5, choices=LandUnit.choices, default=LandUnit.PERCH)
     home_type = models.CharField(max_length=20, choices=HomeType.choices, default=HomeType.HOUSE)
     # Rent or sale. For a sale, `price` is the sale price; for a rental, the monthly rent.
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.FOR_RENT)

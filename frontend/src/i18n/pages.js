@@ -4,6 +4,12 @@
 
 export const pageTranslations = {
   en: {
+    'land.perch': '{count} perch',
+    'land.perches': '{count} perches',
+    'land.acre': '{count} acre',
+    'land.acres': '{count} acres',
+    'land.unitPerch': 'Perches',
+    'land.unitAcre': 'Acres',
     'filter.advance': 'Advance amount',
     'filter.maxAdvance': 'Maximum advance',
     'advance.none': 'No advance',
@@ -211,6 +217,12 @@ export const pageTranslations = {
   },
 
   si: {
+    'land.perch': 'පර්චස් {count}',
+    'land.perches': 'පර්චස් {count}',
+    'land.acre': 'අක්කර {count}',
+    'land.acres': 'අක්කර {count}',
+    'land.unitPerch': 'පර්චස්',
+    'land.unitAcre': 'අක්කර',
     'filter.advance': 'අත්තිකාරම් මුදල',
     'filter.maxAdvance': 'උපරිම අත්තිකාරම',
     'advance.none': 'අත්තිකාරම් නැත',
@@ -416,6 +428,12 @@ export const pageTranslations = {
   },
 
   ta: {
+    'land.perch': '{count} பேர்ச்',
+    'land.perches': '{count} பேர்ச்சஸ்',
+    'land.acre': '{count} ஏக்கர்',
+    'land.acres': '{count} ஏக்கர்',
+    'land.unitPerch': 'பேர்ச்சஸ்',
+    'land.unitAcre': 'ஏக்கர்',
     'filter.advance': 'முன்பணத் தொகை',
     'filter.maxAdvance': 'அதிகபட்ச முன்பணம்',
     'advance.none': 'முன்பணம் இல்லை',

@@ -49,6 +49,18 @@ export function homeTypesFor(status) {
   return status === 'for_sale' ? all.filter((key) => !RENT_ONLY_TYPES.includes(key)) : all
 }
 
+// Every type except these gives the land size (matches Property.NO_LAND_SIZE_TYPES).
+export const NO_LAND_SIZE_TYPES = ['apartment']
+
+/** Land size: "20 perches", "1 perch", "1.5 acres" (in the visitor's language). */
+export function formatLandSize(size, unit, t) {
+  if (!size) return null
+  const amount = Number.isInteger(size) ? size : Number(size.toFixed(2))
+  const acres = unit === 'acre'
+  const key = amount === 1 ? (acres ? 'land.acre' : 'land.perch') : acres ? 'land.acres' : 'land.perches'
+  return t(key, { count: amount.toLocaleString() })
+}
+
 /** Choices for the most a buyer can pay as an advance, in LKR. */
 export const ADVANCE_OPTIONS = [500000, 1000000, 2500000, 5000000, 10000000]
 

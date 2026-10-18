@@ -2,7 +2,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { useLanguage } from '../../context/LanguageContext'
-import { formatKeyMoney, homeTypesFor, RENT_ONLY_TYPES, STORIES_LABELS } from '../../utils/format'
+import { formatKeyMoney, homeTypesFor, NO_LAND_SIZE_TYPES, RENT_ONLY_TYPES, STORIES_LABELS } from '../../utils/format'
 
 
 const EMPTY = {
@@ -17,6 +17,8 @@ const EMPTY = {
   baths: '1',
   shared_bathroom: false,
   sqft: '',
+  land_size: '',
+  land_unit: 'perch',
   home_type: 'house',
   status: 'for_rent',
   key_money_months: '0',
@@ -68,6 +70,7 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
       beds: num(values.beds),
       baths: num(values.baths),
       sqft: num(values.sqft),
+      land_size: NO_LAND_SIZE_TYPES.includes(values.home_type) ? null : num(values.land_size),
       key_money_months: values.status === 'for_sale' ? 0 : num(values.key_money_months) ?? 0,
       advance_amount: values.status === 'for_sale' ? num(values.advance_amount) : null,
       parking_slots: num(values.parking_slots) ?? 0,
@@ -123,6 +126,12 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
               {t('post.sharedBathroom')}
             </label>
           </div>
+          {!NO_LAND_SIZE_TYPES.includes(values.home_type) && (
+            <>
+              <Text label={t('post.landSize')} type="number" step="any" value={values.land_size ?? ''} onChange={(v) => set('land_size', v)} required />
+              <Select label={t('post.landUnit')} value={values.land_unit || 'perch'} onChange={(v) => set('land_unit', v)} options={[['perch', t('land.unitPerch')], ['acre', t('land.unitAcre')]]} />
+            </>
+          )}
           <Text
             label={['shop', 'commercial'].includes(values.home_type) ? t('filter.sqft') : `${t('filter.sqft')} (${t('post.optional')})`}
             type="number"

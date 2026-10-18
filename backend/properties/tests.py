@@ -18,7 +18,7 @@ TEMP_MEDIA = tempfile.mkdtemp()
 def listing_payload(**overrides):
     data = {
         'address': '12 Temple Rd', 'city': 'Colombo', 'latitude': 6.9, 'longitude': 79.86,
-        'price': 50000, 'beds': 2, 'baths': 1, 'sqft': 900, 'home_type': 'annex',
+        'price': 50000, 'beds': 2, 'baths': 1, 'sqft': 900, 'land_size': 10, 'home_type': 'annex',
         'status': 'for_rent', 'key_money_months': 6, 'parking_slots': 1, 'stories': 1,
         'furnishing': 'furnished', 'description': 'Quiet annex near the station.',
         'primary_image_url': 'https://example.com/a.jpg', 'images': ['https://example.com/a.jpg'],
@@ -340,3 +340,32 @@ class SaleListingTests(APITestCase):
         cheap = self.client.get('/api/properties/?status=for_sale&max_advance=2000000').data
         cheap = cheap.get('results', cheap) if isinstance(cheap, dict) else cheap
         self.assertEqual(sorted(p['price'] for p in cheap), [20_000_000, 40_000_000])
+
+
+class LandSizeTests(APITestCase):
+    def setUp(self):
+        self.client.force_authenticate(User.objects.create_user('lander', 'land@example.com', 'pw-123456'))
+
+    def post(self, **overrides):
+        payload = listing_payload(**overrides)
+        if overrides.get('land_size', 0) is None:
+            payload.pop('land_size')
+        return self.client.post('/api/properties/', payload, format='json')
+
+    def test_required_for_every_type_except_apartments(self):
+        for home_type in ('house', 'annex', 'land', 'upper_floor_house', 'shop', 'commercial'):
+            response = self.post(home_type=home_type, sqft=1000, land_size=None)
+            self.assertEqual(response.status_code, 400, home_type)
+            self.assertIn('land_size', response.data)
+
+    def test_perches_or_acres(self):
+        response = self.post(home_type='land', land_size=1.5, land_unit='acre')
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual((response.data['land_size'], response.data['land_unit']), (1.5, 'acre'))
+        self.assertEqual(self.post(home_type='land', land_size=2, land_unit='hectare').status_code, 400)
+
+    def test_apartments_have_no_land_size(self):
+        response = self.post(home_type='apartment', land_size=None)
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertIsNone(response.data['land_size'])
+        self.assertIsNone(self.post(home_type='apartment', land_size=12).data['land_size'])

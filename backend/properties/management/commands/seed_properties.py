@@ -130,6 +130,13 @@ class Command(BaseCommand):
                 advance_amount = None
                 key_money_months = random.choice([0, 0, 1, 2, 3, 6, 6, 10, 12])
 
+            # Land size: none for apartments; acres for some bare land, perches otherwise.
+            land_size, land_unit = None, 'perch'
+            if home_type == Property.HomeType.LAND and random.random() < 0.3:
+                land_size, land_unit = random.choice([0.5, 1, 1.5, 2, 3, 5]), 'acre'
+            elif home_type != Property.HomeType.APARTMENT:
+                land_size = random.choice([6, 8, 10, 12, 15, 20, 25, 30, 40, 60])
+
             lat = city_info['lat'] + random.uniform(-0.012, 0.012)
             lng = city_info['lng'] + random.uniform(-0.012, 0.012)
 
@@ -154,6 +161,8 @@ class Command(BaseCommand):
                 beds=beds,
                 baths=baths,
                 sqft=sqft,
+                land_size=land_size,
+                land_unit=land_unit,
                 home_type=home_type,
                 status=status,
                 key_money_months=key_money_months,

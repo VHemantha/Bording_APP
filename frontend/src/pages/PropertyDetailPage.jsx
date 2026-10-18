@@ -7,6 +7,7 @@ import {
   Car,
   Heart,
   KeyRound,
+  LandPlot,
   Layers,
   MessageCircle,
   Phone,
@@ -30,7 +31,7 @@ import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
 import { useLanguage } from '../context/LanguageContext'
 import { cityName } from '../i18n/translations'
-import { formatBaths, formatKeyMoney, formatPrice } from '../utils/format'
+import { formatBaths, formatKeyMoney, formatLandSize, formatPrice } from '../utils/format'
 
 const SECTIONS = [
   ['overview', 'detail.tabOverview'],
@@ -129,6 +130,7 @@ export default function PropertyDetailPage() {
     [Building2, t(`type.${p.home_type}`)],
     !land && [BedDouble, `${p.beds} ${t(p.beds === 1 ? 'unit.bed' : 'unit.beds')}`],
     !land && [Bath, `${formatBaths(p.baths)} ${t(p.baths === 1 ? 'unit.bath' : 'unit.baths')}${p.shared_bathroom ? ` (${t('bath.shared')})` : ''}`],
+    p.land_size > 0 && [LandPlot, `${t('post.landSize')}: ${formatLandSize(p.land_size, p.land_unit, t)}`],
     sqft && [Ruler, sqft],
     [Sofa, t(`furnishing.${p.furnishing}`)],
     [Car, `${t('filter.parking')}: ${p.parking_slots}`],

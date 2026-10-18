@@ -3,6 +3,9 @@
 
 export const postingTranslations = {
   en: {
+    'post.landSize': 'Land size',
+    'post.landUnit': 'Unit',
+    'post.landSizeHint': '1 acre = 160 perches',
     'post.listingFor': 'Listing type',
     'post.priceSale': 'Sale price (LKR)',
     'post.advance': 'Advance amount (LKR)',
@@ -64,6 +67,9 @@ export const postingTranslations = {
   },
 
   si: {
+    'post.landSize': 'ඉඩමේ ප්‍රමාණය',
+    'post.landUnit': 'ඒකකය',
+    'post.landSizeHint': 'අක්කර 1 = පර්චස් 160',
     'post.listingFor': 'දැන්වීම් වර්ගය',
     'post.priceSale': 'විකුණුම් මිල (LKR)',
     'post.advance': 'අත්තිකාරම් මුදල (LKR)',
@@ -125,6 +131,9 @@ export const postingTranslations = {
   },
 
   ta: {
+    'post.landSize': 'நிலப் பரப்பு',
+    'post.landUnit': 'அலகு',
+    'post.landSizeHint': '1 ஏக்கர் = 160 பேர்ச்சஸ்',
     'post.listingFor': 'விளம்பர வகை',
     'post.priceSale': 'விற்பனை விலை (LKR)',
     'post.advance': 'முன்பணத் தொகை (LKR)',

@@ -34,7 +34,7 @@ class PropertyListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
+            'sqft', 'land_size', 'land_unit', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
             'parking_slots',
             'stories', 'furnishing', 'primary_image_url',
         ]
@@ -50,7 +50,7 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
+            'sqft', 'land_size', 'land_unit', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
             'parking_slots',
             'stories', 'furnishing', 'description',
             'year_built', 'primary_image_url', 'listed_date', 'images',
@@ -92,7 +92,7 @@ class PropertyWriteSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'address', 'city', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
-            'sqft', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
+            'sqft', 'land_size', 'land_unit', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
             'parking_slots',
             'stories', 'furnishing', 'description',
             'year_built', 'primary_image_url', 'listed_date', 'images',
@@ -105,6 +105,12 @@ class PropertyWriteSerializer(serializers.ModelSerializer):
         sqft = attrs.get('sqft', getattr(self.instance, 'sqft', None))
         if home_type in Property.SQFT_REQUIRED_TYPES and not sqft:
             raise serializers.ValidationError({'sqft': 'Square feet is required for shops and commercial properties.'})
+        if home_type in Property.NO_LAND_SIZE_TYPES:
+            attrs['land_size'] = None
+        else:
+            land_size = attrs.get('land_size', getattr(self.instance, 'land_size', None))
+            if not land_size or land_size <= 0:
+                raise serializers.ValidationError({'land_size': 'Give the land size in perches or acres.'})
         status = attrs.get('status', getattr(self.instance, 'status', Property.Status.FOR_RENT))
         if status == Property.Status.FOR_SALE and home_type in Property.RENT_ONLY_TYPES:
             raise serializers.ValidationError({'home_type': 'Annexes and upper floor houses can only be rented out.'})
