@@ -27,19 +27,28 @@ ask() {
   fi
 }
 
-echo "Nestwell server configuration"
+echo "PlaceEka server configuration"
 echo
-ask DOMAIN "Domain name for the site (e.g. www.example.com), or press Enter to use the server's IP over plain HTTP: "
+ask DOMAIN "Domain name for the site (e.g. placeeka.lk), or press Enter to use the server's IP over plain HTTP: "
 DOMAIN=$(printf '%s' "$DOMAIN" | tr '[:upper:]' '[:lower:]' | sed -E 's#^https?://##; s#/.*$##; s/[[:space:]]//g')
 
 if [ -n "$DOMAIN" ]; then
   if ! printf '%s' "$DOMAIN" | grep -Eq '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'; then
-    echo "'$DOMAIN' doesn't look like a domain name (expected something like www.example.com)." >&2
+    echo "'$DOMAIN' doesn't look like a domain name (expected something like placeeka.lk)." >&2
     exit 1
   fi
-  SITE_ADDRESS=$DOMAIN
-  ALLOWED_HOSTS=$DOMAIN
-  CSRF_ORIGINS=https://$DOMAIN
+  BASE=${DOMAIN#www.}
+  if [ "$BASE" != "$DOMAIN" ] || [ "$(printf '%s' "$DOMAIN" | tr -cd . | wc -c)" -eq 1 ]; then
+    # placeeka.lk or www.placeeka.lk: serve both names; Caddy redirects www. to the bare one.
+    SITE_ADDRESS="$BASE, www.$BASE"
+    ALLOWED_HOSTS="$BASE,www.$BASE"
+    CSRF_ORIGINS="https://$BASE,https://www.$BASE"
+  else
+    # Some other subdomain (e.g. app.example.com): just that name.
+    SITE_ADDRESS=$DOMAIN
+    ALLOWED_HOSTS=$DOMAIN
+    CSRF_ORIGINS=https://$DOMAIN
+  fi
   SECURE_COOKIES=true
 else
   SERVER_IP=${SERVER_IP:-$(curl -4 -fsS --max-time 5 https://api.ipify.org 2>/dev/null || true)}
@@ -77,8 +86,8 @@ umask 077   # the file holds secrets: readable by this user only
 echo
 echo "Wrote $(pwd)/.env"
 if [ -n "$DOMAIN" ]; then
-  echo "Site address: https://$DOMAIN  (its DNS 'A' record must point at this server BEFORE you start the stack,"
-  echo "or Caddy cannot get the certificate)."
+  echo "Site address: https://${BASE}  (DNS 'A' records for $SITE_ADDRESS must point at this server BEFORE"
+  echo "you start the stack - with Cloudflare, set them to 'DNS only' until the certificate is issued)."
 else
   echo "Site address: http://$SERVER_IP  (plain HTTP: add a domain before real use, see DEPLOY_CLOUDZY.md)."
 fi

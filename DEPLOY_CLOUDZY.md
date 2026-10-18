@@ -53,17 +53,20 @@ Throughout this guide, replace `SERVER_IP` with that address.
 
 ## 2. Point a domain at it (recommended — do it now)
 
-HTTPS needs a domain name. At your DNS provider create an **A record**: `www.example.com` → `SERVER_IP`
-(use your real name). DNS can take minutes to hours to spread; check from your PC:
+HTTPS needs a domain name. The site's domain is **placeeka.lk**. At your DNS provider (Cloudflare) create two
+**A records**, `placeeka.lk` → `SERVER_IP` and `www.placeeka.lk` → `SERVER_IP`. With Cloudflare, set both to
+**DNS only** (grey cloud) until the site is up with its certificate (step 7), then switch them to **Proxied** and set
+SSL/TLS to **Full (strict)**. DNS can take minutes to hours to spread; check from your PC:
 
 **PowerShell (your PC)**
 ```powershell
-nslookup www.example.com          # the "Address" at the bottom must be SERVER_IP
+nslookup placeeka.lk              # the "Address" at the bottom must be SERVER_IP (while "DNS only")
+nslookup www.placeeka.lk
 ```
 
 No domain yet? You can still deploy by IP over plain HTTP to try things out (step 6 asks). But passwords and login
 tokens then cross the internet unencrypted, and Google sign-in won't work — add a domain before real use (step 10).
-Tip: use a `www.` name (or any subdomain); a bare `example.com` also works with an A record if your DNS provider allows it.
+`www.placeeka.lk` permanently redirects to `placeeka.lk` (Caddyfile), so the site has one address.
 
 ## 3. Your SSH key (made on your PC)
 
@@ -166,7 +169,8 @@ cd /opt/nestwell/deploy/cloudzy
 
 It asks three things and writes `.env` with **freshly generated random secrets** (database password, Django secret key):
 
-1. **Domain** — e.g. `www.example.com` (its A record must already point here), or press Enter for IP-only HTTP.
+1. **Domain** — `placeeka.lk` (both A records must already point here; `www.` is added for you), or press Enter
+   for IP-only HTTP.
 2. **Anthropic API key** — input is hidden; Enter to skip (the AI features then return a clean `503`; the rest works).
    Get a key at <https://console.anthropic.com> and set a monthly spend limit there.
 3. **Google client ID** — Enter to skip (the Google button renders disabled).
@@ -189,10 +193,10 @@ Caddy, and waits until the app reports healthy. Later runs are much faster (cach
 **Server (bash)**
 ```bash
 docker compose ps                      # db, web, caddy: all "Up"; web and db "(healthy)"
-curl -s http://localhost/healthz; echo # ok   (with a domain this redirects to https; use: curl -sI https://www.example.com)
+curl -s http://localhost/healthz; echo # ok   (with a domain this redirects to https; use: curl -sI https://placeeka.lk)
 ```
 
-**Your browser:** open `https://www.example.com` (or `http://SERVER_IP` without a domain). The first HTTPS request
+**Your browser:** open `https://placeeka.lk` (or `http://SERVER_IP` without a domain). The first HTTPS request
 can take ~10–30 seconds while Caddy obtains the certificate. Checklist:
 
 - [ ] Home page loads with styling; refreshing on `/search` works (no 404)
@@ -219,14 +223,14 @@ Use a long unique password — this is a public site. Sign in as `admin` on the 
 1. Create the DNS A record (step 2) and wait until `nslookup` shows `SERVER_IP`.
 2. `nano .env` and change these four lines (keep everything else):
    ```
-   SITE_ADDRESS=www.example.com
-   DJANGO_ALLOWED_HOSTS=www.example.com
-   DJANGO_CSRF_TRUSTED_ORIGINS=https://www.example.com
+   SITE_ADDRESS=placeeka.lk, www.placeeka.lk
+   DJANGO_ALLOWED_HOSTS=placeeka.lk,www.placeeka.lk
+   DJANGO_CSRF_TRUSTED_ORIGINS=https://placeeka.lk,https://www.placeeka.lk
    DJANGO_SECURE_COOKIES=true
    ```
 3. `SKIP_PULL=1 ./deploy.sh`. Caddy fetches the certificate and starts redirecting HTTP → HTTPS.
 4. **Google sign-in:** in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials) add
-   `https://www.example.com` under *Authorized JavaScript origins*, then set **both** `GOOGLE_CLIENT_ID` and
+   `https://placeeka.lk` and `https://www.placeeka.lk` under *Authorized JavaScript origins*, then set **both** `GOOGLE_CLIENT_ID` and
    `VITE_GOOGLE_CLIENT_ID` in `.env` and run `SKIP_PULL=1 ./deploy.sh` (the second one is baked into the JavaScript, so
    it needs the rebuild).
 
