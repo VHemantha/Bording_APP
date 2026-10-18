@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -8,13 +10,63 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from properties.models import Property
 
+from ai_agent.throttles import AIRateThrottle
+
 from .models import Favorite
+from .password_reset import send_reset_email, user_for_token
 from .serializers import FavoriteSerializer, RegisterSerializer, UserSerializer
 
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+
+
+class PasswordResetThrottle(AIRateThrottle):
+    scope = 'password_reset'
+
+
+class PasswordResetRequestView(APIView):
+    """POST {identifier, lang?}: emails a reset link if the account has an email address.
+    Always the same 200 reply, so it can't be used to find out which accounts exist."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [PasswordResetThrottle]
+
+    def post(self, request):
+        identifier = str(request.data.get('identifier', '')).strip()
+        if not identifier:
+            return Response({'identifier': ['Enter your email address or phone number.']}, status=400)
+        send_reset_email(request, identifier, lang=str(request.data.get('lang', 'en')))
+        return Response({'detail': 'If the account has an email address, a reset link has been sent.'})
+
+
+class PasswordResetConfirmView(APIView):
+    """GET ?uid&token: {valid}, so the page can say straight away that a link has expired.
+    POST {uid, token, password}: sets the new password if the link is still valid."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [PasswordResetThrottle]
+
+    def get_throttles(self):
+        return [] if self.request.method == 'GET' else super().get_throttles()
+
+    def get(self, request):
+        user = user_for_token(request.query_params.get('uid', ''), request.query_params.get('token', ''))
+        return Response({'valid': user is not None})
+
+    def post(self, request):
+        user = user_for_token(str(request.data.get('uid', '')), str(request.data.get('token', '')))
+        if user is None:
+            return Response({'detail': 'This reset link is invalid or has expired.', 'code': 'invalid_link'}, status=400)
+        password = str(request.data.get('password', ''))
+        try:
+            validate_password(password, user=user)
+        except DjangoValidationError as exc:
+            return Response({'password': exc.messages}, status=400)
+        user.set_password(password)
+        user.save(update_fields=['password'])  # also makes this link (and any older one) stop working
+        return Response({'detail': 'Your password has been changed.'})
 
 
 class MeView(APIView):

@@ -19,8 +19,8 @@ class Property(models.Model):
     SQFT_REQUIRED_TYPES = ('shop', 'commercial')
     # Types that are only ever rented out, never sold on their own.
     RENT_ONLY_TYPES = ('annex', 'upper_floor_house')
-    # Every type except these must give the land size (perches or acres).
-    NO_LAND_SIZE_TYPES = ('apartment',)
+    # Never have a land size, for sale or rent.
+    NO_LAND_SIZE_TYPES = ('apartment', 'annex')
 
     class LandUnit(models.TextChoices):
         PERCH = 'perch', 'Perches'
@@ -94,6 +94,14 @@ class Property(models.Model):
 
     def __str__(self):
         return f'{self.address}, {self.city}'
+
+    @classmethod
+    def land_size_applies(cls, status, home_type):
+        """Whether a listing gives (and must give) its land size: for sale, every type except
+        apartments and annexes; for rent, land only."""
+        if home_type in cls.NO_LAND_SIZE_TYPES:
+            return False
+        return status == cls.Status.FOR_SALE or home_type == cls.HomeType.LAND
 
 
 class PropertyImage(models.Model):

@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Loader2, X } from 'lucide-react'
+import { ArrowLeft, Loader2, MailCheck, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
+import { requestPasswordReset } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
 import { useLanguage } from '../context/LanguageContext'
@@ -15,9 +16,10 @@ export default function AuthModal() {
   const { open, mode, closeAuth, setMode } = useAuthModal()
   const { login, register, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
-  const { t } = useLanguage()
+  const { lang, t } = useLanguage()
 
   // An email address or a phone number.
+  const [resetSent, setResetSent] = useState(false)
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
@@ -27,6 +29,7 @@ export default function AuthModal() {
     if (open) {
       setError(null)
       setPassword('')
+      setResetSent(false)
     }
   }, [open, mode])
 
@@ -49,6 +52,17 @@ export default function AuthModal() {
     e.preventDefault()
     setBusy(true)
     setError(null)
+    if (mode === 'forgot') {
+      try {
+        await requestPasswordReset(identifier, lang)
+        setResetSent(true)
+      } catch (err) {
+        setError(err?.response?.status === 429 ? t('auth.tooMany') : t('auth.errGeneric'))
+      } finally {
+        setBusy(false)
+      }
+      return
+    }
     try {
       const user =
         mode === 'register'
@@ -84,6 +98,7 @@ export default function AuthModal() {
   }
 
   const isRegister = mode === 'register'
+  const isForgot = mode === 'forgot'
 
   return (
     <AnimatePresence>
@@ -114,16 +129,38 @@ export default function AuthModal() {
               <X size={20} />
             </button>
 
+            {isForgot && (
+              <button
+                type="button"
+                onClick={() => setMode('login')}
+                className="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline"
+              >
+                <ArrowLeft size={16} /> {t('auth.backToSignIn')}
+              </button>
+            )}
             <h2 id="auth-title" className="text-2xl font-extrabold text-brand-900">
-              {isRegister ? t('auth.createTitle') : t('auth.welcomeBack')}
+              {isForgot ? t('auth.resetTitle') : isRegister ? t('auth.createTitle') : t('auth.welcomeBack')}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              {isRegister
-                ? t('auth.createSub')
-                : t('auth.signInSub')}
+              {isForgot ? t('auth.resetSub') : isRegister ? t('auth.createSub') : t('auth.signInSub')}
             </p>
 
-            {SHOW_GOOGLE_SIGN_IN && (
+            {isForgot && resetSent ? (
+              <div className="mt-6 space-y-4">
+                <div className="flex gap-3 rounded-xl bg-leaf-500/10 p-4 text-sm text-slate-700">
+                  <MailCheck size={20} className="shrink-0 text-leaf-600" />
+                  <p>{t('auth.resetSent')}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMode('login')}
+                  className="w-full rounded-lg bg-brand-600 px-4 py-3 text-base font-bold text-white transition hover:bg-brand-700"
+                >
+                  {t('auth.backToSignIn')}
+                </button>
+              </div>
+            ) : <>
+            {SHOW_GOOGLE_SIGN_IN && !isForgot && (
               <>
                 <div className="mt-6">
                   <GoogleButton onCredential={handleGoogle} onError={setError} />
@@ -144,13 +181,26 @@ export default function AuthModal() {
                 placeholder={t('auth.identifierHint')}
                 autoFocus // keyboard focus moves into the dialog when it opens
               />
-              <Field
-                label={t('auth.password')}
-                type="password"
-                value={password}
-                onChange={setPassword}
-                autoComplete={isRegister ? 'new-password' : 'current-password'}
-              />
+              {!isForgot && (
+                <div>
+                  <Field
+                    label={t('auth.password')}
+                    type="password"
+                    value={password}
+                    onChange={setPassword}
+                    autoComplete={isRegister ? 'new-password' : 'current-password'}
+                  />
+                  {!isRegister && (
+                    <button
+                      type="button"
+                      onClick={() => setMode('forgot')}
+                      className="mt-1.5 text-sm font-semibold text-brand-600 hover:underline"
+                    >
+                      {t('auth.forgot')}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {error && (
                 <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
@@ -162,10 +212,18 @@ export default function AuthModal() {
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-3 text-base font-bold text-white transition hover:bg-brand-700 disabled:opacity-60"
               >
                 {busy && <Loader2 size={16} className="animate-spin" />}
-                {isRegister ? t('auth.createAccount') : t('nav.signIn')}
+                {isForgot ? t('auth.resetSend') : isRegister ? t('auth.createAccount') : t('nav.signIn')}
               </button>
             </form>
+            </>}
 
+            {isForgot ? (
+              <p className="mt-5 text-center text-sm text-slate-500">
+                <Link to="/about#contact" onClick={closeAuth} className="hover:text-brand-600 hover:underline">
+                  {t('auth.resetPhoneNote')}
+                </Link>
+              </p>
+            ) : (
             <p className="mt-5 text-center text-sm text-slate-500">
               {isRegister ? t('auth.haveAccount') : t('auth.newHere')}{' '}
               <button
@@ -176,6 +234,7 @@ export default function AuthModal() {
                 {isRegister ? t('nav.signIn') : t('auth.createAnAccount')}
               </button>
             </p>
+            )}
 
             <p className="mt-4 text-center text-[11px] leading-relaxed text-slate-400">
               {t('auth.terms')}

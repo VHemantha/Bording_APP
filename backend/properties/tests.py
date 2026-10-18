@@ -352,11 +352,21 @@ class LandSizeTests(APITestCase):
             payload.pop('land_size')
         return self.client.post('/api/properties/', payload, format='json')
 
-    def test_required_for_every_type_except_apartments(self):
-        for home_type in ('house', 'annex', 'land', 'upper_floor_house', 'shop', 'commercial'):
-            response = self.post(home_type=home_type, sqft=1000, land_size=None)
+    def test_sale_needs_land_size_except_apartments(self):
+        for home_type in ('house', 'land', 'shop', 'commercial'):
+            response = self.post(status='for_sale', home_type=home_type, sqft=1000, land_size=None)
             self.assertEqual(response.status_code, 400, home_type)
             self.assertIn('land_size', response.data)
+        response = self.post(status='for_sale', home_type='apartment', land_size=12)
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertIsNone(response.data['land_size'])
+
+    def test_rent_needs_land_size_only_for_land(self):
+        self.assertEqual(self.post(home_type='land', land_size=None).status_code, 400)
+        for home_type in ('house', 'annex', 'apartment', 'upper_floor_house', 'shop', 'commercial'):
+            response = self.post(home_type=home_type, sqft=1000, land_size=20)
+            self.assertEqual(response.status_code, 201, (home_type, response.data))
+            self.assertIsNone(response.data['land_size'], home_type)
 
     def test_perches_or_acres(self):
         response = self.post(home_type='land', land_size=1.5, land_unit='acre')
@@ -364,8 +374,35 @@ class LandSizeTests(APITestCase):
         self.assertEqual((response.data['land_size'], response.data['land_unit']), (1.5, 'acre'))
         self.assertEqual(self.post(home_type='land', land_size=2, land_unit='hectare').status_code, 400)
 
-    def test_apartments_have_no_land_size(self):
-        response = self.post(home_type='apartment', land_size=None)
+    def test_land_has_no_building_details_or_advance(self):
+        response = self.post(status='for_sale', home_type='land', land_size=20, sqft=900, parking_slots=3,
+                             furnishing='furnished', advance_amount=500000, price=9_000_000)
         self.assertEqual(response.status_code, 201, response.data)
-        self.assertIsNone(response.data['land_size'])
-        self.assertIsNone(self.post(home_type='apartment', land_size=12).data['land_size'])
+        data = response.data
+        self.assertEqual((data['sqft'], data['parking_slots'], data['furnishing'], data['advance_amount']),
+                         (None, 0, 'unfurnished', None))
+
+
+class SearchFilterTests(APITestCase):
+    def setUp(self):
+        self.client.force_authenticate(User.objects.create_user('filterer', 'f@example.com', 'pw-123456'))
+        post = lambda **kw: self.client.post('/api/properties/', listing_payload(**kw), format='json')  # noqa: E731
+        post(home_type='land', land_size=10, price=1)            # 10 perches
+        post(home_type='land', land_size=1, land_unit='acre', price=2)  # 160 perches
+        post(home_type='house', shared_bathroom=True, price=3)
+        post(home_type='house', baths=2, price=4)
+        self.client.force_authenticate(None)
+
+    def prices(self, query):
+        data = self.client.get('/api/properties/?' + query).data
+        data = data.get('results', data) if isinstance(data, dict) else data
+        return sorted(p['price'] for p in data)
+
+    def test_land_size_range_converts_units(self):
+        self.assertEqual(self.prices('min_land_size=100'), [2])
+        self.assertEqual(self.prices('max_land_size=0.5&land_unit=acre'), [1])
+        self.assertEqual(self.prices('min_land_size=0.05&max_land_size=2&land_unit=acre'), [1, 2])
+
+    def test_shared_bathroom(self):
+        self.assertEqual(self.prices('home_type=house&shared_bathroom=true'), [3])
+        self.assertEqual(self.prices('home_type=house&shared_bathroom=false'), [4])

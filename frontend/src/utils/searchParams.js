@@ -12,6 +12,10 @@ const ALLOWED = [
   'max_sqft',
   'stories',
   'furnishing',
+  'shared_bathroom',
+  'min_land_size',
+  'max_land_size',
+  'land_unit',
   'status',
   'search',
 ]

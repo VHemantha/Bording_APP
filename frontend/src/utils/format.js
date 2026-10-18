@@ -49,8 +49,15 @@ export function homeTypesFor(status) {
   return status === 'for_sale' ? all.filter((key) => !RENT_ONLY_TYPES.includes(key)) : all
 }
 
-// Every type except these gives the land size (matches Property.NO_LAND_SIZE_TYPES).
-export const NO_LAND_SIZE_TYPES = ['apartment']
+// Never have a land size (matches Property.NO_LAND_SIZE_TYPES).
+export const NO_LAND_SIZE_TYPES = ['apartment', 'annex']
+
+/** Whether a listing gives its land size (matches Property.land_size_applies): for sale,
+ *  every type except apartments and annexes; for rent, land only. */
+export function landSizeApplies(status, homeType) {
+  if (NO_LAND_SIZE_TYPES.includes(homeType)) return false
+  return status === 'for_sale' || homeType === 'land'
+}
 
 /** Land size: "20 perches", "1 perch", "1.5 acres" (in the visitor's language). */
 export function formatLandSize(size, unit, t) {

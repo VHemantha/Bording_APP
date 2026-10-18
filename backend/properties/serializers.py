@@ -105,20 +105,24 @@ class PropertyWriteSerializer(serializers.ModelSerializer):
         sqft = attrs.get('sqft', getattr(self.instance, 'sqft', None))
         if home_type in Property.SQFT_REQUIRED_TYPES and not sqft:
             raise serializers.ValidationError({'sqft': 'Square feet is required for shops and commercial properties.'})
-        if home_type in Property.NO_LAND_SIZE_TYPES:
-            attrs['land_size'] = None
-        else:
-            land_size = attrs.get('land_size', getattr(self.instance, 'land_size', None))
-            if not land_size or land_size <= 0:
-                raise serializers.ValidationError({'land_size': 'Give the land size in perches or acres.'})
         status = attrs.get('status', getattr(self.instance, 'status', Property.Status.FOR_RENT))
         if status == Property.Status.FOR_SALE and home_type in Property.RENT_ONLY_TYPES:
             raise serializers.ValidationError({'home_type': 'Annexes and upper floor houses can only be rented out.'})
+        if Property.land_size_applies(status, home_type):
+            land_size = attrs.get('land_size', getattr(self.instance, 'land_size', None))
+            if not land_size or land_size <= 0:
+                raise serializers.ValidationError({'land_size': 'Give the land size in perches or acres.'})
+        else:
+            attrs['land_size'] = None
         # Key money belongs to rentals and the advance to sales: drop whichever doesn't apply.
         if status == Property.Status.FOR_SALE:
             attrs['key_money_months'] = 0
         else:
             attrs['advance_amount'] = None
+        if home_type == Property.HomeType.LAND:
+            # Bare land: no building, so no rooms, floor area, parking, furnishing or advance.
+            attrs.update(beds=0, baths=0, shared_bathroom=False, stories=None, sqft=None, parking_slots=0,
+                         furnishing=Property.Furnishing.UNFURNISHED, advance_amount=None)
         if attrs.get('shared_bathroom'):
             attrs['baths'] = 1  # "one shared bathroom"
         for field in ('latitude', 'longitude'):

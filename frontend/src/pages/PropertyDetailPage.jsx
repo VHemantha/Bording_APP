@@ -31,7 +31,7 @@ import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
 import { useLanguage } from '../context/LanguageContext'
 import { cityName } from '../i18n/translations'
-import { formatBaths, formatKeyMoney, formatLandSize, formatPrice } from '../utils/format'
+import { formatBaths, formatKeyMoney, formatLandSize, formatPrice, landSizeApplies } from '../utils/format'
 
 const SECTIONS = [
   ['overview', 'detail.tabOverview'],
@@ -130,10 +130,10 @@ export default function PropertyDetailPage() {
     [Building2, t(`type.${p.home_type}`)],
     !land && [BedDouble, `${p.beds} ${t(p.beds === 1 ? 'unit.bed' : 'unit.beds')}`],
     !land && [Bath, `${formatBaths(p.baths)} ${t(p.baths === 1 ? 'unit.bath' : 'unit.baths')}${p.shared_bathroom ? ` (${t('bath.shared')})` : ''}`],
-    p.land_size > 0 && [LandPlot, `${t('post.landSize')}: ${formatLandSize(p.land_size, p.land_unit, t)}`],
+    landSizeApplies(p.status, p.home_type) && p.land_size > 0 && [LandPlot, `${t('post.landSize')}: ${formatLandSize(p.land_size, p.land_unit, t)}`],
     sqft && [Ruler, sqft],
-    [Sofa, t(`furnishing.${p.furnishing}`)],
-    [Car, `${t('filter.parking')}: ${p.parking_slots}`],
+    !land && [Sofa, t(`furnishing.${p.furnishing}`)],
+    !land && [Car, `${t('filter.parking')}: ${p.parking_slots}`],
     stories && [Layers, stories],
     p.status === 'for_rent' && [KeyRound, `${t('filter.keyMoney')}: ${keyMoney}`],
     [CalendarDays, `${t('detail.listed')}: ${p.listed_date}`],
@@ -175,9 +175,11 @@ export default function PropertyDetailPage() {
               <span className="rounded-md bg-brand-50 px-2 py-0.5 text-sm font-bold text-brand-700">
                 {t(`status.${p.status}`)}
               </span>
-              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-sm font-bold text-slate-700">
-                {t(`furnishing.${p.furnishing}`)}
-              </span>
+              {!land && (
+                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-sm font-bold text-slate-700">
+                  {t(`furnishing.${p.furnishing}`)}
+                </span>
+              )}
             </div>
             <h1 className="mt-3 text-3xl font-extrabold text-brand-900 sm:text-4xl">
               {t('detail.title', { type: t(`type.${p.home_type}`), city })}
@@ -196,7 +198,7 @@ export default function PropertyDetailPage() {
                   <Tag size={16} className="mr-1 inline" /> {t('filter.keyMoney')}: <span className="font-bold text-brand-900">{keyMoney}</span>
                 </p>
               )}
-              {p.status === 'for_sale' && p.advance_amount > 0 && (
+              {p.status === 'for_sale' && !land && p.advance_amount > 0 && (
                 <p className="pb-1 font-medium text-slate-600">
                   <Tag size={16} className="mr-1 inline" /> {t('filter.advance')}: <span className="font-bold text-brand-900">{formatPrice(p.advance_amount)}</span>
                 </p>

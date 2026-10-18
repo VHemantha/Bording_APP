@@ -2,7 +2,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { useLanguage } from '../../context/LanguageContext'
-import { formatKeyMoney, homeTypesFor, NO_LAND_SIZE_TYPES, RENT_ONLY_TYPES, STORIES_LABELS } from '../../utils/format'
+import { formatKeyMoney, homeTypesFor, landSizeApplies, RENT_ONLY_TYPES, STORIES_LABELS } from '../../utils/format'
 
 
 const EMPTY = {
@@ -62,6 +62,7 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
     e.preventDefault()
     setFormError(null)
     const num = (x) => (x === '' || x === null ? null : Number(x))
+    const land = values.home_type === 'land'
     const payload = {
       ...values,
       latitude: num(values.latitude),
@@ -69,11 +70,12 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
       price: num(values.price),
       beds: num(values.beds),
       baths: num(values.baths),
-      sqft: num(values.sqft),
-      land_size: NO_LAND_SIZE_TYPES.includes(values.home_type) ? null : num(values.land_size),
+      sqft: land ? null : num(values.sqft),
+      land_size: landSizeApplies(values.status, values.home_type) ? num(values.land_size) : null,
       key_money_months: values.status === 'for_sale' ? 0 : num(values.key_money_months) ?? 0,
-      advance_amount: values.status === 'for_sale' ? num(values.advance_amount) : null,
-      parking_slots: num(values.parking_slots) ?? 0,
+      advance_amount: values.status === 'for_sale' && !land ? num(values.advance_amount) : null,
+      parking_slots: land ? 0 : num(values.parking_slots) ?? 0,
+      furnishing: land ? 'unfurnished' : values.furnishing,
       stories: num(values.stories),
       year_built: num(values.year_built),
       images: values.images.map((s) => s.trim()).filter(Boolean),
@@ -126,28 +128,34 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
               {t('post.sharedBathroom')}
             </label>
           </div>
-          {!NO_LAND_SIZE_TYPES.includes(values.home_type) && (
+          {landSizeApplies(values.status, values.home_type) && (
             <>
               <Text label={t('post.landSize')} type="number" step="any" value={values.land_size ?? ''} onChange={(v) => set('land_size', v)} required />
               <Select label={t('post.landUnit')} value={values.land_unit || 'perch'} onChange={(v) => set('land_unit', v)} options={[['perch', t('land.unitPerch')], ['acre', t('land.unitAcre')]]} />
             </>
           )}
-          <Text
-            label={['shop', 'commercial'].includes(values.home_type) ? t('filter.sqft') : `${t('filter.sqft')} (${t('post.optional')})`}
-            type="number"
-            value={values.sqft}
-            onChange={(v) => set('sqft', v)}
-            required={['shop', 'commercial'].includes(values.home_type)}
-          />
+          {values.home_type !== 'land' && (
+            <Text
+              label={['shop', 'commercial'].includes(values.home_type) ? t('filter.sqft') : `${t('filter.sqft')} (${t('post.optional')})`}
+              type="number"
+              value={values.sqft}
+              onChange={(v) => set('sqft', v)}
+              required={['shop', 'commercial'].includes(values.home_type)}
+            />
+          )}
           <Select label={t('detail.homeType')} value={values.home_type} onChange={(v) => set('home_type', v)} options={homeTypesFor(values.status).map((key) => [key, t(`type.${key}`)])} />
           {values.status === 'for_sale' ? (
-            <Text label={`${t('post.advance')} (${t('post.optional')})`} type="number" value={values.advance_amount ?? ''} onChange={(v) => set('advance_amount', v)} />
+            values.home_type !== 'land' && <Text label={`${t('post.advance')} (${t('post.optional')})`} type="number" value={values.advance_amount ?? ''} onChange={(v) => set('advance_amount', v)} />
           ) : (
             <Select label={t('admin.keyMoneyUsd')} value={String(values.key_money_months ?? 0)} onChange={(v) => set('key_money_months', v)} options={Array.from({ length: 13 }, (_, n) => [String(n), n === 0 ? t('card.noKeyMoney') : formatKeyMoney(n, t)])} />
           )}
-          <Text label={t('filter.parking')} type="number" value={values.parking_slots} onChange={(v) => set('parking_slots', v)} />
+          {values.home_type !== 'land' && (
+            <Text label={t('filter.parking')} type="number" value={values.parking_slots} onChange={(v) => set('parking_slots', v)} />
+          )}
           <Select label={t('detail.stories')} value={values.stories ?? ''} onChange={(v) => set('stories', v)} options={[['', t('admin.notApplicable')], ...Object.keys(STORIES_LABELS).map((key) => [key, t(`stories.${key}`)])]} />
-          <Select label={t('filter.furnishing')} value={values.furnishing} onChange={(v) => set('furnishing', v)} options={['furnished', 'unfurnished'].map((key) => [key, t(`furnishing.${key}`)])} />
+          {values.home_type !== 'land' && (
+            <Select label={t('filter.furnishing')} value={values.furnishing} onChange={(v) => set('furnishing', v)} options={['furnished', 'unfurnished'].map((key) => [key, t(`furnishing.${key}`)])} />
+          )}
           <Text label={t('post.contactName')} value={values.contact_name} onChange={(v) => set('contact_name', v)} />
           <Text label={t('post.contactPhone')} value={values.contact_phone} onChange={(v) => set('contact_phone', v)} />
           <Text label={t('detail.yearBuilt')} type="number" value={values.year_built} onChange={(v) => set('year_built', v)} />

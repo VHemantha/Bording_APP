@@ -18,6 +18,7 @@ import LoginPage from './pages/LoginPage'
 import MyListingsPage from './pages/MyListingsPage'
 import PostListingPage from './pages/PostListingPage'
 import PropertyDetailPage from './pages/PropertyDetailPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import SavedHomesPage from './pages/SavedHomesPage'
 import SearchResultsPage from './pages/SearchResultsPage'
 
@@ -73,6 +74,7 @@ function App() {
           <Route path="/property/:id" element={<PropertyDetailPage />} />
           <Route path="/login" element={<LoginPage mode="login" />} />
           <Route path="/register" element={<LoginPage mode="register" />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route
             path="/post"
             element={

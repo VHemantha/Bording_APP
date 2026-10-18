@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { useLanguage } from '../context/LanguageContext'
 import DealToggle from './DealToggle'
 import useKeepInViewport from './useKeepInViewport'
-import { ADVANCE_OPTIONS, formatCompactPrice, homeTypesFor, STORIES_LABELS } from '../utils/format'
+import { ADVANCE_OPTIONS, formatCompactPrice, homeTypesFor, landSizeApplies, STORIES_LABELS } from '../utils/format'
 
 // Key money options: any, none, or up to N months' rent.
 const KEY_MONEY_MONTHS = Array.from({ length: 12 }, (_, i) => String(i + 1))
@@ -19,6 +19,14 @@ const inputClass =
   'h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100'
 
 const csv = (value) => (value ? value.split(',') : [])
+
+// Which filter groups make sense for the chosen property types: bare land has no rooms or
+// building details, and land size only exists for some listings (see landSizeApplies).
+function relevance(status, typeList) {
+  const types = typeList.length ? typeList : homeTypesFor(status)
+  const onlyLand = types.every((type) => type === 'land')
+  return { building: !onlyLand, landSize: types.some((type) => landSizeApplies(status, type)) }
+}
 
 /**
  * Search toolbar: search box, then one dropdown per filter group. Each dropdown edits a
@@ -38,9 +46,10 @@ export default function FilterBar({
 }) {
   const { t } = useLanguage()
   const priceActive = filters.min_price || filters.max_price || filters.max_key_money_months || filters.max_advance
-  const bedsActive = filters.min_beds || filters.min_baths
+  const bedsActive = filters.min_beds || filters.min_baths || filters.shared_bathroom
   const types = csv(filters.home_type)
   const moreCount =
+    (filters.min_land_size || filters.max_land_size ? 1 : 0) +
     (filters.min_parking ? 1 : 0) +
     (filters.min_sqft || filters.max_sqft ? 1 : 0) +
     (filters.stories ? 1 : 0) +
@@ -51,6 +60,7 @@ export default function FilterBar({
     (filters.max_key_money_months || filters.max_advance ? 1 : 0) +
     (filters.min_beds ? 1 : 0) +
     (filters.min_baths ? 1 : 0) +
+    (filters.shared_bathroom ? 1 : 0) +
     (types.length ? 1 : 0)
   const [sheetOpen, setSheetOpen] = useState(false)
 
@@ -79,10 +89,14 @@ export default function FilterBar({
         {(close) => <PricePanel filters={filters} onChange={onChange} close={close} />}
       </Dropdown>
 
-      <Dropdown
+      {relevance(filters.status, types).building && <Dropdown
         label={
           bedsActive
-            ? [filters.min_beds && `${filters.min_beds}+ ${t('unit.bd')}`, filters.min_baths && `${filters.min_baths}+ ${t('unit.ba')}`]
+            ? [
+                filters.min_beds && `${filters.min_beds}+ ${t('unit.bd')}`,
+                filters.min_baths && `${filters.min_baths}+ ${t('unit.ba')}`,
+                filters.shared_bathroom && t(filters.shared_bathroom === 'true' ? 'bath.sharedOption' : 'bath.private'),
+              ]
                 .filter(Boolean)
                 .join(', ')
             : t('filter.bedsBaths')
@@ -91,7 +105,7 @@ export default function FilterBar({
         className="hidden sm:block"
       >
         {(close) => <BedsBathsPanel filters={filters} onChange={onChange} close={close} />}
-      </Dropdown>
+      </Dropdown>}
 
       <Dropdown
         label={types.length ? `${t('filter.propertyType')} (${types.length})` : t('filter.propertyType')}
@@ -353,6 +367,7 @@ function MinPicker({ label, value, onChange }) {
 function BedsBathsPanel({ filters, onChange, close }) {
   const [beds, setBeds] = useState(filters.min_beds)
   const [baths, setBaths] = useState(filters.min_baths)
+  const [shared, setShared] = useState(filters.shared_bathroom)
   const { t } = useLanguage()
 
   function apply(values) {
@@ -364,10 +379,63 @@ function BedsBathsPanel({ filters, onChange, close }) {
     <div className="w-[23rem] max-w-[calc(100vw-2rem)] space-y-4 p-4">
       <MinPicker label={t('filter.bedrooms')} value={beds} onChange={setBeds} />
       <MinPicker label={t('filter.bathrooms')} value={baths} onChange={setBaths} />
+      <BathroomTypePicker value={shared} onChange={setShared} />
       <PanelFooter
-        onReset={() => apply({ min_beds: '', min_baths: '' })}
-        onApply={() => apply({ min_beds: beds, min_baths: baths })}
+        onReset={() => apply({ min_beds: '', min_baths: '', shared_bathroom: '' })}
+        onApply={() => apply({ min_beds: beds, min_baths: baths, shared_bathroom: shared })}
       />
+    </div>
+  )
+}
+
+/** Any / private bathroom(s) / one shared bathroom. Values match the `shared_bathroom` filter. */
+function BathroomTypePicker({ value, onChange }) {
+  const { t } = useLanguage()
+  const options = [['', t('common.any')], ['false', t('bath.private')], ['true', t('bath.sharedOption')]]
+  return (
+    <div>
+      <p className="mb-2 font-bold">{t('filter.bathroomType')}</p>
+      <div className="flex overflow-hidden rounded-lg border border-slate-300">
+        {options.map(([v, label]) => (
+          <button
+            key={v || 'any'}
+            type="button"
+            onClick={() => onChange(v)}
+            aria-pressed={value === v}
+            className={`flex-1 border-r border-slate-300 px-2 py-2 text-sm font-bold transition last:border-r-0 ${
+              value === v ? 'bg-brand-600 text-white' : 'hover:bg-slate-50'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Land size range with its unit (perches or acres). */
+function LandSizeRange({ min, max, unit, onMin, onMax, onUnit }) {
+  const { t } = useLanguage()
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="font-bold">{t('filter.landSize')}</p>
+        <select
+          value={unit || 'perch'}
+          onChange={(e) => onUnit(e.target.value)}
+          aria-label={t('post.landUnit')}
+          className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm font-bold text-brand-900 outline-none focus:border-brand-500"
+        >
+          <option value="perch">{t('land.unitPerch')}</option>
+          <option value="acre">{t('land.unitAcre')}</option>
+        </select>
+      </div>
+      <div className="flex items-end gap-2">
+        <NumberField label={t('filter.minimum')} value={min} onChange={onMin} placeholder={t('filter.noMin')} />
+        <span className="pb-3 text-slate-400">–</span>
+        <NumberField label={t('filter.maximum')} value={max} onChange={onMax} placeholder={t('filter.noMax')} />
+      </div>
     </div>
   )
 }
@@ -421,10 +489,18 @@ function MorePanel({ filters, onChange, close }) {
   const [maxSqft, setMaxSqft] = useState(filters.max_sqft)
   const [stories, setStories] = useState(csv(filters.stories))
   const [furnishing, setFurnishing] = useState(csv(filters.furnishing))
+  const [minLand, setMinLand] = useState(filters.min_land_size)
+  const [maxLand, setMaxLand] = useState(filters.max_land_size)
+  const [landUnit, setLandUnit] = useState(filters.land_unit || 'perch')
   const { t } = useLanguage()
+  const show = relevance(filters.status, csv(filters.home_type))
+  const values = () => ({
+    min_parking: parking, min_sqft: minSqft, max_sqft: maxSqft, stories: stories.join(','), furnishing: furnishing.join(','),
+    min_land_size: minLand, max_land_size: maxLand, land_unit: minLand || maxLand ? landUnit : '',
+  })
 
-  function apply(values) {
-    onChange(values)
+  function apply(next) {
+    onChange(next)
     close()
   }
 
@@ -433,9 +509,13 @@ function MorePanel({ filters, onChange, close }) {
       className="w-[23rem] max-w-[calc(100vw-2rem)] space-y-4 p-4"
       onSubmit={(e) => {
         e.preventDefault()
-        apply({ min_parking: parking, min_sqft: minSqft, max_sqft: maxSqft, stories: stories.join(','), furnishing: furnishing.join(',') })
+        apply(values())
       }}
     >
+      {show.landSize && (
+        <LandSizeRange min={minLand} max={maxLand} unit={landUnit} onMin={setMinLand} onMax={setMaxLand} onUnit={setLandUnit} />
+      )}
+      {show.building && <>
       <MinPicker label={t('filter.parking')} value={parking} onChange={setParking} />
       <div>
         <p className="mb-2 font-bold">{t('filter.sqft')}</p>
@@ -461,11 +541,12 @@ function MorePanel({ filters, onChange, close }) {
           onToggle={(value) => setFurnishing((list) => toggleIn(list, value))}
         />
       </div>
+      </>}
       <PanelFooter
-        onReset={() => apply({ min_parking: '', min_sqft: '', max_sqft: '', stories: '', furnishing: '' })}
-        onApply={() =>
-          apply({ min_parking: parking, min_sqft: minSqft, max_sqft: maxSqft, stories: stories.join(','), furnishing: furnishing.join(',') })
+        onReset={() =>
+          apply({ min_parking: '', min_sqft: '', max_sqft: '', stories: '', furnishing: '', min_land_size: '', max_land_size: '', land_unit: '' })
         }
+        onApply={() => apply(values())}
       />
     </form>
   )
@@ -487,9 +568,15 @@ function AllFiltersSheet({ filters, onChange, onClose }) {
     max_sqft: filters.max_sqft,
     stories: csv(filters.stories),
     furnishing: csv(filters.furnishing),
+    shared_bathroom: filters.shared_bathroom,
+    min_land_size: filters.min_land_size,
+    max_land_size: filters.max_land_size,
+    land_unit: filters.land_unit || 'perch',
   }))
   const set = (field) => (value) => setDraft((d) => ({ ...d, [field]: value }))
   const toggle = (field) => (value) => setDraft((d) => ({ ...d, [field]: toggleIn(d[field], value) }))
+  // Follows the property types ticked in the sheet itself.
+  const sheetShow = relevance(filters.status, draft.home_type)
   const closeRef = useRef(null)
 
   useEffect(() => {
@@ -509,6 +596,7 @@ function AllFiltersSheet({ filters, onChange, onClose }) {
   function apply(values) {
     onChange({
       ...values,
+      land_unit: values.min_land_size || values.max_land_size ? values.land_unit : '',
       home_type: values.home_type.join(','),
       stories: values.stories.join(','),
       furnishing: values.furnishing.join(','),
@@ -520,6 +608,7 @@ function AllFiltersSheet({ filters, onChange, onClose }) {
     apply({
       min_price: '', max_price: '', max_key_money_months: '', max_advance: '', min_beds: '', min_baths: '',
       home_type: [], min_parking: '', min_sqft: '', max_sqft: '', stories: [], furnishing: [],
+      shared_bathroom: '', min_land_size: '', max_land_size: '', land_unit: 'perch',
     })
   }
 
@@ -557,8 +646,11 @@ function AllFiltersSheet({ filters, onChange, onClose }) {
 
         <UpFrontField status={filters.status} draft={draft} set={set} />
 
+        {sheetShow.building && <>
         <MinPicker label={t('filter.bedrooms')} value={draft.min_beds} onChange={set('min_beds')} />
         <MinPicker label={t('filter.bathrooms')} value={draft.min_baths} onChange={set('min_baths')} />
+        <BathroomTypePicker value={draft.shared_bathroom} onChange={set('shared_bathroom')} />
+        </>}
 
         <section>
           <p className="mb-2 font-bold">{t('filter.propertyType')}</p>
@@ -569,6 +661,14 @@ function AllFiltersSheet({ filters, onChange, onClose }) {
           />
         </section>
 
+        {sheetShow.landSize && (
+          <LandSizeRange
+            min={draft.min_land_size} max={draft.max_land_size} unit={draft.land_unit}
+            onMin={set('min_land_size')} onMax={set('max_land_size')} onUnit={set('land_unit')}
+          />
+        )}
+
+        {sheetShow.building && <>
         <MinPicker label={t('filter.parking')} value={draft.min_parking} onChange={set('min_parking')} />
 
         <section>
@@ -597,6 +697,7 @@ function AllFiltersSheet({ filters, onChange, onClose }) {
             onToggle={toggle('furnishing')}
           />
         </section>
+        </>}
       </div>
 
       <div className="flex items-center gap-3 border-t border-slate-200 bg-white px-4 py-3">

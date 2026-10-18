@@ -146,6 +146,8 @@ REST_FRAMEWORK = {
         'upload': os.environ.get('UPLOAD_THROTTLE_RATE', '120/hour'),
         # Map "Nearby places" lookups (per IP; results are cached server-side).
         'places': os.environ.get('PLACES_THROTTLE_RATE', '120/min'),
+        # "Forgot password" requests and new-password submissions (per IP).
+        'password_reset': os.environ.get('PASSWORD_RESET_THROTTLE_RATE', '10/hour'),
     },
 }
 
@@ -293,11 +295,29 @@ LOGGING = {
 }
 
 
-# Email
+# Email (password reset links)
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
-
+# The public address of the site, used in links inside emails, e.g. https://placeeka.lk.
+# Blank in local development: the link then points at the page the request came from.
+SITE_URL = os.environ.get('SITE_URL', '')
+# Reset links work for 2 hours, and only until the password is changed.
+PASSWORD_RESET_TIMEOUT = 2 * 60 * 60
+# SMTP server for outgoing mail (your mail provider's, or Brevo / Zoho / Gmail with an app
+# password). With no EMAIL_HOST, emails are printed to the server log instead of being sent.
+_EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
 MAILERS = {
     'default': {
+        'BACKEND': 'django.core.mail.backends.smtp.EmailBackend',
+        'OPTIONS': {
+            'host': _EMAIL_HOST,
+            'port': int(os.environ.get('EMAIL_PORT', '587')),
+            'username': os.environ.get('EMAIL_HOST_USER', ''),
+            'password': os.environ.get('EMAIL_HOST_PASSWORD', ''),
+            'use_tls': os.environ.get('EMAIL_USE_TLS', 'true').lower() == 'true',
+            'timeout': 15,
+        },
+    } if _EMAIL_HOST else {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'PlaceEka <no-reply@placeeka.lk>')

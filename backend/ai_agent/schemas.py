@@ -32,6 +32,10 @@ class PropertySearchFilters(BaseModel):
     max_sqft: Optional[int] = Field(None, description='Maximum floor area in square feet.')
     stories: Optional[Literal[1, 2, 3]] = Field(None, description='Number of stories, if the user asked for one.')
     furnishing: Optional[Literal['furnished', 'unfurnished']] = Field(None, description='Furnished or unfurnished, if the user said.')
+    shared_bathroom: Optional[bool] = Field(None, description='False if the user wants a private bathroom, True if a shared one is fine/wanted.')
+    min_land_size: Optional[float] = Field(None, description='Smallest land size, in land_unit.')
+    max_land_size: Optional[float] = Field(None, description='Largest land size, in land_unit.')
+    land_unit: Optional[Literal['perch', 'acre']] = Field(None, description="Unit of min/max_land_size: 'perch' (default) or 'acre'.")
     status: Optional[Literal['for_sale', 'for_rent']] = Field(
         None, description="'for_rent' if the user is looking to rent, 'for_sale' if buying."
     )

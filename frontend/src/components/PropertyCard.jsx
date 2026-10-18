@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { mediaUrl } from '../api/client'
 import { useLanguage } from '../context/LanguageContext'
 import { cityName } from '../i18n/translations'
-import { formatBaths, formatCompactPrice, formatKeyMoney, formatLandSize, formatPrice } from '../utils/format'
+import { formatBaths, formatCompactPrice, formatKeyMoney, formatLandSize, formatPrice, landSizeApplies } from '../utils/format'
 
 export default function PropertyCard({
   property,
@@ -32,7 +32,7 @@ export default function PropertyCard({
     ],
     property.sqft && [property.sqft.toLocaleString(), t('unit.sqft')],
   ].filter(Boolean)
-  const landSize = formatLandSize(property.land_size, property.land_unit, t)
+  const landSize = landSizeApplies(property.status, property.home_type) && formatLandSize(property.land_size, property.land_unit, t)
 
   // In bold first: key money for a rental, the advance (if any) for a sale.
   const lead =
@@ -44,7 +44,7 @@ export default function PropertyCard({
   const extras = [
     property.parking_slots > 0 && t('card.parking', { count: property.parking_slots }),
     property.stories && t(`stories.${property.stories}`),
-    property.furnishing && t(`furnishing.${property.furnishing}`),
+    property.home_type !== 'land' && property.furnishing && t(`furnishing.${property.furnishing}`),
   ].filter(Boolean)
 
   return (

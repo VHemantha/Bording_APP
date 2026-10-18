@@ -34,6 +34,10 @@ const FILTER_KEYS = [
   'max_sqft',
   'stories',
   'furnishing',
+  'shared_bathroom',
+  'min_land_size',
+  'max_land_size',
+  'land_unit',
 ]
 // Prices, key money and the advance mean different things for rent and sale, so these
 // filters are cleared when the visitor switches between the two.

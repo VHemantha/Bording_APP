@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext'
 import { useDeal } from '../context/DealContext'
 import { useLanguage } from '../context/LanguageContext'
 import { CITIES } from '../i18n/translations'
-import { formatKeyMoney, homeTypesFor, NO_LAND_SIZE_TYPES, RENT_ONLY_TYPES, STORIES_LABELS } from '../utils/format'
+import { formatKeyMoney, homeTypesFor, landSizeApplies, RENT_ONLY_TYPES, STORIES_LABELS } from '../utils/format'
 
 const MAX_PHOTOS = 20
 // Property types whose listings must give the floor area (matches the backend).
@@ -151,13 +151,16 @@ export default function PostListingPage() {
       ...values,
       price: num(values.price),
       key_money_months: selling ? 0 : num(values.key_money_months) ?? 0,
-      advance_amount: selling ? num(values.advance_amount) : null,
+      // Bare land has no building: no rooms, floor area, parking, furnishing or advance.
+      advance_amount: selling && !land ? num(values.advance_amount) : null,
       beds: land ? 0 : num(values.beds),
       baths: land ? 0 : num(values.baths),
-      sqft: num(values.sqft),
-      land_size: NO_LAND_SIZE_TYPES.includes(values.home_type) ? null : num(values.land_size),
+      shared_bathroom: land ? false : values.shared_bathroom,
+      sqft: land ? null : num(values.sqft),
+      land_size: landSizeApplies(values.status, values.home_type) ? num(values.land_size) : null,
       stories: land ? null : num(values.stories),
-      parking_slots: num(values.parking_slots) ?? 0,
+      parking_slots: land ? 0 : num(values.parking_slots) ?? 0,
+      furnishing: land ? 'unfurnished' : values.furnishing,
       latitude: Number(location.lat.toFixed(6)),
       longitude: Number(location.lng.toFixed(6)),
       primary_image_url: ready[0],
@@ -209,19 +212,21 @@ export default function PostListingPage() {
             hint={selling ? t('post.rentOnlyTypes') : undefined}
             error={errors.home_type}
           />
-          <Select
-            label={t('filter.furnishing')}
-            value={values.furnishing}
-            onChange={(v) => set('furnishing', v)}
-            options={['unfurnished', 'furnished'].map((k) => [k, t(`furnishing.${k}`)])}
-          />
+          {!land && (
+            <Select
+              label={t('filter.furnishing')}
+              value={values.furnishing}
+              onChange={(v) => set('furnishing', v)}
+              options={['unfurnished', 'furnished'].map((k) => [k, t(`furnishing.${k}`)])}
+            />
+          )}
           <Field
             label={t(selling ? 'post.priceSale' : 'post.priceRent')}
             type="number" min="1" required
             value={values.price} onChange={(v) => set('price', v)} error={errors.price}
           />
           {selling ? (
-            <Field
+            !land && <Field
               label={`${t('post.advance')} (${t('post.optional')})`}
               type="number" min="0"
               value={values.advance_amount} onChange={(v) => set('advance_amount', v)}
@@ -240,7 +245,7 @@ export default function PostListingPage() {
           )}
         </Section>
 
-        <Section title={t('post.rooms')}>
+        <Section title={t(land ? 'post.landSize' : 'post.rooms')}>
           {!land && (
             <>
               <Select
@@ -272,7 +277,7 @@ export default function PostListingPage() {
               </div>
             </>
           )}
-          {!NO_LAND_SIZE_TYPES.includes(values.home_type) && (
+          {landSizeApplies(values.status, values.home_type) && (
             <LandSizeField
               size={values.land_size}
               unit={values.land_unit}
@@ -281,11 +286,13 @@ export default function PostListingPage() {
               error={errors.land_size}
             />
           )}
-          <Field
-            label={SQFT_REQUIRED.includes(values.home_type) ? t('filter.sqft') : `${t('filter.sqft')} (${t('post.optional')})`}
-            type="number" min="1" required={SQFT_REQUIRED.includes(values.home_type)}
-            value={values.sqft} onChange={(v) => set('sqft', v)} error={errors.sqft}
-          />
+          {!land && (
+            <Field
+              label={SQFT_REQUIRED.includes(values.home_type) ? t('filter.sqft') : `${t('filter.sqft')} (${t('post.optional')})`}
+              type="number" min="1" required={SQFT_REQUIRED.includes(values.home_type)}
+              value={values.sqft} onChange={(v) => set('sqft', v)} error={errors.sqft}
+            />
+          )}
           {!land && (
             <Select
               label={t('filter.stories')}
@@ -294,7 +301,9 @@ export default function PostListingPage() {
               options={Object.keys(STORIES_LABELS).map((k) => [k, t(`stories.${k}`)])}
             />
           )}
-          <Field label={t('filter.parking')} type="number" min="0" value={values.parking_slots} onChange={(v) => set('parking_slots', v)} error={errors.parking_slots} />
+          {!land && (
+            <Field label={t('filter.parking')} type="number" min="0" value={values.parking_slots} onChange={(v) => set('parking_slots', v)} error={errors.parking_slots} />
+          )}
         </Section>
 
         <Section title={t('admin.location')}>

@@ -28,6 +28,13 @@ class PropertyFilter(django_filters.FilterSet):
     max_sqft = django_filters.NumberFilter(field_name='sqft', lookup_expr='lte')
     stories = NumberInFilter(field_name='stories', lookup_expr='in')
     furnishing = CharInFilter(field_name='furnishing', lookup_expr='in')
+    # true = only one shared bathroom, false = private bathroom(s).
+    shared_bathroom = django_filters.BooleanFilter(field_name='shared_bathroom')
+    # Land size range in `land_unit` (perch, the default, or acre); listings stored in the
+    # other unit are compared after converting (1 acre = 160 perches).
+    min_land_size = django_filters.NumberFilter(method='filter_land_size')
+    max_land_size = django_filters.NumberFilter(method='filter_land_size')
+    land_unit = django_filters.CharFilter(method='filter_noop')
     status = django_filters.CharFilter(field_name='status', lookup_expr='exact')
 
     min_lat = django_filters.NumberFilter(field_name='latitude', lookup_expr='gte')
@@ -42,8 +49,21 @@ class PropertyFilter(django_filters.FilterSet):
         fields = [
             'city', 'zip_code', 'min_price', 'max_price', 'min_beds',
             'min_baths', 'home_type', 'max_key_money_months', 'max_advance', 'min_parking', 'min_sqft',
-            'max_sqft', 'stories', 'furnishing', 'status', 'min_lat', 'max_lat', 'min_lng', 'max_lng',
+            'max_sqft', 'stories', 'furnishing', 'shared_bathroom', 'min_land_size', 'max_land_size', 'land_unit',
+            'status', 'min_lat', 'max_lat', 'min_lng', 'max_lng',
         ]
+
+    def filter_noop(self, queryset, name, value):
+        return queryset  # read by filter_land_size
+
+    def filter_land_size(self, queryset, name, value):
+        from django.db.models import Q
+        perches = float(value) * (160 if self.data.get('land_unit') == 'acre' else 1)
+        op = 'gte' if name == 'min_land_size' else 'lte'
+        return queryset.filter(
+            Q(land_unit='perch', **{f'land_size__{op}': perches})
+            | Q(land_unit='acre', **{f'land_size__{op}': perches / 160})
+        )
 
     def filter_max_advance(self, queryset, name, value):
         from django.db.models import Q

@@ -50,6 +50,7 @@ if [ -n "$DOMAIN" ]; then
     CSRF_ORIGINS=https://$DOMAIN
   fi
   SECURE_COOKIES=true
+  SITE_URL=https://${BASE}
 else
   SERVER_IP=${SERVER_IP:-$(curl -4 -fsS --max-time 5 https://api.ipify.org 2>/dev/null || true)}
   ask SERVER_IP "Could not detect this server's public IP. Enter it: "
@@ -61,6 +62,7 @@ else
   ALLOWED_HOSTS=$SERVER_IP
   CSRF_ORIGINS=http://$SERVER_IP
   SECURE_COOKIES=false
+  SITE_URL=http://$SERVER_IP
 fi
 
 ask ANTHROPIC_API_KEY "Anthropic API key for the AI features (input hidden; Enter to skip): " secret
@@ -76,6 +78,15 @@ umask 077   # the file holds secrets: readable by this user only
   echo "DJANGO_ALLOWED_HOSTS=$ALLOWED_HOSTS"
   echo "DJANGO_CSRF_TRUSTED_ORIGINS=$CSRF_ORIGINS"
   echo "DJANGO_SECURE_COOKIES=$SECURE_COOKIES"
+  echo "SITE_URL=$SITE_URL"
+  echo
+  echo "# Email for password reset links (blank EMAIL_HOST = printed to the log, not sent)"
+  echo "EMAIL_HOST="
+  echo "EMAIL_PORT=587"
+  echo "EMAIL_HOST_USER="
+  echo "EMAIL_HOST_PASSWORD="
+  echo "EMAIL_USE_TLS=true"
+  echo "DEFAULT_FROM_EMAIL=PlaceEka <no-reply@placeeka.lk>"
   echo
   echo "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY"
   echo "ANTHROPIC_MODEL=claude-sonnet-5"
