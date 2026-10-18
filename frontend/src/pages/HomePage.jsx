@@ -4,15 +4,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import DealToggle from '../components/DealToggle'
+import HeroCarousel from '../components/HeroCarousel'
 import { useDeal } from '../context/DealContext'
 import { useLanguage } from '../context/LanguageContext'
 import { CITIES } from '../i18n/translations'
 
 // Phones show this many cities until "Show all" is pressed (54 tiles is a very long scroll).
 const PHONE_CITY_LIMIT = 12
-
-const HERO_IMG =
-  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=2000&q=80'
 
 export default function HomePage() {
   const [query, setQuery] = useState('')
@@ -33,9 +31,11 @@ export default function HomePage() {
     <div>
       {/* Hero */}
       <section className="relative isolate overflow-hidden">
-        <img src={HERO_IMG} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
+        <HeroCarousel />
         {/* Darkens only the left, where the white text sits, so the photo stays bright. */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+        {/* Phones: the text spans the whole width, so the photo is dimmed evenly as well. */}
+        <div className="absolute inset-0 -z-10 bg-black/25 sm:hidden" />
 
         <div className="mx-auto flex min-h-[65vh] max-w-7xl flex-col justify-center px-4 py-8">
           <motion.div

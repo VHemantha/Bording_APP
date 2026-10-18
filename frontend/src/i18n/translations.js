@@ -97,6 +97,7 @@ const landingTranslations = {
       "Search houses, annexes, apartments and shops for rent across Sri Lanka — or just tell our assistant what you're picturing.",
     'hero.placeholder': 'Enter Cities',
     'hero.search': 'Search',
+    'hero.photo': 'Show photo {n} of {total}',
 
     'cities.title': 'Explore by city',
     'cities.subtitle': "Rentals across Sri Lanka's main cities.",
@@ -139,6 +140,7 @@ const landingTranslations = {
       'ශ්‍රී ලංකාව පුරා කුලියට ඇති නිවාස, ඇනෙක්සි, මහල් නිවාස සහ වෙළඳසැල් සොයන්න — නැතහොත් ඔබ සිතන දේ අපගේ සහායකයාට කියන්න.',
     'hero.placeholder': 'නගර ඇතුළත් කරන්න',
     'hero.search': 'සොයන්න',
+    'hero.photo': 'ඡායාරූප {total} න් {n} වැන්න පෙන්වන්න',
 
     'cities.title': 'නගරය අනුව සොයන්න',
     'cities.subtitle': 'ශ්‍රී ලංකාවේ ප්‍රධාන නගරවල කුලී නිවාස.',
@@ -181,6 +183,7 @@ const landingTranslations = {
       'இலங்கை முழுவதும் வாடகைக்கு உள்ள வீடுகள், இணைப்பு வீடுகள், அடுக்குமாடி வீடுகள் மற்றும் கடைகளைத் தேடுங்கள் — அல்லது நீங்கள் நினைப்பதை எங்கள் உதவியாளரிடம் சொல்லுங்கள்.',
     'hero.placeholder': 'நகரங்களை உள்ளிடவும்',
     'hero.search': 'தேடு',
+    'hero.photo': '{total} படங்களில் {n}-ஐக் காட்டு',
 
     'cities.title': 'நகரம் வாரியாகத் தேடுங்கள்',
     'cities.subtitle': 'இலங்கையின் முக்கிய நகரங்களில் வாடகை வீடுகள்.',

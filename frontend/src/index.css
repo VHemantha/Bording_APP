@@ -199,3 +199,20 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Home page hero slideshow (HeroCarousel). The shown photo fades in and zooms in slowly; one
+   being replaced fades out first and only then snaps back to full size, while invisible. */
+.hero-slide {
+  opacity: 0;
+  transform: scale(1);
+  transition: opacity 1.5s ease-out, transform 0s linear 1.5s;
+}
+.hero-slide.is-current {
+  opacity: 1;
+  transform: scale(1.08);
+  transition: opacity 1.5s ease-out, transform 8s linear;
+}
+.hero-slide.is-still,
+.hero-slide.is-still.is-current {
+  transform: none;
+}
