@@ -234,6 +234,47 @@ Use a long unique password — this is a public site. Sign in as `admin` on the 
    `VITE_GOOGLE_CLIENT_ID` in `.env` and run `SKIP_PULL=1 ./deploy.sh` (the second one is baked into the JavaScript, so
    it needs the rebuild).
 
+## 10a. Email for "Forgot password?" (Resend)
+
+Reset links are sent through **[Resend](https://resend.com)** over SMTP. The free plan covers 3,000
+emails a month, at most 100 a day.
+
+1. **Sign up** at resend.com and confirm your email address.
+2. **Add the domain.** **Domains → Add Domain** → `placeeka.lk`. Resend lists a few DNS records: a DKIM
+   `TXT` on `resend._domainkey`, plus an `MX` and an SPF `TXT` on `send`. Add them in **Cloudflare → DNS →
+   Records** exactly as shown, or use Resend's **Auto configure** button for Cloudflare. These records
+   aren't proxied (no orange cloud). Recommended: also add
+   `TXT _dmarc  v=DMARC1; p=none; rua=mailto:you@your-email` so Gmail and Yahoo trust the mail. Back in
+   Resend, select **Verify DNS Records** and wait until the domain shows **Verified** (minutes, sometimes
+   longer).
+3. **Create an API key.** **API Keys → Create API Key** → name `placeeka-server`, permission **Sending
+   access**, domain `placeeka.lk` → copy the key (starts with `re_`). Resend shows it only once.
+4. **On the server**, `nano .env` and set (keep everything else):
+   ```
+   SITE_URL=https://placeeka.lk
+   EMAIL_HOST=smtp.resend.com
+   EMAIL_PORT=465
+   EMAIL_USE_SSL=true
+   EMAIL_HOST_USER=resend
+   EMAIL_HOST_PASSWORD=re_your_key_here
+   DEFAULT_FROM_EMAIL=PlaceEka <no-reply@placeeka.lk>
+   ```
+   Then `./deploy.sh`.
+5. **Test it:**
+   ```
+   docker compose exec web python manage.py sendtestemail you@gmail.com
+   ```
+   It should arrive within a minute and show up under **Emails** in Resend. If it doesn't,
+   `docker compose logs --tail=50 web` shows why:
+   - `535` = wrong API key;
+   - `550` / "domain is not verified" = step 2 isn't finished;
+   - a timeout = the server can't reach port 465 outbound. Try `EMAIL_PORT=2465` (also implicit TLS), or
+     `EMAIL_PORT=587` with `EMAIL_USE_SSL=false`.
+
+Optional: to *receive* mail at your domain (for example `info@placeeka.lk` → your Gmail), use
+Cloudflare **Email → Email Routing**. It's free and works alongside Resend, because Resend's `MX`
+record is on the `send` subdomain, not on `placeeka.lk` itself.
+
 ## 11. Day-to-day: shipping changes
 
 **PowerShell (your PC)** — commit and `git push origin main` as usual. Then:

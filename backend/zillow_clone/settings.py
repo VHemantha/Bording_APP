@@ -302,18 +302,24 @@ LOGGING = {
 SITE_URL = os.environ.get('SITE_URL', '')
 # Reset links work for 2 hours, and only until the password is changed.
 PASSWORD_RESET_TIMEOUT = 2 * 60 * 60
-# SMTP server for outgoing mail (your mail provider's, or Brevo / Zoho / Gmail with an app
-# password). With no EMAIL_HOST, emails are printed to the server log instead of being sent.
+# SMTP server for outgoing mail. Production uses Resend (see DEPLOY_CLOUDZY.md): smtp.resend.com,
+# port 465 with implicit TLS (EMAIL_USE_SSL), user "resend" and a Resend API key as the password.
+# Port 587 servers use STARTTLS (EMAIL_USE_TLS) instead.
+# With no EMAIL_HOST, emails are printed to the server log instead of being sent.
 _EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+_EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+# Implicit TLS by default on 465, STARTTLS otherwise; the two can't be combined.
+_EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'true' if _EMAIL_PORT == 465 else 'false').lower() == 'true'
 MAILERS = {
     'default': {
         'BACKEND': 'django.core.mail.backends.smtp.EmailBackend',
         'OPTIONS': {
             'host': _EMAIL_HOST,
-            'port': int(os.environ.get('EMAIL_PORT', '587')),
+            'port': _EMAIL_PORT,
             'username': os.environ.get('EMAIL_HOST_USER', ''),
             'password': os.environ.get('EMAIL_HOST_PASSWORD', ''),
-            'use_tls': os.environ.get('EMAIL_USE_TLS', 'true').lower() == 'true',
+            'use_ssl': _EMAIL_USE_SSL,
+            'use_tls': not _EMAIL_USE_SSL and os.environ.get('EMAIL_USE_TLS', 'true').lower() == 'true',
             'timeout': 15,
         },
     } if _EMAIL_HOST else {
