@@ -18,7 +18,7 @@ export default function Footer() {
         <div className="grid gap-10 text-center md:grid-cols-[1.4fr_repeat(3,1fr)] md:text-left">
           <div>
             <Link to="/" aria-label={APP_NAME} className="inline-block">
-              <Logo className="h-16" />
+              <Logo className="h-20" />
             </Link>
           </div>
 

@@ -23,7 +23,7 @@ export default function AdminLayout() {
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col justify-between bg-brand-900 p-5 text-white lg:flex">
         <div>
           <Link to="/" className="inline-block" aria-label={APP_NAME}>
-            <Logo className="h-9" />
+            <Logo className="h-12" onDark />
           </Link>
           <p className="mt-1 text-xs text-white/50">{t('admin.console')}</p>
 

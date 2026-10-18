@@ -34,7 +34,7 @@ export default function Navbar() {
       {/* Logo on the left, account actions on the right. */}
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:h-20">
         <Link to="/" className="min-w-0 shrink" aria-label={APP_NAME}>
-          <Logo className="h-9 max-w-full min-[380px]:h-10 md:h-12" />
+          <Logo className="h-11 max-w-full min-[380px]:h-12 md:h-[3.75rem]" />
         </Link>
 
         <nav
