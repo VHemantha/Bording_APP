@@ -7,7 +7,7 @@ export const LEGAL = {
     about: {
       title: 'About us',
       intro:
-        'Rent House.lk helps people across Sri Lanka find a place to rent, and helps owners find good tenants. Our tagline says it best: හිතට, හරියන නිවසක් — a home that feels just right.',
+        'Place helps people across Sri Lanka find a place to rent, and helps owners find good tenants. Our tagline says it best: හිතට, හරියන නිවසක් — a home that feels just right.',
       sections: [
         {
           heading: 'For people looking for a place',
@@ -33,13 +33,13 @@ export const LEGAL = {
       ],
       contactHeading: 'Get in touch',
       contactOwners: 'Questions about a property? Contact its owner with the Call or WhatsApp buttons on the listing.',
-      contactUs: 'To reach the Rent House.lk team:',
+      contactUs: 'To reach the Place team:',
     },
     privacy: {
       title: 'Privacy policy',
       updated: 'Last updated: 16 October 2026',
       intro:
-        'Rent House.lk is a website for finding and listing properties for rent in Sri Lanka. This policy explains what information we collect when you use the site, how we use it, and the choices you have.',
+        'Place is a website for finding and listing properties for rent in Sri Lanka. This policy explains what information we collect when you use the site, how we use it, and the choices you have.',
       sections: [
         {
           heading: 'Information we collect',
@@ -97,7 +97,7 @@ export const LEGAL = {
         },
         {
           heading: 'Children',
-          paragraphs: ['Rent House.lk is meant for adults. If you are under 18, please don’t create an account.'],
+          paragraphs: ['Place is meant for adults. If you are under 18, please don’t create an account.'],
         },
         {
           heading: 'Changes to this policy',
@@ -111,7 +111,7 @@ export const LEGAL = {
     about: {
       title: 'අප ගැන',
       intro:
-        'Rent House.lk ශ්‍රී ලංකාව පුරා කුලියට නිවසක් සොයන අයට එය සොයා ගැනීමටත්, අයිතිකරුවන්ට හොඳ කුලී නිවැසියන් සොයා ගැනීමටත් උදව් කරයි. අපගේ පාඨය එය හොඳින්ම කියයි: හිතට, හරියන නිවසක්!',
+        'Place ශ්‍රී ලංකාව පුරා කුලියට නිවසක් සොයන අයට එය සොයා ගැනීමටත්, අයිතිකරුවන්ට හොඳ කුලී නිවැසියන් සොයා ගැනීමටත් උදව් කරයි. අපගේ පාඨය එය හොඳින්ම කියයි: හිතට, හරියන නිවසක්!',
       sections: [
         {
           heading: 'නිවසක් සොයන අය සඳහා',
@@ -137,13 +137,13 @@ export const LEGAL = {
       ],
       contactHeading: 'අප අමතන්න',
       contactOwners: 'දේපළක් ගැන ප්‍රශ්නයක් තිබේද? දැන්වීමේ ඇති ඇමතුම් හෝ WhatsApp බොත්තම් මගින් එහි අයිතිකරු අමතන්න.',
-      contactUs: 'Rent House.lk කණ්ඩායම ඇමතීමට:',
+      contactUs: 'Place කණ්ඩායම ඇමතීමට:',
     },
     privacy: {
       title: 'පෞද්ගලිකත්ව ප්‍රතිපත්තිය',
       updated: 'අවසන් වරට යාවත්කාලීන කළේ: 2026 ඔක්තෝබර් 16',
       intro:
-        'Rent House.lk යනු ශ්‍රී ලංකාවේ කුලියට ඇති දේපළ සොයා ගැනීමට සහ දැන්වීම් පළ කිරීමට ඇති වෙබ් අඩවියකි. ඔබ වෙබ් අඩවිය භාවිත කරන විට අප එකතු කරන තොරතුරු, අප ඒවා භාවිත කරන ආකාරය සහ ඔබට ඇති තේරීම් මෙම ප්‍රතිපත්තියෙන් පැහැදිලි කරයි.',
+        'Place යනු ශ්‍රී ලංකාවේ කුලියට ඇති දේපළ සොයා ගැනීමට සහ දැන්වීම් පළ කිරීමට ඇති වෙබ් අඩවියකි. ඔබ වෙබ් අඩවිය භාවිත කරන විට අප එකතු කරන තොරතුරු, අප ඒවා භාවිත කරන ආකාරය සහ ඔබට ඇති තේරීම් මෙම ප්‍රතිපත්තියෙන් පැහැදිලි කරයි.',
       sections: [
         {
           heading: 'අප එකතු කරන තොරතුරු',
@@ -201,7 +201,7 @@ export const LEGAL = {
         },
         {
           heading: 'ළමයින්',
-          paragraphs: ['Rent House.lk වැඩිහිටියන් සඳහා වේ. ඔබ වයස අවුරුදු 18ට අඩු නම්, කරුණාකර ගිණුමක් සාදන්න එපා.'],
+          paragraphs: ['Place වැඩිහිටියන් සඳහා වේ. ඔබ වයස අවුරුදු 18ට අඩු නම්, කරුණාකර ගිණුමක් සාදන්න එපා.'],
         },
         {
           heading: 'මෙම ප්‍රතිපත්තියේ වෙනස්කම්',
@@ -215,7 +215,7 @@ export const LEGAL = {
     about: {
       title: 'எங்களைப் பற்றி',
       intro:
-        'Rent House.lk இலங்கை முழுவதும் வாடகைக்கு வீடு தேடுபவர்களுக்கு அதைக் கண்டறியவும், உரிமையாளர்களுக்கு நல்ல குடியிருப்பாளர்களைக் கண்டறியவும் உதவுகிறது. எங்கள் வாசகம் அதைச் சிறப்பாகச் சொல்கிறது: மனதுக்கு ஏற்ற ஒரு வீடு.',
+        'Place இலங்கை முழுவதும் வாடகைக்கு வீடு தேடுபவர்களுக்கு அதைக் கண்டறியவும், உரிமையாளர்களுக்கு நல்ல குடியிருப்பாளர்களைக் கண்டறியவும் உதவுகிறது. எங்கள் வாசகம் அதைச் சிறப்பாகச் சொல்கிறது: மனதுக்கு ஏற்ற ஒரு வீடு.',
       sections: [
         {
           heading: 'வீடு தேடுபவர்களுக்கு',
@@ -241,13 +241,13 @@ export const LEGAL = {
       ],
       contactHeading: 'தொடர்பு கொள்ள',
       contactOwners: 'ஒரு சொத்து பற்றிக் கேள்விகள் உள்ளதா? விளம்பரத்தில் உள்ள அழைப்பு அல்லது WhatsApp பொத்தான்கள் மூலம் அதன் உரிமையாளரைத் தொடர்பு கொள்ளுங்கள்.',
-      contactUs: 'Rent House.lk குழுவைத் தொடர்பு கொள்ள:',
+      contactUs: 'Place குழுவைத் தொடர்பு கொள்ள:',
     },
     privacy: {
       title: 'தனியுரிமைக் கொள்கை',
       updated: 'கடைசியாகப் புதுப்பிக்கப்பட்டது: 16 அக்டோபர் 2026',
       intro:
-        'Rent House.lk என்பது இலங்கையில் வாடகைக்கு உள்ள சொத்துகளைக் கண்டறியவும் விளம்பரப்படுத்தவும் உதவும் இணையதளம். நீங்கள் இணையதளத்தைப் பயன்படுத்தும்போது நாங்கள் சேகரிக்கும் தகவல்கள், அவற்றை நாங்கள் பயன்படுத்தும் விதம் மற்றும் உங்களுக்கு உள்ள தேர்வுகளை இந்தக் கொள்கை விளக்குகிறது.',
+        'Place என்பது இலங்கையில் வாடகைக்கு உள்ள சொத்துகளைக் கண்டறியவும் விளம்பரப்படுத்தவும் உதவும் இணையதளம். நீங்கள் இணையதளத்தைப் பயன்படுத்தும்போது நாங்கள் சேகரிக்கும் தகவல்கள், அவற்றை நாங்கள் பயன்படுத்தும் விதம் மற்றும் உங்களுக்கு உள்ள தேர்வுகளை இந்தக் கொள்கை விளக்குகிறது.',
       sections: [
         {
           heading: 'நாங்கள் சேகரிக்கும் தகவல்கள்',
@@ -305,7 +305,7 @@ export const LEGAL = {
         },
         {
           heading: 'சிறுவர்கள்',
-          paragraphs: ['Rent House.lk பெரியவர்களுக்கானது. நீங்கள் 18 வயதுக்குக் குறைவானவராக இருந்தால், கணக்கை உருவாக்க வேண்டாம்.'],
+          paragraphs: ['Place பெரியவர்களுக்கானது. நீங்கள் 18 வயதுக்குக் குறைவானவராக இருந்தால், கணக்கை உருவாக்க வேண்டாம்.'],
         },
         {
           heading: 'இந்தக் கொள்கையில் மாற்றங்கள்',

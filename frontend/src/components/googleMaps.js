@@ -15,14 +15,14 @@ const authListeners = new Set()
 function loadGoogleMaps() {
   if (window.google?.maps?.Map) return Promise.resolve(window.google.maps)
   mapsPromise ??= new Promise((resolve, reject) => {
-    window.__rentHouseMapsReady = () => resolve(window.google.maps)
+    window.__placeMapsReady = () => resolve(window.google.maps)
     window.gm_authFailure = () => {
       authFailed = true
       authListeners.forEach((notify) => notify())
       reject(new Error('Google Maps rejected the API key'))
     }
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(API_KEY)}&v=weekly&loading=async&callback=__rentHouseMapsReady`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(API_KEY)}&v=weekly&loading=async&callback=__placeMapsReady`
     script.async = true
     script.onerror = () => reject(new Error('Google Maps failed to load'))
     document.head.appendChild(script)

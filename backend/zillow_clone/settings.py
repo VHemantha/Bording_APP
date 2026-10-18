@@ -123,7 +123,7 @@ GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
 # tried in order; the public mirrors were unreliable when this was written, so none by default. Overpass asks clients to identify themselves (keep the user agent
 # simple: its firewall rejects some punctuation with 406 Not Acceptable).
 OVERPASS_URLS = _env_list('OVERPASS_URLS') or ['https://overpass-api.de/api/interpreter']
-OVERPASS_USER_AGENT = os.environ.get('OVERPASS_USER_AGENT', 'RentHouseLK/1.0')
+OVERPASS_USER_AGENT = os.environ.get('OVERPASS_USER_AGENT', 'PlaceLK/1.0')
 # Download map squares of nearby places in a background thread (off in tests).
 PLACES_FETCH_IN_BACKGROUND = os.environ.get('PLACES_FETCH_IN_BACKGROUND', 'true').lower() == 'true'
 

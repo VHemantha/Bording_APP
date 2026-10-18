@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useState } from 'react'
 // (or the search toolbar) and remembered in this browser, so the whole site follows it.
 export const DEALS = ['for_sale', 'for_rent']
 const DEFAULT_DEAL = 'for_rent'
-const STORAGE_KEY = 'renthouse.deal'
+const STORAGE_KEY = 'place.deal'
 
 const DealContext = createContext({ deal: DEFAULT_DEAL, setDeal: () => {} })
 

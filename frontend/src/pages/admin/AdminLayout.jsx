@@ -2,7 +2,7 @@ import { LayoutDashboard, List, LogOut, Plus, Wand2 } from 'lucide-react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import LanguageSwitcher from '../../components/LanguageSwitcher'
-import Logo from '../../components/Logo'
+import Logo, { APP_NAME } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
 import { useLanguage } from '../../context/LanguageContext'
 
@@ -22,7 +22,7 @@ export default function AdminLayout() {
     <div className="flex min-h-screen bg-slate-100">
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col justify-between bg-brand-900 p-5 text-white lg:flex">
         <div>
-          <Link to="/" className="inline-block rounded-xl bg-white px-3 py-2" aria-label="Rent House.lk">
+          <Link to="/" className="inline-block" aria-label={APP_NAME}>
             <Logo className="h-9" />
           </Link>
           <p className="mt-1 text-xs text-white/50">{t('admin.console')}</p>
