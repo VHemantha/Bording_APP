@@ -16,6 +16,8 @@ const ALLOWED = [
   'min_land_size',
   'max_land_size',
   'land_unit',
+  'deed_type',
+  'has_video',
   'status',
   'search',
 ]

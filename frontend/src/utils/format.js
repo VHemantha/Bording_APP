@@ -43,10 +43,51 @@ export const HOME_TYPE_LABELS = {
 // Property types that are only ever rented out, never sold (matches Property.RENT_ONLY_TYPES).
 export const RENT_ONLY_TYPES = ['annex', 'upper_floor_house']
 
-/** The property types that can be listed or searched for 'for_sale' / 'for_rent'. */
+/** The property types that can be listed or searched for 'for_sale' / 'for_rent'. For sale,
+ *  shops and commercial property are one type ("Shop / commercial", the commercial key). */
 export function homeTypesFor(status) {
   const all = Object.keys(HOME_TYPE_LABELS)
-  return status === 'for_sale' ? all.filter((key) => !RENT_ONLY_TYPES.includes(key)) : all
+  return status === 'for_sale' ? all.filter((key) => !RENT_ONLY_TYPES.includes(key) && key !== 'shop') : all
+}
+
+/** A property type's name; for sale, commercial reads "Shop / commercial property". */
+export function typeLabel(type, status, t) {
+  return status === 'for_sale' && type === 'commercial' ? t('type.shopCommercial') : t(`type.${type}`)
+}
+
+// Homes: the types with bedrooms, bathrooms and furnishing (matches Property.RESIDENTIAL_TYPES).
+export const RESIDENTIAL_TYPES = ['house', 'annex', 'upper_floor_house', 'apartment']
+
+// Sri Lankan land titles, for land for sale (matches Property.DeedType); names: t(`deed.${key}`).
+export const DEED_TYPES = ['sinnakkara', 'bimsaviya', 'jayabhoomi', 'swarnabhoomi', 'permit', 'leasehold', 'other']
+
+/**
+ * The optional details a listing of this type has, for sale or rent (matches
+ * Property.fields_for): rooms, shared_bathroom, furnishing, stories, sqft, parking,
+ * land_size, key_money, deed_type. The forms only ask for these and listings only show them.
+ */
+export function listingFields(status, type) {
+  const selling = status === 'for_sale'
+  const land = type === 'land'
+  const fields = new Set()
+  if (RESIDENTIAL_TYPES.includes(type)) {
+    fields.add('rooms').add('furnishing')
+    if (!selling) fields.add('shared_bathroom')
+  }
+  if (!land && type !== 'shop') fields.add('stories')
+  if (!land) fields.add('sqft').add('parking')
+  if (landSizeApplies(status, type)) fields.add('land_size')
+  if (!selling) fields.add('key_money')
+  if (selling && land) fields.add('deed_type')
+  return fields
+}
+
+/** The 11-character id of a YouTube video link (watch, youtu.be, shorts, embed), or null. */
+export function youtubeId(url) {
+  const match = (url || '')
+    .trim()
+    .match(/^(?:https?:\/\/)?(?:www\.|m\.|music\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/|v\/)|youtu\.be\/|youtube-nocookie\.com\/embed\/)([A-Za-z0-9_-]{11})(?:[?&#/].*)?$/)
+  return match ? match[1] : null
 }
 
 // Never have a land size (matches Property.NO_LAND_SIZE_TYPES).
@@ -67,9 +108,6 @@ export function formatLandSize(size, unit, t) {
   const key = amount === 1 ? (acres ? 'land.acre' : 'land.perch') : acres ? 'land.acres' : 'land.perches'
   return t(key, { count: amount.toLocaleString() })
 }
-
-/** Choices for the most a buyer can pay as an advance, in LKR. */
-export const ADVANCE_OPTIONS = [500000, 1000000, 2500000, 5000000, 10000000]
 
 export const STORIES_LABELS = {
   1: 'Single story',

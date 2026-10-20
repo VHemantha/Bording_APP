@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 
 import { districtLabel, fetchLocations } from '../../api/locations'
 import { useLanguage } from '../../context/LanguageContext'
-import { formatKeyMoney, homeTypesFor, landSizeApplies, RENT_ONLY_TYPES, STORIES_LABELS } from '../../utils/format'
+import { DEED_TYPES, formatKeyMoney, homeTypesFor, listingFields, RENT_ONLY_TYPES, STORIES_LABELS, typeLabel } from '../../utils/format'
 
 
 const EMPTY = {
@@ -24,7 +24,8 @@ const EMPTY = {
   home_type: 'house',
   status: 'for_rent',
   key_money_months: '0',
-  advance_amount: '',
+  deed_type: '',
+  video_url: '',
   parking_slots: 0,
   stories: '',
   furnishing: 'unfurnished',
@@ -68,21 +69,24 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
     e.preventDefault()
     setFormError(null)
     const num = (x) => (x === '' || x === null ? null : Number(x))
-    const land = values.home_type === 'land'
+    // Only the details this kind of listing has (the server clears the rest too).
+    const fields = listingFields(values.status, values.home_type)
     const payload = {
       ...values,
       latitude: num(values.latitude),
       longitude: num(values.longitude),
       price: num(values.price),
-      beds: num(values.beds),
-      baths: num(values.baths),
-      sqft: land ? null : num(values.sqft),
-      land_size: landSizeApplies(values.status, values.home_type) ? num(values.land_size) : null,
-      key_money_months: values.status === 'for_sale' ? 0 : num(values.key_money_months) ?? 0,
-      advance_amount: values.status === 'for_sale' && !land ? num(values.advance_amount) : null,
-      parking_slots: land ? 0 : num(values.parking_slots) ?? 0,
-      furnishing: land ? 'unfurnished' : values.furnishing,
-      stories: num(values.stories),
+      beds: fields.has('rooms') ? num(values.beds) : 0,
+      baths: fields.has('rooms') ? num(values.baths) : 0,
+      shared_bathroom: fields.has('shared_bathroom') && Boolean(values.shared_bathroom),
+      sqft: fields.has('sqft') ? num(values.sqft) : null,
+      land_size: fields.has('land_size') ? num(values.land_size) : null,
+      key_money_months: fields.has('key_money') ? num(values.key_money_months) ?? 0 : 0,
+      deed_type: fields.has('deed_type') ? values.deed_type || '' : '',
+      parking_slots: fields.has('parking') ? num(values.parking_slots) ?? 0 : 0,
+      furnishing: fields.has('furnishing') ? values.furnishing : 'unfurnished',
+      stories: fields.has('stories') ? num(values.stories) : null,
+      video_url: (values.video_url || '').trim(),
       year_built: num(values.year_built),
       images: values.images.map((s) => s.trim()).filter(Boolean),
     }
@@ -92,6 +96,8 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
     }
     onSubmit(payload)
   }
+
+  const fields = listingFields(values.status, values.home_type)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -119,34 +125,39 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
             value={values.status}
             onChange={(v) => {
               set('status', v)
-              if (v === 'for_sale' && RENT_ONLY_TYPES.includes(values.home_type)) set('home_type', 'house')
+              if (v === 'for_sale' && values.home_type === 'shop') set('home_type', 'commercial')
+              else if (v === 'for_sale' && RENT_ONLY_TYPES.includes(values.home_type)) set('home_type', 'house')
             }}
             options={['for_rent', 'for_sale'].map((key) => [key, t(`status.${key}`)])}
           />
           <Text label={values.status === 'for_sale' ? t('post.priceSale') : t('admin.priceUsd')} type="number" value={values.price} onChange={(v) => set('price', v)} required />
-          <Select label={t('filter.bedrooms')} value={String(values.beds)} onChange={(v) => set('beds', v)} options={roomOptions(values.beds)} />
-          <div>
-            <Select label={t('filter.bathrooms')} value={values.shared_bathroom ? '1' : String(values.baths)} onChange={(v) => set('baths', v)} options={roomOptions(values.baths)} />
-            <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={Boolean(values.shared_bathroom)}
-                onChange={(e) => {
-                  set('shared_bathroom', e.target.checked)
-                  if (e.target.checked) set('baths', '1')
-                }}
-                className="h-4 w-4 accent-brand-600"
-              />
-              {t('post.sharedBathroom')}
-            </label>
-          </div>
-          {landSizeApplies(values.status, values.home_type) && (
+          {fields.has('rooms') && <Select label={t('filter.bedrooms')} value={String(values.beds)} onChange={(v) => set('beds', v)} options={roomOptions(values.beds)} />}
+          {fields.has('rooms') && (
+            <div>
+              <Select label={t('filter.bathrooms')} value={values.shared_bathroom ? '1' : String(values.baths)} onChange={(v) => set('baths', v)} options={roomOptions(values.baths)} />
+              {fields.has('shared_bathroom') && (
+                <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(values.shared_bathroom)}
+                    onChange={(e) => {
+                      set('shared_bathroom', e.target.checked)
+                      if (e.target.checked) set('baths', '1')
+                    }}
+                    className="h-4 w-4 accent-brand-600"
+                  />
+                  {t('post.sharedBathroom')}
+                </label>
+              )}
+            </div>
+          )}
+          {fields.has('land_size') && (
             <>
               <Text label={t('post.landSize')} type="number" step="any" value={values.land_size ?? ''} onChange={(v) => set('land_size', v)} required />
               <Select label={t('post.landUnit')} value={values.land_unit || 'perch'} onChange={(v) => set('land_unit', v)} options={[['perch', t('land.unitPerch')], ['acre', t('land.unitAcre')]]} />
             </>
           )}
-          {values.home_type !== 'land' && (
+          {fields.has('sqft') && (
             <Text
               label={['shop', 'commercial'].includes(values.home_type) ? t('filter.sqft') : `${t('filter.sqft')} (${t('post.optional')})`}
               type="number"
@@ -155,17 +166,21 @@ export default function ListingForm({ initial, onSubmit, submitting, submitLabel
               required={['shop', 'commercial'].includes(values.home_type)}
             />
           )}
-          <Select label={t('detail.homeType')} value={values.home_type} onChange={(v) => set('home_type', v)} options={homeTypesFor(values.status).map((key) => [key, t(`type.${key}`)])} />
-          {values.status === 'for_sale' ? (
-            values.home_type !== 'land' && <Text label={`${t('post.advance')} (${t('post.optional')})`} type="number" value={values.advance_amount ?? ''} onChange={(v) => set('advance_amount', v)} />
-          ) : (
+          <Select label={t('detail.homeType')} value={values.home_type} onChange={(v) => set('home_type', v)} options={homeTypesFor(values.status).map((key) => [key, typeLabel(key, values.status, t)])} />
+          {fields.has('key_money') && (
             <Select label={t('admin.keyMoneyUsd')} value={String(values.key_money_months ?? 0)} onChange={(v) => set('key_money_months', v)} options={Array.from({ length: 13 }, (_, n) => [String(n), n === 0 ? t('card.noKeyMoney') : formatKeyMoney(n, t)])} />
           )}
-          {values.home_type !== 'land' && (
+          {fields.has('deed_type') && (
+            <Select label={t('filter.deedType')} value={values.deed_type || ''} onChange={(v) => set('deed_type', v)} options={[['', t('post.chooseDeed')], ...DEED_TYPES.map((key) => [key, t(`deed.${key}`)])]} />
+          )}
+          {fields.has('parking') && (
             <Text label={t('filter.parking')} type="number" value={values.parking_slots} onChange={(v) => set('parking_slots', v)} />
           )}
-          <Select label={t('detail.stories')} value={values.stories ?? ''} onChange={(v) => set('stories', v)} options={[['', t('admin.notApplicable')], ...Object.keys(STORIES_LABELS).map((key) => [key, t(`stories.${key}`)])]} />
-          {values.home_type !== 'land' && (
+          {fields.has('stories') && (
+            <Select label={t('detail.stories')} value={values.stories ?? ''} onChange={(v) => set('stories', v)} options={[['', t('admin.notApplicable')], ...Object.keys(STORIES_LABELS).map((key) => [key, t(`stories.${key}`)])]} />
+          )}
+          <Text label={t('post.videoLink')} type="url" value={values.video_url || ''} onChange={(v) => set('video_url', v)} />
+          {fields.has('furnishing') && (
             <Select label={t('filter.furnishing')} value={values.furnishing} onChange={(v) => set('furnishing', v)} options={['furnished', 'unfurnished'].map((key) => [key, t(`furnishing.${key}`)])} />
           )}
           <Text label={t('post.contactName')} value={values.contact_name} onChange={(v) => set('contact_name', v)} />

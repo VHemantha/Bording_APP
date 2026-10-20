@@ -275,6 +275,33 @@ Optional: to *receive* mail at your domain (for example `info@placeeka.lk` → y
 Cloudflare **Email → Email Routing**. It's free and works alongside Resend, because Resend's `MX`
 record is on the `send` subdomain, not on `placeeka.lk` itself.
 
+## 10b. SMS codes for phone sign-up (Notify.lk)
+
+People who sign up with a phone number confirm it with a 6-digit code sent by SMS. The same
+codes let phone accounts reset their password. The SMS go through **[Notify.lk](https://notify.lk)**,
+a Sri Lankan SMS gateway (prepaid credit, charged per SMS).
+
+**Until this is set up, phone sign-up doesn't work.** Codes are only written to the server log.
+Email sign-up keeps working.
+
+1. **Sign up** at notify.lk and top up some credit.
+2. **Request a Sender ID** (for example `PlaceEka`) in the dashboard and wait for approval. Don't send codes
+   with the `NotifyDEMO` sender: Notify.lk can suspend accounts that do.
+3. **Get your keys:** in **Settings → API Keys** copy your **User ID** and **API Key**.
+4. **On the server**, `nano .env` and set:
+   ```
+   NOTIFY_LK_USER_ID=12345
+   NOTIFY_LK_API_KEY=your-api-key
+   NOTIFY_LK_SENDER_ID=PlaceEka
+   ```
+   Then `./deploy.sh`.
+5. **Test it:** on the site, choose **Create an account**, enter your own mobile number and a password, and press
+   **Send verification code**. The SMS should arrive within seconds. If it doesn't, `docker compose logs --tail=50 web`
+   shows Notify.lk's reply.
+
+Limits built in: a code works for 10 minutes and 5 tries, and a number can ask for a new code once a minute,
+at most 5 times an hour. Each visitor can also request at most 10 codes an hour.
+
 ## 11. Day-to-day: shipping changes
 
 **PowerShell (your PC)** — commit and `git push origin main` as usual. Then:

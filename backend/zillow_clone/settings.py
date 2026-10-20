@@ -148,6 +148,8 @@ REST_FRAMEWORK = {
         'places': os.environ.get('PLACES_THROTTLE_RATE', '120/min'),
         # "Forgot password" requests and new-password submissions (per IP).
         'password_reset': os.environ.get('PASSWORD_RESET_THROTTLE_RATE', '10/hour'),
+        # SMS codes sent (per IP); each number also has its own limit (accounts/otp.py).
+        'otp': os.environ.get('OTP_THROTTLE_RATE', '10/hour'),
     },
 }
 
@@ -327,3 +329,10 @@ MAILERS = {
     },
 }
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'PlaceEka <no-reply@placeeka.lk>')
+
+
+# SMS (phone sign-up and password reset codes) through Notify.lk, see accounts/sms.py.
+# Without these, codes are only written to the server log.
+NOTIFY_LK_USER_ID = os.environ.get('NOTIFY_LK_USER_ID', '')
+NOTIFY_LK_API_KEY = os.environ.get('NOTIFY_LK_API_KEY', '')
+NOTIFY_LK_SENDER_ID = os.environ.get('NOTIFY_LK_SENDER_ID', '')

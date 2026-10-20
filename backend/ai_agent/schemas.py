@@ -39,6 +39,9 @@ class PropertySearchFilters(BaseModel):
     min_land_size: Optional[float] = Field(None, description='Smallest land size, in land_unit.')
     max_land_size: Optional[float] = Field(None, description='Largest land size, in land_unit.')
     land_unit: Optional[Literal['perch', 'acre']] = Field(None, description="Unit of min/max_land_size: 'perch' (default) or 'acre'.")
+    deed_type: Optional[Literal['sinnakkara', 'bimsaviya', 'jayabhoomi', 'swarnabhoomi', 'permit', 'leasehold', 'other']] = Field(
+        None, description='Land for sale: the deed (title) type the user asked for, e.g. sinnakkara (freehold).'
+    )
     status: Optional[Literal['for_sale', 'for_rent']] = Field(
         None, description="'for_rent' if the user is looking to rent, 'for_sale' if buying."
     )

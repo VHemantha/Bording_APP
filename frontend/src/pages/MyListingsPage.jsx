@@ -7,6 +7,7 @@ import { deleteProperty, fetchInquiries, fetchMyListings } from '../api/properti
 import PageLoader from '../components/PageLoader'
 import { useLanguage } from '../context/LanguageContext'
 import { cityName } from '../i18n/translations'
+import { typeLabel } from '../utils/format'
 import { formatPrice } from '../utils/format'
 
 /** The signed-in user's own listings: edit, delete, and read messages from interested people. */
@@ -96,7 +97,7 @@ function ListingRow({ listing, lang, t, busy, onDelete }) {
             {listing.address}, {cityName(listing.city, lang)}
           </p>
           <p className="mt-1 text-sm text-slate-500">
-            {t(`type.${listing.home_type}`)} &middot; {t(`status.${listing.status}`)} &middot;{' '}
+            {typeLabel(listing.home_type, listing.status, t)} &middot; {t(`status.${listing.status}`)} &middot;{' '}
             {t('mine.listed', { date: listing.listed_date })}
           </p>
         </div>

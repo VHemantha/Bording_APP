@@ -91,6 +91,11 @@ umask 077   # the file holds secrets: readable by this user only
   echo "EMAIL_HOST_PASSWORD="
   echo "DEFAULT_FROM_EMAIL=PlaceEka <no-reply@placeeka.lk>"
   echo
+  echo "# SMS codes for phone sign-up / reset, via Notify.lk (see DEPLOY_CLOUDZY.md). Blank = log only."
+  echo "NOTIFY_LK_USER_ID="
+  echo "NOTIFY_LK_API_KEY="
+  echo "NOTIFY_LK_SENDER_ID="
+  echo
   echo "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY"
   echo "ANTHROPIC_MODEL=claude-sonnet-5"
   echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"

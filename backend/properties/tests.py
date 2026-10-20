@@ -307,12 +307,12 @@ class SaleListingTests(APITestCase):
     def setUp(self):
         self.client.force_authenticate(User.objects.create_user('seller', 'sell@example.com', 'pw-123456'))
 
-    def test_sale_listing_keeps_advance_and_drops_key_money(self):
+    def test_sale_listing_has_no_key_money_or_advance(self):
         response = self.client.post('/api/properties/', listing_payload(
             status='for_sale', home_type='house', price=25_000_000, advance_amount=2_500_000, key_money_months=6,
         ), format='json')
         self.assertEqual(response.status_code, 201, response.data)
-        self.assertEqual((response.data['advance_amount'], response.data['key_money_months']), (2_500_000, 0))
+        self.assertEqual((response.data['advance_amount'], response.data['key_money_months']), (None, 0))
 
     def test_rental_drops_advance(self):
         response = self.client.post('/api/properties/', listing_payload(advance_amount=100_000), format='json')
@@ -326,20 +326,14 @@ class SaleListingTests(APITestCase):
             self.assertEqual(response.status_code, 400, home_type)
             self.assertIn('home_type', response.data)
 
-    def test_filters_by_status_and_max_advance(self):
-        def post(**kw):
-            self.client.post('/api/properties/', listing_payload(status='for_sale', home_type='house', **kw), format='json')
-        post(price=20_000_000, advance_amount=1_000_000)
-        post(price=30_000_000, advance_amount=5_000_000)
-        post(price=40_000_000)  # no advance asked
+    def test_filters_by_status(self):
+        for price in (20_000_000, 30_000_000):
+            self.client.post('/api/properties/', listing_payload(status='for_sale', home_type='house', price=price), format='json')
         self.client.post('/api/properties/', listing_payload(), format='json')  # a rental
         self.client.force_authenticate(None)
         sales = self.client.get('/api/properties/?status=for_sale').data
         sales = sales.get('results', sales) if isinstance(sales, dict) else sales
-        self.assertEqual(len(sales), 3)
-        cheap = self.client.get('/api/properties/?status=for_sale&max_advance=2000000').data
-        cheap = cheap.get('results', cheap) if isinstance(cheap, dict) else cheap
-        self.assertEqual(sorted(p['price'] for p in cheap), [20_000_000, 40_000_000])
+        self.assertEqual(sorted(p['price'] for p in sales), [20_000_000, 30_000_000])
 
 
 class LandSizeTests(APITestCase):
@@ -376,7 +370,7 @@ class LandSizeTests(APITestCase):
 
     def test_land_has_no_building_details_or_advance(self):
         response = self.post(status='for_sale', home_type='land', land_size=20, sqft=900, parking_slots=3,
-                             furnishing='furnished', advance_amount=500000, price=9_000_000)
+                             furnishing='furnished', advance_amount=500000, price=9_000_000, deed_type='sinnakkara')
         self.assertEqual(response.status_code, 201, response.data)
         data = response.data
         self.assertEqual((data['sqft'], data['parking_slots'], data['furnishing'], data['advance_amount']),
@@ -461,3 +455,60 @@ class DistrictTests(APITestCase):
         self.client.force_authenticate(None)
         towns = next(d for d in self.client.get('/api/locations/').data['districts'] if d['key'] == 'colombo')['towns']
         self.assertIn(('Colombo', 1), [(t['name'], t['count']) for t in towns])
+
+
+class FieldRuleTests(APITestCase):
+    """Property.fields_for: which details each kind of listing keeps."""
+
+    def setUp(self):
+        self.client.force_authenticate(User.objects.create_user('rules', 'rules@example.com', 'pw-123456'))
+
+    def post(self, **kw):
+        response = self.client.post('/api/properties/', listing_payload(**kw), format='json')
+        self.assertIn(response.status_code, (201, 400), response.data)
+        return response
+
+    def test_rent_shop_and_commercial_have_no_rooms_or_furnishing(self):
+        shop = self.post(home_type='shop', sqft=500, beds=3, baths=2, stories=2, furnishing='furnished').data
+        self.assertEqual((shop['beds'], shop['baths'], shop['stories'], shop['furnishing']), (0, 0, None, 'unfurnished'))
+        office = self.post(home_type='commercial', sqft=900, beds=3, stories=2, furnishing='furnished').data
+        self.assertEqual((office['beds'], office['stories'], office['furnishing']), (0, 2, 'unfurnished'))
+
+    def test_sale_homes_have_no_shared_bathroom_or_advance(self):
+        for home_type in ('house', 'apartment'):
+            data = self.post(status='for_sale', home_type=home_type, land_size=10, shared_bathroom=True,
+                             baths=2, advance_amount=500000).data
+            self.assertEqual((data['shared_bathroom'], data['baths'], data['advance_amount']), (False, 2, None), home_type)
+
+    def test_shop_for_sale_becomes_shop_or_commercial(self):
+        data = self.post(status='for_sale', home_type='shop', sqft=500, land_size=8, beds=2, furnishing='furnished').data
+        self.assertEqual((data['home_type'], data['beds'], data['furnishing']), ('commercial', 0, 'unfurnished'))
+
+    def test_land_for_sale_needs_a_deed_type(self):
+        response = self.post(status='for_sale', home_type='land', land_size=20)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('deed_type', response.data)
+        self.assertEqual(self.post(status='for_sale', home_type='land', land_size=20, deed_type='sinnakkara').data['deed_type'], 'sinnakkara')
+        self.assertEqual(self.post(home_type='land', land_size=20, deed_type='sinnakkara').data['deed_type'], '')  # rentals: no deed
+
+    def test_youtube_video_link(self):
+        data = self.post(video_url='https://youtu.be/dQw4w9WgXcQ?si=abc').data
+        self.assertEqual((data['video_url'], data['youtube_id']), ('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'dQw4w9WgXcQ'))
+        bad = self.post(video_url='https://vimeo.com/123456')
+        self.assertEqual(bad.status_code, 400)
+        self.assertIn('video_url', bad.data)
+
+    def test_filters_for_deed_type_and_video(self):
+        self.post(status='for_sale', home_type='land', land_size=20, deed_type='sinnakkara', price=1)
+        self.post(status='for_sale', home_type='land', land_size=20, deed_type='permit', price=2)
+        self.post(video_url='https://youtu.be/dQw4w9WgXcQ', price=3)
+        self.client.force_authenticate(None)
+
+        def prices(query):
+            data = self.client.get('/api/properties/?' + query).data
+            data = data.get('results', data) if isinstance(data, dict) else data
+            return sorted(p['price'] for p in data)
+
+        self.assertEqual(prices('deed_type=sinnakkara'), [1])
+        self.assertEqual(prices('deed_type=sinnakkara,permit'), [1, 2])
+        self.assertEqual(prices('has_video=true'), [3])

@@ -6,6 +6,7 @@ from rest_framework import serializers
 from .media import delete_uploaded_photos, is_valid_photo_reference
 from .models import Inquiry, Property, PropertyImage
 from .permissions import can_manage
+from .video import normalize_youtube_url
 
 PHONE_RE = re.compile(r'^\+?[0-9 ()-]{7,20}$')
 
@@ -29,18 +30,22 @@ class PropertyImageSerializer(serializers.ModelSerializer):
 
 
 class PropertyListSerializer(serializers.ModelSerializer):
+    youtube_id = serializers.CharField(read_only=True)
+
     class Meta:
         model = Property
         fields = [
             'id', 'address', 'city', 'district', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
             'sqft', 'land_size', 'land_unit', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
+            'deed_type', 'video_url', 'youtube_id',
             'parking_slots',
             'stories', 'furnishing', 'primary_image_url',
         ]
 
 
 class PropertyDetailSerializer(serializers.ModelSerializer):
+    youtube_id = serializers.CharField(read_only=True)
     images = PropertyImageSerializer(many=True, read_only=True)
     # True when the viewer may edit/delete it (its owner, or an admin).
     can_edit = serializers.SerializerMethodField()
@@ -51,6 +56,7 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
             'id', 'address', 'city', 'district', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
             'sqft', 'land_size', 'land_unit', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
+            'deed_type', 'video_url', 'youtube_id',
             'parking_slots',
             'stories', 'furnishing', 'description',
             'year_built', 'primary_image_url', 'listed_date', 'images',
@@ -93,6 +99,7 @@ class PropertyWriteSerializer(serializers.ModelSerializer):
             'id', 'address', 'city', 'district', 'state', 'zip_code',
             'latitude', 'longitude', 'price', 'beds', 'baths',
             'sqft', 'land_size', 'land_unit', 'shared_bathroom', 'home_type', 'status', 'key_money_months', 'advance_amount',
+            'deed_type', 'video_url', 'youtube_id',
             'parking_slots',
             'stories', 'furnishing', 'description',
             'year_built', 'primary_image_url', 'listed_date', 'images',
@@ -100,29 +107,52 @@ class PropertyWriteSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {'listed_date': {'required': False}}
 
+    def validate_video_url(self, value):
+        normalized = normalize_youtube_url(value)
+        if normalized is None:
+            raise serializers.ValidationError('Paste a YouTube link, e.g. https://youtu.be/abc123XYZ_0.')
+        return normalized
+
     def validate(self, attrs):
-        home_type = attrs.get('home_type', getattr(self.instance, 'home_type', None))
-        sqft = attrs.get('sqft', getattr(self.instance, 'sqft', None))
-        if home_type in Property.SQFT_REQUIRED_TYPES and not sqft:
-            raise serializers.ValidationError({'sqft': 'Square feet is required for shops and commercial properties.'})
-        status = attrs.get('status', getattr(self.instance, 'status', Property.Status.FOR_RENT))
+        current = lambda field, default=None: attrs.get(field, getattr(self.instance, field, default))  # noqa: E731
+        status = current('status', Property.Status.FOR_RENT)
+        home_type = current('home_type')
+        if status == Property.Status.FOR_SALE and home_type == Property.HomeType.SHOP:
+            # For sale, shops and commercial property are one type ("Shop / commercial").
+            attrs['home_type'] = home_type = Property.HomeType.COMMERCIAL
         if status == Property.Status.FOR_SALE and home_type in Property.RENT_ONLY_TYPES:
             raise serializers.ValidationError({'home_type': 'Annexes and upper floor houses can only be rented out.'})
-        if Property.land_size_applies(status, home_type):
-            land_size = attrs.get('land_size', getattr(self.instance, 'land_size', None))
+
+        # Only the details this kind of listing has (Property.fields_for); the rest are cleared.
+        fields = Property.fields_for(status, home_type)
+        if 'sqft' in fields and home_type in Property.SQFT_REQUIRED_TYPES and not current('sqft'):
+            raise serializers.ValidationError({'sqft': 'Square feet is required for shops and commercial properties.'})
+        if 'land_size' in fields:
+            land_size = current('land_size')
             if not land_size or land_size <= 0:
                 raise serializers.ValidationError({'land_size': 'Give the land size in perches or acres.'})
         else:
             attrs['land_size'] = None
-        # Key money belongs to rentals and the advance to sales: drop whichever doesn't apply.
-        if status == Property.Status.FOR_SALE:
-            attrs['key_money_months'] = 0
+        if 'deed_type' in fields:
+            if not current('deed_type'):
+                raise serializers.ValidationError({'deed_type': 'Choose the deed type.'})
         else:
-            attrs['advance_amount'] = None
-        if home_type == Property.HomeType.LAND:
-            # Bare land: no building, so no rooms, floor area, parking, furnishing or advance.
-            attrs.update(beds=0, baths=0, shared_bathroom=False, stories=None, sqft=None, parking_slots=0,
-                         furnishing=Property.Furnishing.UNFURNISHED, advance_amount=None)
+            attrs['deed_type'] = ''
+        if 'rooms' not in fields:
+            attrs.update(beds=0, baths=0)
+        if 'shared_bathroom' not in fields:
+            attrs['shared_bathroom'] = False
+        if 'stories' not in fields:
+            attrs['stories'] = None
+        if 'furnishing' not in fields:
+            attrs['furnishing'] = Property.Furnishing.UNFURNISHED
+        if 'sqft' not in fields:
+            attrs['sqft'] = None
+        if 'parking' not in fields:
+            attrs['parking_slots'] = 0
+        if 'key_money' not in fields:
+            attrs['key_money_months'] = 0
+        attrs['advance_amount'] = None  # no longer part of a listing
         if attrs.get('shared_bathroom'):
             attrs['baths'] = 1  # "one shared bathroom"
         for field in ('latitude', 'longitude'):

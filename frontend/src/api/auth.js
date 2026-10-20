@@ -1,8 +1,20 @@
 import client from './client'
 
 /** `identifier` is an email address or a phone number. */
-export async function registerUser({ identifier, password }) {
-  const { data } = await client.post('/auth/register/', { identifier, password })
+export async function registerUser({ identifier, password, code }) {
+  const { data } = await client.post('/auth/register/', { identifier, password, code })
+  return data
+}
+
+/** Texts a 6-digit code to a phone number; purpose is 'register' or 'reset'. */
+export async function sendPhoneCode(phone, purpose) {
+  const { data } = await client.post('/auth/phone-code/', { phone, purpose })
+  return data
+}
+
+/** New password for a phone account, with the code texted for purpose 'reset'. */
+export async function resetPasswordWithPhone({ phone, code, password }) {
+  const { data } = await client.post('/auth/password-reset/phone/', { phone, code, password })
   return data
 }
 

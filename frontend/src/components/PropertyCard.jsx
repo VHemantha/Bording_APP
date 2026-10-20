@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion'
-import { Heart } from 'lucide-react'
+import { Heart, Play } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { mediaUrl } from '../api/client'
 import { useLanguage } from '../context/LanguageContext'
 import { cityName } from '../i18n/translations'
-import { formatBaths, formatCompactPrice, formatKeyMoney, formatLandSize, formatPrice, landSizeApplies } from '../utils/format'
+import { formatBaths, formatKeyMoney, formatLandSize, formatPrice, listingFields, typeLabel } from '../utils/format'
 
 export default function PropertyCard({
   property,
@@ -23,7 +23,8 @@ export default function PropertyCard({
     onToggleFavorite?.(property)
   }
 
-  // Land has no rooms, so those chips are left out rather than showing "0 bd".
+  // Only the details this kind of listing has (listingFields); no "0 bd" chips.
+  const fields = listingFields(property.status, property.home_type)
   const chips = [
     property.beds > 0 && [property.beds, t('unit.bd')],
     property.baths > 0 && [
@@ -32,19 +33,18 @@ export default function PropertyCard({
     ],
     property.sqft && [property.sqft.toLocaleString(), t('unit.sqft')],
   ].filter(Boolean)
-  const landSize = landSizeApplies(property.status, property.home_type) && formatLandSize(property.land_size, property.land_unit, t)
+  const landSize = fields.has('land_size') && formatLandSize(property.land_size, property.land_unit, t)
 
-  // In bold first: key money for a rental, the advance (if any) for a sale.
-  const lead =
-    property.status === 'for_sale'
-      ? property.advance_amount > 0 && t('card.advance', { amount: formatCompactPrice(property.advance_amount) })
-      : property.key_money_months > 0
-        ? t('card.keyMoney', { amount: formatKeyMoney(property.key_money_months, t) })
-        : t('card.noKeyMoney')
+  // In bold first: key money for a rental, the deed type for land for sale.
+  const lead = fields.has('key_money')
+    ? property.key_money_months > 0
+      ? t('card.keyMoney', { amount: formatKeyMoney(property.key_money_months, t) })
+      : t('card.noKeyMoney')
+    : fields.has('deed_type') && property.deed_type && t('card.deed', { deed: t(`deed.${property.deed_type}`) })
   const extras = [
-    property.parking_slots > 0 && t('card.parking', { count: property.parking_slots }),
-    property.stories && t(`stories.${property.stories}`),
-    property.home_type !== 'land' && property.furnishing && t(`furnishing.${property.furnishing}`),
+    fields.has('parking') && property.parking_slots > 0 && t('card.parking', { count: property.parking_slots }),
+    fields.has('stories') && property.stories && t(`stories.${property.stories}`),
+    fields.has('furnishing') && property.furnishing && t(`furnishing.${property.furnishing}`),
   ].filter(Boolean)
 
   return (
@@ -71,12 +71,17 @@ export default function PropertyCard({
           />
           <div className="absolute left-3 top-3 flex gap-1.5">
             <span className="rounded-full bg-brand-600 px-3 py-1 text-sm font-bold text-white shadow">
-              {t(`type.${property.home_type}`)}
+              {typeLabel(property.home_type, property.status, t)}
             </span>
             <span className="rounded-full bg-brand-900/80 px-3 py-1 text-sm font-bold text-white shadow">
               {t(`status.${property.status}`)}
             </span>
           </div>
+          {property.youtube_id && (
+            <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-black/70 px-2.5 py-1 text-xs font-bold text-white">
+              <Play size={12} fill="currentColor" /> {t('card.video')}
+            </span>
+          )}
           {onToggleFavorite && (
             <button
               type="button"
@@ -100,7 +105,7 @@ export default function PropertyCard({
             {formatPrice(property.price, property.status, t('unit.perMonth'))}
           </p>
           <p className="mt-1 truncate text-slate-600">
-            {property.address} <span className="text-slate-300">|</span> {cityName(property.city, lang)}, {property.state}
+            {property.address} <span className="text-slate-300">|</span> {[cityName(property.city, lang), property.state].filter(Boolean).join(', ')}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {chips.map(([value, unit]) => (

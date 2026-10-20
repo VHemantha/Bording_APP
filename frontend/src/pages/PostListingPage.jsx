@@ -1,4 +1,4 @@
-import { ImagePlus, Loader2, Star, X } from 'lucide-react'
+import { CircleAlert, CircleCheck, ImagePlus, Loader2, Star, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -8,11 +8,22 @@ import { createProperty, fetchProperty, updateProperty, uploadPhoto } from '../a
 import DealToggle from '../components/DealToggle'
 import LocationPicker from '../components/LocationPicker'
 import PageLoader from '../components/PageLoader'
+import TownPicker from '../components/TownPicker'
+import VideoField from '../components/VideoField'
 import { useAuth } from '../context/AuthContext'
 import { useDeal } from '../context/DealContext'
 import { useLanguage } from '../context/LanguageContext'
 import { CITIES } from '../i18n/translations'
-import { formatKeyMoney, homeTypesFor, landSizeApplies, RENT_ONLY_TYPES, STORIES_LABELS } from '../utils/format'
+import {
+  DEED_TYPES,
+  formatKeyMoney,
+  homeTypesFor,
+  listingFields,
+  RENT_ONLY_TYPES,
+  STORIES_LABELS,
+  typeLabel,
+  youtubeId,
+} from '../utils/format'
 
 const MAX_PHOTOS = 20
 // Property types whose listings must give the floor area (matches the backend).
@@ -23,7 +34,7 @@ const EMPTY = {
   home_type: 'house',
   price: '',
   key_money_months: '0',
-  advance_amount: '',
+  deed_type: '',
   furnishing: 'unfurnished',
   beds: '1',
   baths: '1',
@@ -38,6 +49,7 @@ const EMPTY = {
   city: '',
   zip_code: '',
   description: '',
+  video_url: '',
   contact_name: '',
   contact_phone: '',
 }
@@ -73,6 +85,7 @@ export default function PostListingPage() {
   const [formError, setFormError] = useState(null)
   const [saving, setSaving] = useState(false)
   const fileInput = useRef(null)
+  const mapRef = useRef(null)
   const nextKey = useRef(0)
 
   useEffect(() => {
@@ -103,13 +116,20 @@ export default function PostListingPage() {
 
   function chooseDeal(status) {
     set('status', status)
-    // Annexes and upper floor houses can't be sold.
-    if (status === 'for_sale' && RENT_ONLY_TYPES.includes(values.home_type)) set('home_type', 'house')
+    if (status !== 'for_sale') return
+    // For sale, shops are listed as "Shop / commercial"; annexes and upper floors can't be sold.
+    if (values.home_type === 'shop') set('home_type', 'commercial')
+    else if (RENT_ONLY_TYPES.includes(values.home_type)) set('home_type', 'house')
   }
+
+  const districtTowns = districts.find((d) => d.key === values.district)?.towns ?? []
 
   function chooseDistrict(key) {
     set('district', key)
     const district = districts.find((d) => d.key === key)
+    // A town from another district no longer fits.
+    const keepsCity = district?.towns.some((town) => town.name.toLowerCase() === values.city.trim().toLowerCase())
+    if (values.city && !keepsCity) set('city', '')
     // Jump the map to the district so finding the spot starts nearby.
     if (district && !location) setMapFocus({ lat: district.lat, lng: district.lng, zoom: 11 })
   }
@@ -117,14 +137,10 @@ export default function PostListingPage() {
   function chooseCity(name) {
     set('city', name)
     const typed = name.trim().toLowerCase()
-    // A known town also fills in its district when none was chosen yet.
-    const owner = districts.find((d) => d.towns.some((town) => town.name.toLowerCase() === typed))
-    if (owner && !values.district) set('district', owner.key)
-    const city =
-      owner?.towns.find((town) => town.name.toLowerCase() === typed && town.lat) ||
-      CITIES.find((c) => c.name.toLowerCase() === typed)
-    // Jump the map to the city so the owner only has to fine-tune the pin.
-    if (city && !location) setMapFocus({ lat: city.lat, lng: city.lng, zoom: 13 })
+    const town = districtTowns.find((item) => item.name.toLowerCase() === typed)
+    const city = (town?.lat && town) || CITIES.find((c) => c.name.toLowerCase() === typed)
+    // Jump the map to the town so the owner only has to fine-tune the pin.
+    if (city && !location) setMapFocus({ lat: city.lat, lng: city.lng, zoom: 14 })
   }
 
   async function addFiles(fileList) {
@@ -157,29 +173,36 @@ export default function PostListingPage() {
     const nextErrors = {}
     if (!location) nextErrors.location = true
     if (ready.length === 0) nextErrors.photos = t('post.photoRequired')
+    if (values.video_url.trim() && !youtubeId(values.video_url)) nextErrors.video_url = t('post.videoInvalid')
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors)
-      setFormError(t('post.errorSave'))
+      if (nextErrors.location) {
+        // The pin is required: take the owner straight to the map.
+        mapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        setFormError(t('post.locationMissing'))
+      } else {
+        setFormError(t('post.errorSave'))
+      }
       return
     }
 
     const num = (x) => (x === '' ? null : Number(x))
-    const land = values.home_type === 'land'
-    const selling = values.status === 'for_sale'
+    const fields = listingFields(values.status, values.home_type)
     const payload = {
       ...values,
       price: num(values.price),
-      key_money_months: selling ? 0 : num(values.key_money_months) ?? 0,
-      // Bare land has no building: no rooms, floor area, parking, furnishing or advance.
-      advance_amount: selling && !land ? num(values.advance_amount) : null,
-      beds: land ? 0 : num(values.beds),
-      baths: land ? 0 : num(values.baths),
-      shared_bathroom: land ? false : values.shared_bathroom,
-      sqft: land ? null : num(values.sqft),
-      land_size: landSizeApplies(values.status, values.home_type) ? num(values.land_size) : null,
-      stories: land ? null : num(values.stories),
-      parking_slots: land ? 0 : num(values.parking_slots) ?? 0,
-      furnishing: land ? 'unfurnished' : values.furnishing,
+      // Only the details this kind of listing has (the server clears the rest too).
+      key_money_months: fields.has('key_money') ? num(values.key_money_months) ?? 0 : 0,
+      deed_type: fields.has('deed_type') ? values.deed_type : '',
+      beds: fields.has('rooms') ? num(values.beds) : 0,
+      baths: fields.has('rooms') ? num(values.baths) : 0,
+      shared_bathroom: fields.has('shared_bathroom') && values.shared_bathroom,
+      furnishing: fields.has('furnishing') ? values.furnishing : 'unfurnished',
+      sqft: fields.has('sqft') ? num(values.sqft) : null,
+      land_size: fields.has('land_size') ? num(values.land_size) : null,
+      stories: fields.has('stories') ? num(values.stories) : null,
+      parking_slots: fields.has('parking') ? num(values.parking_slots) ?? 0 : 0,
+      video_url: values.video_url.trim(),
       latitude: Number(location.lat.toFixed(6)),
       longitude: Number(location.lng.toFixed(6)),
       primary_image_url: ready[0],
@@ -206,9 +229,10 @@ export default function PostListingPage() {
     return <p className="mx-auto max-w-3xl px-4 py-16 text-center text-slate-500">{t('post.notAllowed')}</p>
   }
 
-  const land = values.home_type === 'land'
+  const fields = listingFields(values.status, values.home_type)
   const selling = values.status === 'for_sale'
   const uploading = photos.some((p) => p.uploading)
+  const sizeTitle = fields.has('rooms') ? 'post.rooms' : values.home_type === 'land' ? 'post.landSize' : 'post.sizeParking'
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -227,11 +251,11 @@ export default function PostListingPage() {
             label={t('filter.propertyType')}
             value={values.home_type}
             onChange={(v) => set('home_type', v)}
-            options={homeTypesFor(values.status).map((k) => [k, t(`type.${k}`)])}
+            options={homeTypesFor(values.status).map((k) => [k, typeLabel(k, values.status, t)])}
             hint={selling ? t('post.rentOnlyTypes') : undefined}
             error={errors.home_type}
           />
-          {!land && (
+          {fields.has('furnishing') && (
             <Select
               label={t('filter.furnishing')}
               value={values.furnishing}
@@ -239,19 +263,23 @@ export default function PostListingPage() {
               options={['unfurnished', 'furnished'].map((k) => [k, t(`furnishing.${k}`)])}
             />
           )}
+          {fields.has('deed_type') && (
+            <Select
+              label={t('filter.deedType')}
+              value={values.deed_type}
+              onChange={(v) => set('deed_type', v)}
+              options={[['', t('post.chooseDeed')], ...DEED_TYPES.map((k) => [k, t(`deed.${k}`)])]}
+              required
+              hint={t('post.deedHint')}
+              error={errors.deed_type}
+            />
+          )}
           <Field
             label={t(selling ? 'post.priceSale' : 'post.priceRent')}
             type="number" min="1" required
             value={values.price} onChange={(v) => set('price', v)} error={errors.price}
           />
-          {selling ? (
-            !land && <Field
-              label={`${t('post.advance')} (${t('post.optional')})`}
-              type="number" min="0"
-              value={values.advance_amount} onChange={(v) => set('advance_amount', v)}
-              error={errors.advance_amount} hint={t('post.advanceHint')}
-            />
-          ) : (
+          {fields.has('key_money') && (
             <Select
               label={t('post.keyMoney')}
               value={values.key_money_months}
@@ -264,8 +292,8 @@ export default function PostListingPage() {
           )}
         </Section>
 
-        <Section title={t(land ? 'post.landSize' : 'post.rooms')}>
-          {!land && (
+        <Section title={t(sizeTitle)}>
+          {fields.has('rooms') && (
             <>
               <Select
                 label={t('filter.bedrooms')}
@@ -276,27 +304,29 @@ export default function PostListingPage() {
               <div>
                 <Select
                   label={t('filter.bathrooms')}
-                  value={values.shared_bathroom ? '1' : values.baths}
+                  value={fields.has('shared_bathroom') && values.shared_bathroom ? '1' : values.baths}
                   onChange={(v) => set('baths', v)}
                   options={roomOptions(values.baths)}
-                  disabled={values.shared_bathroom}
+                  disabled={fields.has('shared_bathroom') && values.shared_bathroom}
                 />
-                <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={values.shared_bathroom}
-                    onChange={(e) => {
-                      set('shared_bathroom', e.target.checked)
-                      if (e.target.checked) set('baths', '1')
-                    }}
-                    className="h-4 w-4 accent-brand-600"
-                  />
-                  {t('post.sharedBathroom')}
-                </label>
+                {fields.has('shared_bathroom') && (
+                  <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={values.shared_bathroom}
+                      onChange={(e) => {
+                        set('shared_bathroom', e.target.checked)
+                        if (e.target.checked) set('baths', '1')
+                      }}
+                      className="h-4 w-4 accent-brand-600"
+                    />
+                    {t('post.sharedBathroom')}
+                  </label>
+                )}
               </div>
             </>
           )}
-          {landSizeApplies(values.status, values.home_type) && (
+          {fields.has('land_size') && (
             <LandSizeField
               size={values.land_size}
               unit={values.land_unit}
@@ -305,22 +335,22 @@ export default function PostListingPage() {
               error={errors.land_size}
             />
           )}
-          {!land && (
+          {fields.has('sqft') && (
             <Field
               label={SQFT_REQUIRED.includes(values.home_type) ? t('filter.sqft') : `${t('filter.sqft')} (${t('post.optional')})`}
               type="number" min="1" required={SQFT_REQUIRED.includes(values.home_type)}
               value={values.sqft} onChange={(v) => set('sqft', v)} error={errors.sqft}
             />
           )}
-          {!land && (
+          {fields.has('stories') && (
             <Select
               label={t('filter.stories')}
-              value={values.stories}
+              value={values.stories || '1'}
               onChange={(v) => set('stories', v)}
               options={Object.keys(STORIES_LABELS).map((k) => [k, t(`stories.${k}`)])}
             />
           )}
-          {!land && (
+          {fields.has('parking') && (
             <Field label={t('filter.parking')} type="number" min="0" value={values.parking_slots} onChange={(v) => set('parking_slots', v)} error={errors.parking_slots} />
           )}
         </Section>
@@ -335,24 +365,41 @@ export default function PostListingPage() {
             required
             error={errors.district}
           />
-          <Field label={t('post.cityTown')} required list="post-cities" value={values.city} onChange={chooseCity} error={errors.city} hint={t('post.cityTownHint')} />
-          <datalist id="post-cities">
-            {(districts.find((d) => d.key === values.district)?.towns ?? CITIES).map((town) => (
-              <option key={town.name} value={town.name}>
-                {town.area ? town.area[lang] || town.area.en : town[lang] && town[lang] !== town.name ? town[lang] : null}
-              </option>
-            ))}
-          </datalist>
+          <TownPicker
+            label={t('post.cityTown')}
+            value={values.city}
+            onChange={chooseCity}
+            towns={districtTowns}
+            disabled={!values.district}
+            placeholder={values.district ? t('post.searchTown') : t('post.chooseDistrictFirst')}
+            error={errors.city}
+          />
           <Field
             label={`${t('admin.zip')} (${t('post.optional')})`}
             value={values.zip_code} onChange={(v) => set('zip_code', v)} error={errors.zip_code}
           />
-          <div className="sm:col-span-2">
+          <div ref={mapRef} className="scroll-mt-28 sm:col-span-2">
+            {/* The exact spot is required: it puts the listing on the map and in "nearby" searches. */}
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-bold text-slate-700">{t('post.pinTitle')}</span>
+              {location ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-leaf-500/10 px-2.5 py-1 text-xs font-bold text-leaf-600">
+                  <CircleCheck size={14} /> {t('post.pinSet')}
+                </span>
+              ) : (
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${
+                  errors.location ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-700'
+                }`}>
+                  <CircleAlert size={14} /> {t('post.pinRequired')}
+                </span>
+              )}
+            </div>
             <LocationPicker
               value={location}
               onChange={(point) => {
                 setLocation(point)
                 setErrors((e) => ({ ...e, location: undefined }))
+                if (formError === t('post.locationMissing')) setFormError(null)
               }}
               focus={mapFocus}
               invalid={Boolean(errors.location || errors.latitude)}
@@ -430,6 +477,10 @@ export default function PostListingPage() {
               {errors.photos || t('post.photosHint')}
             </p>
           </div>
+        </Section>
+
+        <Section title={`${t('post.videoSection')} (${t('post.optional')})`}>
+          <VideoField value={values.video_url} onChange={(v) => set('video_url', v)} error={errors.video_url} />
         </Section>
 
         <Section title={t('post.ownerDescription')}>
@@ -532,7 +583,7 @@ function LandSizeField({ size, unit, onSize, onUnit, error }) {
 // Bedrooms / bathrooms: 1-7, plus the listing's current value if it's outside that (older listings).
 function roomOptions(current) {
   const values = ['1', '2', '3', '4', '5', '6', '7']
-  if (current && !values.includes(String(current))) values.unshift(String(current))
+  if (current && current !== '0' && !values.includes(String(current))) values.unshift(String(current))
   return values.map((v) => [v, v])
 }
 

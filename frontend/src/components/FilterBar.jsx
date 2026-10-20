@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { useLanguage } from '../context/LanguageContext'
 import DealToggle from './DealToggle'
 import useKeepInViewport from './useKeepInViewport'
-import { ADVANCE_OPTIONS, formatCompactPrice, homeTypesFor, landSizeApplies, STORIES_LABELS } from '../utils/format'
+import { DEED_TYPES, homeTypesFor, listingFields, STORIES_LABELS, typeLabel } from '../utils/format'
 
 // Key money options: any, none, or up to N months' rent.
 const KEY_MONEY_MONTHS = Array.from({ length: 12 }, (_, i) => String(i + 1))
@@ -20,12 +20,22 @@ const inputClass =
 
 const csv = (value) => (value ? value.split(',') : [])
 
-// Which filter groups make sense for the chosen property types: bare land has no rooms or
-// building details, and land size only exists for some listings (see landSizeApplies).
+// Which filter groups make sense for the chosen property types (all types when none is
+// ticked): a group shows when at least one of them has that detail (see listingFields).
 function relevance(status, typeList) {
   const types = typeList.length ? typeList : homeTypesFor(status)
-  const onlyLand = types.every((type) => type === 'land')
-  return { building: !onlyLand, landSize: types.some((type) => landSizeApplies(status, type)) }
+  const has = (field) => types.some((type) => listingFields(status, type).has(field))
+  return {
+    rooms: has('rooms'),
+    shared: has('shared_bathroom'),
+    furnishing: has('furnishing'),
+    stories: has('stories'),
+    sqft: has('sqft'),
+    parking: has('parking'),
+    landSize: has('land_size'),
+    deed: has('deed_type'),
+    keyMoney: has('key_money'),
+  }
 }
 
 /**
@@ -45,11 +55,13 @@ export default function FilterBar({
   onToggleAi,
 }) {
   const { t } = useLanguage()
-  const priceActive = filters.min_price || filters.max_price || filters.max_key_money_months || filters.max_advance
+  const priceActive = filters.min_price || filters.max_price || filters.max_key_money_months
   const bedsActive = filters.min_beds || filters.min_baths || filters.shared_bathroom
   const types = csv(filters.home_type)
   const moreCount =
     (filters.min_land_size || filters.max_land_size ? 1 : 0) +
+    (filters.deed_type ? 1 : 0) +
+    (filters.has_video ? 1 : 0) +
     (filters.min_parking ? 1 : 0) +
     (filters.min_sqft || filters.max_sqft ? 1 : 0) +
     (filters.stories ? 1 : 0) +
@@ -57,7 +69,7 @@ export default function FilterBar({
   const allCount =
     moreCount +
     (filters.min_price || filters.max_price ? 1 : 0) +
-    (filters.max_key_money_months || filters.max_advance ? 1 : 0) +
+    (filters.max_key_money_months ? 1 : 0) +
     (filters.min_beds ? 1 : 0) +
     (filters.min_baths ? 1 : 0) +
     (filters.shared_bathroom ? 1 : 0) +
@@ -89,7 +101,7 @@ export default function FilterBar({
         {(close) => <PricePanel filters={filters} onChange={onChange} close={close} />}
       </Dropdown>
 
-      {relevance(filters.status, types).building && <Dropdown
+      {relevance(filters.status, types).rooms && <Dropdown
         label={
           bedsActive
             ? [
@@ -282,7 +294,6 @@ function PricePanel({ filters, onChange, close }) {
     min_price: filters.min_price,
     max_price: filters.max_price,
     max_key_money_months: filters.max_key_money_months,
-    max_advance: filters.max_advance,
   })
   const set = (field) => (value) => setDraft((d) => ({ ...d, [field]: value }))
   const { t } = useLanguage()
@@ -306,30 +317,25 @@ function PricePanel({ filters, onChange, close }) {
         <span className="pb-3 text-slate-400">–</span>
         <NumberField label={t('filter.maximum')} value={draft.max_price} onChange={set('max_price')} placeholder={t('filter.noMax')} />
       </div>
-      <UpFrontField status={filters.status} draft={draft} set={set} className="mt-4" />
+      {filters.status === 'for_rent' && <KeyMoneyField draft={draft} set={set} className="mt-4" />}
       <PanelFooter
-        onReset={() => apply({ min_price: '', max_price: '', max_key_money_months: '', max_advance: '' })}
+        onReset={() => apply({ min_price: '', max_price: '', max_key_money_months: '' })}
         onApply={() => apply(draft)}
       />
     </form>
   )
 }
 
-/** What's paid up front: key money (months of rent) for rentals, the advance (LKR) for sales. */
-function UpFrontField({ status, draft, set, className = '' }) {
+/** Key money (rentals): the most months of rent paid up front. */
+function KeyMoneyField({ draft, set, className = '' }) {
   const { t } = useLanguage()
-  const selling = status === 'for_sale'
-  const field = selling ? 'max_advance' : 'max_key_money_months'
-  const options = selling
-    ? [['0', t('advance.none')], ...ADVANCE_OPTIONS.map((n) => [String(n), t('advance.upTo', { amount: formatCompactPrice(n) })])]
-    : [['0', t('card.noKeyMoney')], ...KEY_MONEY_MONTHS.map((n) => [n, n === '1' ? t('keyMoney.upToOne') : t('keyMoney.upTo', { count: n })])]
-
+  const options = [['0', t('card.noKeyMoney')], ...KEY_MONEY_MONTHS.map((n) => [n, n === '1' ? t('keyMoney.upToOne') : t('keyMoney.upTo', { count: n })])]
   return (
     <div className={className}>
-      <p className="mb-2 font-bold">{t(selling ? 'filter.advance' : 'filter.keyMoney')}</p>
+      <p className="mb-2 font-bold">{t('filter.keyMoney')}</p>
       <label className="block">
-        <span className="mb-1 block text-xs font-bold text-slate-600">{t(selling ? 'filter.maxAdvance' : 'filter.maxKeyMoney')}</span>
-        <select value={draft[field]} onChange={(e) => set(field)(e.target.value)} className={inputClass}>
+        <span className="mb-1 block text-xs font-bold text-slate-600">{t('filter.maxKeyMoney')}</span>
+        <select value={draft.max_key_money_months} onChange={(e) => set('max_key_money_months')(e.target.value)} className={inputClass}>
           <option value="">{t('common.any')}</option>
           {options.map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
@@ -379,7 +385,7 @@ function BedsBathsPanel({ filters, onChange, close }) {
     <div className="w-[23rem] max-w-[calc(100vw-2rem)] space-y-4 p-4">
       <MinPicker label={t('filter.bedrooms')} value={beds} onChange={setBeds} />
       <MinPicker label={t('filter.bathrooms')} value={baths} onChange={setBaths} />
-      <BathroomTypePicker value={shared} onChange={setShared} />
+      {relevance(filters.status, csv(filters.home_type)).shared && <BathroomTypePicker value={shared} onChange={setShared} />}
       <PanelFooter
         onReset={() => apply({ min_beds: '', min_baths: '', shared_bathroom: '' })}
         onApply={() => apply({ min_beds: beds, min_baths: baths, shared_bathroom: shared })}
@@ -474,7 +480,7 @@ function TypePanel({ filters, onChange, close }) {
     <div className="w-64 p-4">
       <p className="mb-2 font-bold">{t('filter.propertyType')}</p>
       <CheckList
-        options={homeTypesFor(filters.status).map((key) => [key, t(`type.${key}`)])}
+        options={homeTypesFor(filters.status).map((key) => [key, typeLabel(key, filters.status, t)])}
         selected={selected}
         onToggle={(value) => setSelected((list) => toggleIn(list, value))}
       />
@@ -483,24 +489,94 @@ function TypePanel({ filters, onChange, close }) {
   )
 }
 
-function MorePanel({ filters, onChange, close }) {
-  const [parking, setParking] = useState(filters.min_parking)
-  const [minSqft, setMinSqft] = useState(filters.min_sqft)
-  const [maxSqft, setMaxSqft] = useState(filters.max_sqft)
-  const [stories, setStories] = useState(csv(filters.stories))
-  const [furnishing, setFurnishing] = useState(csv(filters.furnishing))
-  const [minLand, setMinLand] = useState(filters.min_land_size)
-  const [maxLand, setMaxLand] = useState(filters.max_land_size)
-  const [landUnit, setLandUnit] = useState(filters.land_unit || 'perch')
+// The "Filters" groups' values, as kept while editing (lists for the tick boxes).
+const moreDraft = (filters) => ({
+  min_land_size: filters.min_land_size,
+  max_land_size: filters.max_land_size,
+  land_unit: filters.land_unit || 'perch',
+  deed_type: csv(filters.deed_type),
+  min_parking: filters.min_parking,
+  min_sqft: filters.min_sqft,
+  max_sqft: filters.max_sqft,
+  stories: csv(filters.stories),
+  furnishing: csv(filters.furnishing),
+  has_video: filters.has_video,
+})
+
+const moreValues = (draft) => ({
+  ...draft,
+  land_unit: draft.min_land_size || draft.max_land_size ? draft.land_unit : '',
+  deed_type: draft.deed_type.join(','),
+  stories: draft.stories.join(','),
+  furnishing: draft.furnishing.join(','),
+})
+
+const MORE_RESET = {
+  min_land_size: '', max_land_size: '', land_unit: 'perch', deed_type: [], min_parking: '',
+  min_sqft: '', max_sqft: '', stories: [], furnishing: [], has_video: '',
+}
+
+/** The "Filters" groups, each shown only for property types that have it (see relevance). */
+function MoreFilters({ show, draft, set, toggle }) {
   const { t } = useLanguage()
+  return (
+    <>
+      {show.landSize && (
+        <LandSizeRange
+          min={draft.min_land_size} max={draft.max_land_size} unit={draft.land_unit}
+          onMin={set('min_land_size')} onMax={set('max_land_size')} onUnit={set('land_unit')}
+        />
+      )}
+      {show.deed && (
+        <div>
+          <p className="mb-2 font-bold">{t('filter.deedType')}</p>
+          <CheckList options={DEED_TYPES.map((key) => [key, t(`deed.${key}`)])} selected={draft.deed_type} onToggle={toggle('deed_type')} />
+        </div>
+      )}
+      {show.parking && <MinPicker label={t('filter.parking')} value={draft.min_parking} onChange={set('min_parking')} />}
+      {show.sqft && (
+        <div>
+          <p className="mb-2 font-bold">{t('filter.sqft')}</p>
+          <div className="flex items-end gap-2">
+            <NumberField label={t('filter.minimum')} value={draft.min_sqft} onChange={set('min_sqft')} placeholder={t('filter.noMin')} />
+            <span className="pb-3 text-slate-400">–</span>
+            <NumberField label={t('filter.maximum')} value={draft.max_sqft} onChange={set('max_sqft')} placeholder={t('filter.noMax')} />
+          </div>
+        </div>
+      )}
+      {show.stories && (
+        <div>
+          <p className="mb-2 font-bold">{t('filter.stories')}</p>
+          <CheckList options={Object.keys(STORIES_LABELS).map((key) => [key, t(`stories.${key}`)])} selected={draft.stories} onToggle={toggle('stories')} />
+        </div>
+      )}
+      {show.furnishing && (
+        <div>
+          <p className="mb-2 font-bold">{t('filter.furnishing')}</p>
+          <CheckList options={['furnished', 'unfurnished'].map((key) => [key, t(`furnishing.${key}`)])} selected={draft.furnishing} onToggle={toggle('furnishing')} />
+        </div>
+      )}
+      <label className="flex cursor-pointer items-center gap-3 rounded-lg px-1 py-1.5 font-bold hover:bg-slate-50">
+        <input
+          type="checkbox"
+          checked={draft.has_video === 'true'}
+          onChange={(e) => set('has_video')(e.target.checked ? 'true' : '')}
+          className="h-5 w-5 accent-brand-600"
+        />
+        {t('filter.hasVideo')}
+      </label>
+    </>
+  )
+}
+
+function MorePanel({ filters, onChange, close }) {
+  const [draft, setDraft] = useState(() => moreDraft(filters))
+  const set = (field) => (value) => setDraft((d) => ({ ...d, [field]: value }))
+  const toggle = (field) => (value) => setDraft((d) => ({ ...d, [field]: toggleIn(d[field], value) }))
   const show = relevance(filters.status, csv(filters.home_type))
-  const values = () => ({
-    min_parking: parking, min_sqft: minSqft, max_sqft: maxSqft, stories: stories.join(','), furnishing: furnishing.join(','),
-    min_land_size: minLand, max_land_size: maxLand, land_unit: minLand || maxLand ? landUnit : '',
-  })
 
   function apply(next) {
-    onChange(next)
+    onChange(moreValues(next))
     close()
   }
 
@@ -509,45 +585,11 @@ function MorePanel({ filters, onChange, close }) {
       className="w-[23rem] max-w-[calc(100vw-2rem)] space-y-4 p-4"
       onSubmit={(e) => {
         e.preventDefault()
-        apply(values())
+        apply(draft)
       }}
     >
-      {show.landSize && (
-        <LandSizeRange min={minLand} max={maxLand} unit={landUnit} onMin={setMinLand} onMax={setMaxLand} onUnit={setLandUnit} />
-      )}
-      {show.building && <>
-      <MinPicker label={t('filter.parking')} value={parking} onChange={setParking} />
-      <div>
-        <p className="mb-2 font-bold">{t('filter.sqft')}</p>
-        <div className="flex items-end gap-2">
-          <NumberField label={t('filter.minimum')} value={minSqft} onChange={setMinSqft} placeholder={t('filter.noMin')} />
-          <span className="pb-3 text-slate-400">–</span>
-          <NumberField label={t('filter.maximum')} value={maxSqft} onChange={setMaxSqft} placeholder={t('filter.noMax')} />
-        </div>
-      </div>
-      <div>
-        <p className="mb-2 font-bold">{t('filter.stories')}</p>
-        <CheckList
-          options={Object.keys(STORIES_LABELS).map((key) => [key, t(`stories.${key}`)])}
-          selected={stories}
-          onToggle={(value) => setStories((list) => toggleIn(list, value))}
-        />
-      </div>
-      <div>
-        <p className="mb-2 font-bold">{t('filter.furnishing')}</p>
-        <CheckList
-          options={['furnished', 'unfurnished'].map((key) => [key, t(`furnishing.${key}`)])}
-          selected={furnishing}
-          onToggle={(value) => setFurnishing((list) => toggleIn(list, value))}
-        />
-      </div>
-      </>}
-      <PanelFooter
-        onReset={() =>
-          apply({ min_parking: '', min_sqft: '', max_sqft: '', stories: '', furnishing: '', min_land_size: '', max_land_size: '', land_unit: '' })
-        }
-        onApply={() => apply(values())}
-      />
+      <MoreFilters show={show} draft={draft} set={set} toggle={toggle} />
+      <PanelFooter onReset={() => apply(MORE_RESET)} onApply={() => apply(draft)} />
     </form>
   )
 }
@@ -559,19 +601,11 @@ function AllFiltersSheet({ filters, onChange, onClose }) {
     min_price: filters.min_price,
     max_price: filters.max_price,
     max_key_money_months: filters.max_key_money_months,
-    max_advance: filters.max_advance,
     min_beds: filters.min_beds,
     min_baths: filters.min_baths,
-    home_type: csv(filters.home_type),
-    min_parking: filters.min_parking,
-    min_sqft: filters.min_sqft,
-    max_sqft: filters.max_sqft,
-    stories: csv(filters.stories),
-    furnishing: csv(filters.furnishing),
     shared_bathroom: filters.shared_bathroom,
-    min_land_size: filters.min_land_size,
-    max_land_size: filters.max_land_size,
-    land_unit: filters.land_unit || 'perch',
+    home_type: csv(filters.home_type),
+    ...moreDraft(filters),
   }))
   const set = (field) => (value) => setDraft((d) => ({ ...d, [field]: value }))
   const toggle = (field) => (value) => setDraft((d) => ({ ...d, [field]: toggleIn(d[field], value) }))
@@ -594,22 +628,12 @@ function AllFiltersSheet({ filters, onChange, onClose }) {
   }, [onClose])
 
   function apply(values) {
-    onChange({
-      ...values,
-      land_unit: values.min_land_size || values.max_land_size ? values.land_unit : '',
-      home_type: values.home_type.join(','),
-      stories: values.stories.join(','),
-      furnishing: values.furnishing.join(','),
-    })
+    onChange({ ...moreValues(values), home_type: values.home_type.join(',') })
     onClose()
   }
 
   function reset() {
-    apply({
-      min_price: '', max_price: '', max_key_money_months: '', max_advance: '', min_beds: '', min_baths: '',
-      home_type: [], min_parking: '', min_sqft: '', max_sqft: '', stories: [], furnishing: [],
-      shared_bathroom: '', min_land_size: '', max_land_size: '', land_unit: 'perch',
-    })
+    apply({ min_price: '', max_price: '', max_key_money_months: '', min_beds: '', min_baths: '', shared_bathroom: '', home_type: [], ...MORE_RESET })
   }
 
   // Rendered into <body>: inside the toolbar it would sit under the site header and the
@@ -644,60 +668,26 @@ function AllFiltersSheet({ filters, onChange, onClose }) {
           </div>
         </section>
 
-        <UpFrontField status={filters.status} draft={draft} set={set} />
-
-        {sheetShow.building && <>
-        <MinPicker label={t('filter.bedrooms')} value={draft.min_beds} onChange={set('min_beds')} />
-        <MinPicker label={t('filter.bathrooms')} value={draft.min_baths} onChange={set('min_baths')} />
-        <BathroomTypePicker value={draft.shared_bathroom} onChange={set('shared_bathroom')} />
-        </>}
+        {filters.status === 'for_rent' && <KeyMoneyField draft={draft} set={set} />}
 
         <section>
           <p className="mb-2 font-bold">{t('filter.propertyType')}</p>
           <CheckList
-            options={homeTypesFor(filters.status).map((key) => [key, t(`type.${key}`)])}
+            options={homeTypesFor(filters.status).map((key) => [key, typeLabel(key, filters.status, t)])}
             selected={draft.home_type}
             onToggle={toggle('home_type')}
           />
         </section>
 
-        {sheetShow.landSize && (
-          <LandSizeRange
-            min={draft.min_land_size} max={draft.max_land_size} unit={draft.land_unit}
-            onMin={set('min_land_size')} onMax={set('max_land_size')} onUnit={set('land_unit')}
-          />
+        {sheetShow.rooms && (
+          <>
+            <MinPicker label={t('filter.bedrooms')} value={draft.min_beds} onChange={set('min_beds')} />
+            <MinPicker label={t('filter.bathrooms')} value={draft.min_baths} onChange={set('min_baths')} />
+            {sheetShow.shared && <BathroomTypePicker value={draft.shared_bathroom} onChange={set('shared_bathroom')} />}
+          </>
         )}
 
-        {sheetShow.building && <>
-        <MinPicker label={t('filter.parking')} value={draft.min_parking} onChange={set('min_parking')} />
-
-        <section>
-          <p className="mb-2 font-bold">{t('filter.sqft')}</p>
-          <div className="flex items-end gap-2">
-            <NumberField label={t('filter.minimum')} value={draft.min_sqft} onChange={set('min_sqft')} placeholder={t('filter.noMin')} />
-            <span className="pb-3 text-slate-400">–</span>
-            <NumberField label={t('filter.maximum')} value={draft.max_sqft} onChange={set('max_sqft')} placeholder={t('filter.noMax')} />
-          </div>
-        </section>
-
-        <section>
-          <p className="mb-2 font-bold">{t('filter.stories')}</p>
-          <CheckList
-            options={Object.keys(STORIES_LABELS).map((key) => [key, t(`stories.${key}`)])}
-            selected={draft.stories}
-            onToggle={toggle('stories')}
-          />
-        </section>
-
-        <section>
-          <p className="mb-2 font-bold">{t('filter.furnishing')}</p>
-          <CheckList
-            options={['furnished', 'unfurnished'].map((key) => [key, t(`furnishing.${key}`)])}
-            selected={draft.furnishing}
-            onToggle={toggle('furnishing')}
-          />
-        </section>
-        </>}
+        <MoreFilters show={sheetShow} draft={draft} set={set} toggle={toggle} />
       </div>
 
       <div className="flex items-center gap-3 border-t border-slate-200 bg-white px-4 py-3">

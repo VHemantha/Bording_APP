@@ -2,6 +2,7 @@
 
 export const detailTranslations = {
   en: {
+    'detail.videoTour': "Video tour",
     'a11y.skip': 'Skip to main content',
     'a11y.mainMenu': 'Main menu',
     'a11y.sections': 'Page sections',
@@ -28,6 +29,7 @@ export const detailTranslations = {
     'detail.neighborhoodHint': 'Use "Nearby places" on the map to see schools, supermarkets, hospitals and more around this home.',
   },
   si: {
+    'detail.videoTour': "වීඩියෝ චාරිකාව",
     'a11y.skip': 'ප්‍රධාන අන්තර්ගතයට යන්න',
     'a11y.mainMenu': 'ප්‍රධාන මෙනුව',
     'a11y.sections': 'පිටුවේ කොටස්',
@@ -54,6 +56,7 @@ export const detailTranslations = {
     'detail.neighborhoodHint': 'මෙම නිවස අවට පාසල්, සුපිරි වෙළඳසැල්, රෝහල් සහ තවත් දේ බැලීමට සිතියමේ "අවට ස්ථාන" භාවිත කරන්න.',
   },
   ta: {
+    'detail.videoTour': "வீடியோ சுற்றுப்பார்வை",
     'a11y.skip': 'முதன்மை உள்ளடக்கத்திற்குச் செல்',
     'a11y.mainMenu': 'முதன்மைப் பட்டி',
     'a11y.sections': 'பக்கப் பிரிவுகள்',

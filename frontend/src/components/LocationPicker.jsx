@@ -21,11 +21,13 @@ export default function LocationPicker({ value, onChange, focus, invalid }) {
   const { t } = useLanguage()
   const { maps, failed } = useGoogleMaps()
   const [locating, setLocating] = useState(false)
+  const [geoError, setGeoError] = useState(null)
   const [localFocus, setLocalFocus] = useState(null)
 
   function useMyLocation() {
     if (!navigator.geolocation) return
     setLocating(true)
+    setGeoError(null)
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         const point = { lat: coords.latitude, lng: coords.longitude }
@@ -33,8 +35,12 @@ export default function LocationPicker({ value, onChange, focus, invalid }) {
         setLocalFocus({ ...point, zoom: 17 })
         setLocating(false)
       },
-      () => setLocating(false),
-      { enableHighAccuracy: true, timeout: 10000 }
+      // Denied, or no fix: say so, and point to placing the pin by hand.
+      (err) => {
+        setGeoError(err.code === 1 ? 'post.locationDenied' : 'post.locationFailed')
+        setLocating(false)
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
     )
   }
 
@@ -56,8 +62,8 @@ export default function LocationPicker({ value, onChange, focus, invalid }) {
         )}
       </div>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
-        <p className={invalid ? 'font-medium text-red-600' : 'text-slate-500'}>
-          {invalid ? t('post.locationMissing') : t('post.mapHint')}
+        <p className={invalid || geoError ? 'font-medium text-red-600' : 'text-slate-500'}>
+          {geoError ? t(geoError) : invalid ? t('post.locationMissing') : t('post.mapHint')}
         </p>
         {'geolocation' in navigator && (
           <button

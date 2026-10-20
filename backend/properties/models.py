@@ -5,6 +5,7 @@ from django.core.validators import MaxValueValidator
 from django.db import models
 
 from .locations import DISTRICT_CHOICES, district_for_city
+from .video import youtube_id
 
 
 class Property(models.Model):
@@ -23,6 +24,18 @@ class Property(models.Model):
     RENT_ONLY_TYPES = ('annex', 'upper_floor_house')
     # Never have a land size, for sale or rent.
     NO_LAND_SIZE_TYPES = ('apartment', 'annex')
+    # Homes: the types with bedrooms, bathrooms and furnishing.
+    RESIDENTIAL_TYPES = ('house', 'annex', 'upper_floor_house', 'apartment')
+
+    class DeedType(models.TextChoices):
+        # Sri Lankan land titles, for land for sale.
+        SINNAKKARA = 'sinnakkara', 'Sinnakkara (freehold)'
+        BIMSAVIYA = 'bimsaviya', 'Bim Saviya (title certificate)'
+        JAYABHOOMI = 'jayabhoomi', 'Jayabhoomi grant'
+        SWARNABHOOMI = 'swarnabhoomi', 'Swarnabhoomi grant'
+        PERMIT = 'permit', 'LDO permit'
+        LEASEHOLD = 'leasehold', 'Leasehold'
+        OTHER = 'other', 'Other'
 
     class LandUnit(models.TextChoices):
         PERCH = 'perch', 'Perches'
@@ -73,8 +86,12 @@ class Property(models.Model):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.FOR_RENT)
     # Rentals: key money, the advance a landlord asks for up front, in months' rent (0-12).
     key_money_months = models.PositiveSmallIntegerField(default=0, validators=[MaxValueValidator(12)])
-    # Sales: the advance (deposit) the buyer pays to reserve the property, in LKR. Blank if none.
+    # No longer asked for (always blank); kept so older data and API clients don't break.
     advance_amount = models.PositiveIntegerField(null=True, blank=True)
+    # Land for sale: the kind of deed (title) it comes with.
+    deed_type = models.CharField(max_length=20, choices=DeedType.choices, blank=True)
+    # A video tour hosted on YouTube (https://www.youtube.com/watch?v=<id>), or blank.
+    video_url = models.CharField(max_length=200, blank=True)
     parking_slots = models.PositiveSmallIntegerField(default=0)
     # Blank for listings where it doesn't apply (land).
     stories = models.PositiveSmallIntegerField(choices=Stories.choices, null=True, blank=True)
@@ -104,6 +121,34 @@ class Property(models.Model):
         if not self.district:
             self.district = district_for_city(self.city)
         super().save(*args, **kwargs)
+
+    @property
+    def youtube_id(self):
+        return youtube_id(self.video_url)
+
+    @classmethod
+    def fields_for(cls, status, home_type):
+        """The optional details a listing of this type has, for sale or rent. Everything else
+        is cleared when it's saved, and the website only asks for and shows these."""
+        selling = status == cls.Status.FOR_SALE
+        land = home_type == cls.HomeType.LAND
+        residential = home_type in cls.RESIDENTIAL_TYPES
+        fields = set()
+        if residential:
+            fields |= {'rooms', 'furnishing'}
+            if not selling:
+                fields.add('shared_bathroom')
+        if not land and home_type != cls.HomeType.SHOP:
+            fields.add('stories')
+        if not land:
+            fields |= {'sqft', 'parking'}
+        if cls.land_size_applies(status, home_type):
+            fields.add('land_size')
+        if not selling:
+            fields.add('key_money')
+        if selling and land:
+            fields.add('deed_type')
+        return fields
 
     @classmethod
     def land_size_applies(cls, status, home_type):

@@ -29,6 +29,10 @@ class PropertyFilter(django_filters.FilterSet):
     max_sqft = django_filters.NumberFilter(field_name='sqft', lookup_expr='lte')
     stories = NumberInFilter(field_name='stories', lookup_expr='in')
     furnishing = CharInFilter(field_name='furnishing', lookup_expr='in')
+    # Land for sale: one or more deed types, e.g. deed_type=sinnakkara,bimsaviya.
+    deed_type = CharInFilter(field_name='deed_type', lookup_expr='in')
+    # Only listings with a video tour.
+    has_video = django_filters.BooleanFilter(method='filter_has_video')
     # true = only one shared bathroom, false = private bathroom(s).
     shared_bathroom = django_filters.BooleanFilter(field_name='shared_bathroom')
     # Land size range in `land_unit` (perch, the default, or acre); listings stored in the
@@ -51,8 +55,11 @@ class PropertyFilter(django_filters.FilterSet):
             'city', 'district', 'zip_code', 'min_price', 'max_price', 'min_beds',
             'min_baths', 'home_type', 'max_key_money_months', 'max_advance', 'min_parking', 'min_sqft',
             'max_sqft', 'stories', 'furnishing', 'shared_bathroom', 'min_land_size', 'max_land_size', 'land_unit',
-            'status', 'min_lat', 'max_lat', 'min_lng', 'max_lng',
+            'deed_type', 'has_video', 'status', 'min_lat', 'max_lat', 'min_lng', 'max_lng',
         ]
+
+    def filter_has_video(self, queryset, name, value):
+        return queryset.exclude(video_url='') if value else queryset.filter(video_url='')
 
     def filter_noop(self, queryset, name, value):
         return queryset  # read by filter_land_size

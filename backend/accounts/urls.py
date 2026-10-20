@@ -8,6 +8,8 @@ from .views import (
     MeView,
     PasswordResetConfirmView,
     PasswordResetRequestView,
+    PhoneCodeView,
+    PhonePasswordResetView,
     RegisterView,
 )
 
@@ -19,6 +21,8 @@ urlpatterns = [
     path('auth/me/', MeView.as_view(), name='me'),
     path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password_reset'),
     path('auth/password-reset/confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('auth/phone-code/', PhoneCodeView.as_view(), name='phone_code'),
+    path('auth/password-reset/phone/', PhonePasswordResetView.as_view(), name='password_reset_phone'),
     path('favorites/', FavoriteListCreateView.as_view(), name='favorite-list'),
     path('favorites/<int:property_id>/', FavoriteDestroyView.as_view(), name='favorite-destroy'),
 ]

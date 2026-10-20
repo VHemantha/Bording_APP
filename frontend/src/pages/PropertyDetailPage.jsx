@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Phone,
   Ruler,
+  ScrollText,
   Share2,
   Sofa,
   Tag,
@@ -31,7 +32,7 @@ import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
 import { useLanguage } from '../context/LanguageContext'
 import { cityName } from '../i18n/translations'
-import { formatBaths, formatKeyMoney, formatLandSize, formatPrice, landSizeApplies } from '../utils/format'
+import { formatBaths, formatKeyMoney, formatLandSize, formatPrice, listingFields, typeLabel } from '../utils/format'
 
 const SECTIONS = [
   ['overview', 'detail.tabOverview'],
@@ -117,7 +118,9 @@ export default function PropertyDetailPage() {
   }
 
   const p = property
-  const land = p.home_type === 'land'
+  // Only the details this kind of listing has (listingFields).
+  const fields = listingFields(p.status, p.home_type)
+  const typeName = typeLabel(p.home_type, p.status, t)
   const city = cityName(p.city, lang)
   const photos = p.images?.length ? p.images.map((img) => img.image_url) : [p.primary_image_url].filter(Boolean)
   const address = [p.address, city, `${p.state} ${p.zip_code}`.trim()].filter(Boolean).join(', ')
@@ -127,15 +130,16 @@ export default function PropertyDetailPage() {
 
   // The tiles under the title (Zillow's icon fact grid).
   const highlights = [
-    [Building2, t(`type.${p.home_type}`)],
-    !land && [BedDouble, `${p.beds} ${t(p.beds === 1 ? 'unit.bed' : 'unit.beds')}`],
-    !land && [Bath, `${formatBaths(p.baths)} ${t(p.baths === 1 ? 'unit.bath' : 'unit.baths')}${p.shared_bathroom ? ` (${t('bath.shared')})` : ''}`],
-    landSizeApplies(p.status, p.home_type) && p.land_size > 0 && [LandPlot, `${t('post.landSize')}: ${formatLandSize(p.land_size, p.land_unit, t)}`],
-    sqft && [Ruler, sqft],
-    !land && [Sofa, t(`furnishing.${p.furnishing}`)],
-    !land && [Car, `${t('filter.parking')}: ${p.parking_slots}`],
-    stories && [Layers, stories],
-    p.status === 'for_rent' && [KeyRound, `${t('filter.keyMoney')}: ${keyMoney}`],
+    [Building2, typeName],
+    fields.has('deed_type') && p.deed_type && [ScrollText, `${t('filter.deedType')}: ${t(`deed.${p.deed_type}`)}`],
+    fields.has('rooms') && [BedDouble, `${p.beds} ${t(p.beds === 1 ? 'unit.bed' : 'unit.beds')}`],
+    fields.has('rooms') && [Bath, `${formatBaths(p.baths)} ${t(p.baths === 1 ? 'unit.bath' : 'unit.baths')}${fields.has('shared_bathroom') && p.shared_bathroom ? ` (${t('bath.shared')})` : ''}`],
+    fields.has('land_size') && p.land_size > 0 && [LandPlot, `${t('post.landSize')}: ${formatLandSize(p.land_size, p.land_unit, t)}`],
+    fields.has('sqft') && sqft && [Ruler, sqft],
+    fields.has('furnishing') && [Sofa, t(`furnishing.${p.furnishing}`)],
+    fields.has('parking') && [Car, `${t('filter.parking')}: ${p.parking_slots}`],
+    fields.has('stories') && stories && [Layers, stories],
+    fields.has('key_money') && [KeyRound, `${t('filter.keyMoney')}: ${keyMoney}`],
     [CalendarDays, `${t('detail.listed')}: ${p.listed_date}`],
   ].filter(Boolean)
 
@@ -175,14 +179,14 @@ export default function PropertyDetailPage() {
               <span className="rounded-md bg-brand-50 px-2 py-0.5 text-sm font-bold text-brand-700">
                 {t(`status.${p.status}`)}
               </span>
-              {!land && (
+              {fields.has('furnishing') && (
                 <span className="rounded-md bg-slate-100 px-2 py-0.5 text-sm font-bold text-slate-700">
                   {t(`furnishing.${p.furnishing}`)}
                 </span>
               )}
             </div>
             <h1 className="mt-3 text-3xl font-extrabold text-brand-900 sm:text-4xl">
-              {t('detail.title', { type: t(`type.${p.home_type}`), city })}
+              {t('detail.title', { type: typeName, city })}
             </h1>
             <p className="mt-1 text-lg text-slate-700">{address}</p>
 
@@ -196,11 +200,6 @@ export default function PropertyDetailPage() {
               {p.status === 'for_rent' && (
                 <p className="pb-1 font-medium text-slate-600">
                   <Tag size={16} className="mr-1 inline" /> {t('filter.keyMoney')}: <span className="font-bold text-brand-900">{keyMoney}</span>
-                </p>
-              )}
-              {p.status === 'for_sale' && !land && p.advance_amount > 0 && (
-                <p className="pb-1 font-medium text-slate-600">
-                  <Tag size={16} className="mr-1 inline" /> {t('filter.advance')}: <span className="font-bold text-brand-900">{formatPrice(p.advance_amount)}</span>
                 </p>
               )}
             </div>
@@ -222,6 +221,26 @@ export default function PropertyDetailPage() {
           </section>
 
           <hr className="my-10 border-slate-200" />
+
+          {p.youtube_id && (
+            <>
+              <section id="video" className="scroll-mt-40">
+                <h2 className="text-2xl font-extrabold text-brand-900">{t('detail.videoTour')}</h2>
+                <div className="mt-4 aspect-video overflow-hidden rounded-xl bg-slate-900">
+                  {/* youtube-nocookie: YouTube sets no tracking cookies until the visitor presses play. */}
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${p.youtube_id}?rel=0`}
+                    title={t('detail.videoTour')}
+                    loading="lazy"
+                    allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                    allowFullScreen
+                    className="h-full w-full"
+                  />
+                </div>
+              </section>
+              <hr className="my-10 border-slate-200" />
+            </>
+          )}
 
           <section id="neighborhood" className="scroll-mt-40">
             <h2 className="text-2xl font-extrabold text-brand-900">{t('detail.tabNeighborhood')}</h2>

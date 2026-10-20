@@ -26,7 +26,6 @@ const FILTER_KEYS = [
   'min_price',
   'max_price',
   'max_key_money_months',
-  'max_advance',
   'min_beds',
   'min_baths',
   'home_type',
@@ -39,10 +38,12 @@ const FILTER_KEYS = [
   'min_land_size',
   'max_land_size',
   'land_unit',
+  'deed_type',
+  'has_video',
 ]
-// Prices, key money and the advance mean different things for rent and sale, so these
-// filters are cleared when the visitor switches between the two.
-const DEAL_SPECIFIC_FILTERS = ['min_price', 'max_price', 'max_key_money_months', 'max_advance']
+// Prices mean different things for rent and sale, and key money and deed types belong to
+// one of them, so these filters are cleared when the visitor switches between the two.
+const DEAL_SPECIFIC_FILTERS = ['min_price', 'max_price', 'max_key_money_months', 'deed_type']
 
 // Labels come from the translations: t(`sort.${key}`).
 const SORTS = {
@@ -51,11 +52,10 @@ const SORTS = {
   price_desc: (a, b) => b.price - a.price,
   sqft_desc: (a, b) => (b.sqft ?? 0) - (a.sqft ?? 0),
   key_money_asc: (a, b) => a.key_money_months - b.key_money_months,
-  advance_asc: (a, b) => (a.advance_amount ?? 0) - (b.advance_amount ?? 0),
 }
-// Key money is for rentals and the advance for sales.
+// Key money is for rentals only.
 const SORTS_FOR = {
-  for_rent: Object.keys(SORTS).filter((key) => key !== 'advance_asc'),
+  for_rent: Object.keys(SORTS),
   for_sale: Object.keys(SORTS).filter((key) => key !== 'key_money_asc'),
 }
 
@@ -157,8 +157,15 @@ export default function SearchResultsPage() {
     params.set('status', next)
     DEAL_SPECIFIC_FILTERS.forEach((key) => params.delete(key))
     if (next === 'for_sale') {
-      // Annexes and upper floor houses are never for sale.
-      const types = (params.get('home_type') || '').split(',').filter((v) => v && !RENT_ONLY_TYPES.includes(v))
+      // Annexes and upper floor houses are never for sale; shops are "Shop / commercial" there.
+      const types = [
+        ...new Set(
+          (params.get('home_type') || '')
+            .split(',')
+            .map((v) => (v === 'shop' ? 'commercial' : v))
+            .filter((v) => v && !RENT_ONLY_TYPES.includes(v))
+        ),
+      ]
       if (types.length) params.set('home_type', types.join(','))
       else params.delete('home_type')
     }
