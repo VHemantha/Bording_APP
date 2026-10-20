@@ -16,7 +16,7 @@ import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
 import { DEALS, useDeal } from '../context/DealContext'
 import { useLanguage } from '../context/LanguageContext'
-import { cityName } from '../i18n/translations'
+import { cityArea, cityName } from '../i18n/translations'
 import { RENT_ONLY_TYPES } from '../utils/format'
 import { filtersToSearchParams } from '../utils/searchParams'
 
@@ -111,8 +111,8 @@ export default function SearchResultsPage() {
   const district = searchParams.get('district') || ''
   const [districts, setDistricts] = useState([])
   useEffect(() => {
-    if (district) fetchLocations().then(setDistricts).catch(() => {})
-  }, [district])
+    if (district || city) fetchLocations().then(setDistricts).catch(() => {})
+  }, [district, city])
   const districtName = districtLabel(districts.find((d) => d.key === district), lang) || district
 
   useEffect(() => {
@@ -237,8 +237,9 @@ export default function SearchResultsPage() {
   }, [properties, activeSort])
 
   const renting = filters.status === 'for_rent'
+  const area = cityArea(city, lang)
   const place =
-    cityName(city, lang) ||
+    (city && (area ? `${cityName(city, lang)} – ${area}` : cityName(city, lang))) ||
     (district && t('districts.district', { district: districtName })) ||
     cityName(search, lang) ||
     t('search.sriLanka')

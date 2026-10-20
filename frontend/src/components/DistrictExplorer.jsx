@@ -177,7 +177,10 @@ export default function DistrictExplorer({ deal }) {
                             town.count ? 'bg-brand-50 ring-brand-200 hover:ring-brand-400' : 'bg-white ring-slate-200 hover:ring-slate-300'
                           }`}
                         >
-                          <span className="block text-base font-extrabold leading-tight text-brand-900 sm:text-lg">{town[lang] || town.name}</span>
+                          <span>
+                            <span className="block text-base font-extrabold leading-tight text-brand-900 sm:text-lg">{town[lang] || town.name}</span>
+                            {town.area && <span className="mt-0.5 block text-xs font-medium text-slate-500">{town.area[lang] || town.area.en}</span>}
+                          </span>
                           <span className="flex items-center justify-between gap-2">
                             <span className={`whitespace-nowrap text-sm font-bold ${town.count ? 'text-brand-700' : 'text-slate-400'}`}>{ads(town.count)}</span>
                             <ArrowRight size={16} className="hidden shrink-0 text-brand-300 transition group-hover:translate-x-0.5 group-hover:text-brand-600 sm:block" aria-hidden="true" />

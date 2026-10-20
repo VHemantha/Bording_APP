@@ -430,7 +430,8 @@ class DistrictTests(APITestCase):
         rent = {d['key']: d for d in self.client.get('/api/locations/?status=for_rent').data['districts']}
         self.assertEqual(len(rent), 25)
         self.assertEqual(rent['colombo']['count'], 2)
-        self.assertEqual(rent['colombo']['towns'][0], {'name': 'Maharagama', 'si': 'මහරගම', 'ta': 'மகரகம', 'count': 2})
+        towns = {row['name']: row for row in rent['colombo']['towns']}
+        self.assertEqual(towns['Maharagama'], {'name': 'Maharagama', 'si': 'මහරගම', 'ta': 'மகரகம', 'count': 2})
         self.assertEqual(rent['gampaha']['count'], 0)
         sale = {d['key']: d for d in self.client.get('/api/locations/?status=for_sale').data['districts']}
         self.assertEqual((sale['gampaha']['count'], sale['colombo']['count']), (1, 0))
@@ -442,3 +443,21 @@ class DistrictTests(APITestCase):
         data = self.client.get('/api/properties/?district=colombo').data
         data = data.get('results', data) if isinstance(data, dict) else data
         self.assertEqual([p['price'] for p in data], [1])
+
+    def test_colombo_is_split_into_postal_zones(self):
+        self.assertEqual(self.post(city='Colombo 3').data['district'], 'colombo')
+        self.assertEqual(self.post(city='Kollupitiya').data['district'], 'colombo')
+        self.client.force_authenticate(None)
+        towns = next(d for d in self.client.get('/api/locations/').data['districts'] if d['key'] == 'colombo')['towns']
+        self.assertEqual([t['name'] for t in towns[:15]], [f'Colombo {n}' for n in range(1, 16)])
+        self.assertEqual(towns[2]['area'], {'en': 'Kollupitiya', 'si': 'කොල්ලුපිටිය', 'ta': 'கொள்ளுப்பிட்டி'})
+        self.assertEqual(towns[2]['count'], 1)
+        names = [t['name'] for t in towns]
+        self.assertNotIn('Colombo', names)  # only shown while a listing still says just "Colombo"
+        self.assertNotIn('Wellawatte', names)  # that's Colombo 6
+
+    def test_plain_colombo_card_stays_while_listings_use_it(self):
+        self.post(city='Colombo')
+        self.client.force_authenticate(None)
+        towns = next(d for d in self.client.get('/api/locations/').data['districts'] if d['key'] == 'colombo')['towns']
+        self.assertIn(('Colombo', 1), [(t['name'], t['count']) for t in towns])

@@ -120,7 +120,9 @@ export default function PostListingPage() {
     // A known town also fills in its district when none was chosen yet.
     const owner = districts.find((d) => d.towns.some((town) => town.name.toLowerCase() === typed))
     if (owner && !values.district) set('district', owner.key)
-    const city = CITIES.find((c) => c.name.toLowerCase() === typed)
+    const city =
+      owner?.towns.find((town) => town.name.toLowerCase() === typed && town.lat) ||
+      CITIES.find((c) => c.name.toLowerCase() === typed)
     // Jump the map to the city so the owner only has to fine-tune the pin.
     if (city && !location) setMapFocus({ lat: city.lat, lng: city.lng, zoom: 13 })
   }
@@ -336,7 +338,9 @@ export default function PostListingPage() {
           <Field label={t('post.cityTown')} required list="post-cities" value={values.city} onChange={chooseCity} error={errors.city} hint={t('post.cityTownHint')} />
           <datalist id="post-cities">
             {(districts.find((d) => d.key === values.district)?.towns ?? CITIES).map((town) => (
-              <option key={town.name} value={town.name}>{town[lang] && town[lang] !== town.name ? town[lang] : null}</option>
+              <option key={town.name} value={town.name}>
+                {town.area ? town.area[lang] || town.area.en : town[lang] && town[lang] !== town.name ? town[lang] : null}
+              </option>
             ))}
           </datalist>
           <Field

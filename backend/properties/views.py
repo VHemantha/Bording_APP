@@ -122,7 +122,7 @@ class LocationsView(APIView):
     def get(self, request):
         from django.db.models.functions import Lower
 
-        from .locations import DISTRICTS
+        from .locations import DISTRICTS, HIDE_WHEN_EMPTY, ZONE_INFO
 
         listings = Property.objects.all()
         status_filter = request.query_params.get('status')
@@ -133,12 +133,17 @@ class LocationsView(APIView):
 
         districts = []
         for key, name, si, ta, province, (lat, lng), towns in DISTRICTS:
-            town_rows = [
-                {'name': t_name, 'si': t_si, 'ta': t_ta, 'count': by_city.get(t_name.lower(), 0)}
-                for t_name, t_si, t_ta in towns
-            ]
-            # Busiest first; towns with the same count keep the list's (size) order.
-            town_rows.sort(key=lambda row: -row['count'])
+            zones, others = [], []
+            for t_name, t_si, t_ta in towns:
+                row = {'name': t_name, 'si': t_si, 'ta': t_ta, 'count': by_city.get(t_name.lower(), 0)}
+                if t_name in ZONE_INFO:
+                    row['area'], row['lat'], row['lng'] = ZONE_INFO[t_name]
+                    zones.append(row)
+                elif row['count'] or t_name.lower() not in HIDE_WHEN_EMPTY:
+                    others.append(row)
+            # Colombo 1-15 first and in order; then the busiest towns (ties keep the list's order).
+            others.sort(key=lambda row: -row['count'])
+            town_rows = zones + others
             districts.append({
                 'key': key, 'name': name, 'si': si, 'ta': ta, 'province': province,
                 'lat': lat, 'lng': lng, 'count': by_district.get(key, 0), 'towns': town_rows,

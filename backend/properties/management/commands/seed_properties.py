@@ -155,7 +155,8 @@ class Command(BaseCommand):
 
             prop = Property.objects.create(
                 address=address,
-                city=city_info['city'],
+                # Sample listings in Colombo city go into one of its 15 postal zones.
+                city=f'Colombo {random.randint(1, 15)}' if city_info['city'] == 'Colombo' else city_info['city'],
                 state=city_info['state'],
                 zip_code=random.choice(city_info['zips']),
                 latitude=round(lat, 6),

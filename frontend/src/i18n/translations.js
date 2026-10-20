@@ -251,6 +251,12 @@ export function registerPlaceNames(districts) {
   districts.forEach((district) => district.towns.forEach((town) => placeNames.set(town.name.toLowerCase(), town)))
 }
 
+/** The area of a Colombo postal zone ("Colombo 3" -> "Kollupitiya"), or '' for other towns. */
+export function cityArea(name, lang) {
+  const area = placeNames.get((name || '').toLowerCase())?.area
+  return area ? area[lang] || area.en : ''
+}
+
 export function cityName(name, lang) {
   const key = (name || '').toLowerCase()
   const city = CITIES.find((c) => c.name.toLowerCase() === key) || placeNames.get(key)

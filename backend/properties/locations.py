@@ -4,11 +4,38 @@ The one list the whole site uses: the home page's district cards, the listing fo
 and town choices, and the district stored on each listing (worked out from its city when the
 owner didn't pick one). Served by GET /api/locations/ together with listing counts.
 Each town is (English, Sinhala, Tamil). The order is roughly by size, biggest first.
+Colombo city is split into its 15 postal zones (COLOMBO_ZONES), listed first and in order.
 """
+
+# Colombo 1-15: (number, area in English, Sinhala, Tamil, centre). Stored on listings as the
+# city "Colombo 3" etc.; the area is shown under the name on the home page and in the form.
+COLOMBO_ZONES = [
+    (1, 'Fort', 'කොටුව', 'கோட்டை', (6.9344, 79.8428)),
+    (2, 'Slave Island', 'කොම්පඤ්ඤවීදිය', 'கொம்பனித்தெரு', (6.9214, 79.8494)),
+    (3, 'Kollupitiya', 'කොල්ලුපිටිය', 'கொள்ளுப்பிட்டி', (6.9106, 79.8507)),
+    (4, 'Bambalapitiya', 'බම්බලපිටිය', 'பம்பலப்பிட்டி', (6.8897, 79.8559)),
+    (5, 'Havelock Town', 'හැව්ලොක් නගරය', 'ஹெவ்லொக் நகரம்', (6.8818, 79.8687)),
+    (6, 'Wellawatte', 'වැල්ලවත්ත', 'வெள்ளவத்தை', (6.8742, 79.8605)),
+    (7, 'Cinnamon Gardens', 'කුරුඳු වත්ත', 'கறுவாத்தோட்டம்', (6.9094, 79.8636)),
+    (8, 'Borella', 'බොරැල්ල', 'பொரளை', (6.9147, 79.8778)),
+    (9, 'Dematagoda', 'දෙමටගොඩ', 'தெமட்டகொடை', (6.9333, 79.8778)),
+    (10, 'Maradana', 'මරදාන', 'மருதானை', (6.9286, 79.8653)),
+    (11, 'Pettah', 'පිටකොටුව', 'புறக்கோட்டை', (6.9372, 79.8506)),
+    (12, 'Hulftsdorp', 'අලුත්කඩේ', 'புதுக்கடை', (6.9431, 79.8592)),
+    (13, 'Kotahena', 'කොටහේන', 'கொட்டாஞ்சேனை', (6.9497, 79.8611)),
+    (14, 'Grandpass', 'ග්‍රෑන්ඩ්පාස්', 'கிராண்ட்பாஸ்', (6.9536, 79.8714)),
+    (15, 'Mattakkuliya', 'මට්ටක්කුලිය', 'மட்டக்குளி', (6.9667, 79.875)),
+]
+COLOMBO_ZONE_TOWNS = [(f'Colombo {n}', f'කොළඹ {n}', f'கொழும்பு {n}') for n, *_ in COLOMBO_ZONES]
+
+# Shown on the home page only while some listing still uses the name (older listings that
+# just say "Colombo"); new listings pick a zone.
+HIDE_WHEN_EMPTY = {'colombo'}
 
 # key, English, Sinhala, Tamil, province code (as in Property.state), centre (lat, lng), towns
 DISTRICTS = [
     ('colombo', 'Colombo', 'කොළඹ', 'கொழும்பு', 'WP', (6.9271, 79.8612), [
+        *COLOMBO_ZONE_TOWNS,
         ('Colombo', 'කොළඹ', 'கொழும்பு'),
         ('Dehiwala', 'දෙහිවල', 'தெஹிவளை'),
         ('Mount Lavinia', 'ගල්කිස්ස', 'கல்கிசை'),
@@ -25,7 +52,6 @@ DISTRICTS = [
         ('Kaduwela', 'කඩුවෙල', 'கடுவெல'),
         ('Kolonnawa', 'කොලොන්නාව', 'கொலன்னாவை'),
         ('Wellampitiya', 'වැල්ලම්පිටිය', 'வெல்லம்பிட்டி'),
-        ('Wellawatte', 'වැල්ලවත්ත', 'வெள்ளவத்தை'),
         ('Boralesgamuwa', 'බොරලැස්ගමුව', 'பொரலஸ்கமுவ'),
         ('Kottawa', 'කොට්ටාව', 'கொட்டாவை'),
         ('Homagama', 'හෝමාගම', 'ஹோமாகம'),
@@ -277,6 +303,14 @@ DISTRICT_CHOICES = [(d[0], d[1]) for d in DISTRICTS]
 # lower-case town name -> district key ("Mullaitivu" spelt both ways)
 _TOWN_DISTRICT = {town[0].lower(): d[0] for d in DISTRICTS for town in d[6]}
 _TOWN_DISTRICT['mullaitivu'] = 'mullaitivu'
+# Areas of Colombo city people may type instead of the zone ("Kollupitiya", "Wellawatte").
+_TOWN_DISTRICT.update({area.lower(): 'colombo' for _, area, *_ in COLOMBO_ZONES})
+
+# Town name -> (area {en, si, ta}, lat, lng) for the Colombo zones.
+ZONE_INFO = {
+    f'Colombo {n}': ({'en': area, 'si': si, 'ta': ta}, lat, lng)
+    for n, area, si, ta, (lat, lng) in COLOMBO_ZONES
+}
 
 
 def district_for_city(city):
