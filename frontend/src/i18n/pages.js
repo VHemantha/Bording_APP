@@ -4,6 +4,8 @@
 
 export const pageTranslations = {
   en: {
+    'contact.whatsappUs': "Chat with us on WhatsApp: {phone}",
+    'auth.needHelpWhatsapp': "Need help getting back in? WhatsApp us on {phone}.",
     'auth.needHelp': "Need help getting back in? Contact us.",
     'auth.phoneVerifyNote': "We'll text a 6-digit code to this number to confirm it's yours.",
     'auth.waitSeconds': "Please wait {seconds} seconds before asking for another code.",
@@ -261,6 +263,8 @@ export const pageTranslations = {
   },
 
   si: {
+    'contact.whatsappUs': "WhatsApp හරහා අප සමඟ කතා කරන්න: {phone}",
+    'auth.needHelpWhatsapp': "නැවත පිවිසීමට උදව් අවශ්‍යද? {phone} අංකයට WhatsApp කරන්න.",
     'auth.needHelp': "නැවත පිවිසීමට උදව් අවශ්‍යද? අප අමතන්න.",
     'auth.phoneVerifyNote': "මෙම අංකය ඔබගේ බව තහවුරු කිරීමට අපි ඉලක්කම් 6ක කේතයක් SMS මගින් එවන්නෙමු.",
     'auth.waitSeconds': "නව කේතයක් ඉල්ලීමට පෙර තත්පර {seconds}ක් රැඳී සිටින්න.",
@@ -516,6 +520,8 @@ export const pageTranslations = {
   },
 
   ta: {
+    'contact.whatsappUs': "WhatsApp இல் எங்களுடன் பேசுங்கள்: {phone}",
+    'auth.needHelpWhatsapp': "மீண்டும் உள்நுழைய உதவி தேவையா? {phone} க்கு WhatsApp செய்யுங்கள்.",
     'auth.needHelp': "மீண்டும் உள்நுழைய உதவி தேவையா? எங்களைத் தொடர்பு கொள்ளுங்கள்.",
     'auth.phoneVerifyNote': "இந்த எண் உங்களுடையது என்பதை உறுதிப்படுத்த 6 இலக்கக் குறியீட்டை SMS மூலம் அனுப்புவோம்.",
     'auth.waitSeconds': "புதிய குறியீட்டைக் கோருவதற்கு முன் {seconds} வினாடிகள் காத்திருக்கவும்.",

@@ -1,14 +1,15 @@
-import { Mail, Phone } from 'lucide-react'
+import { Mail, MessageCircle, Phone } from 'lucide-react'
 import { useEffect } from 'react'
 
 import { APP_NAME } from '../components/Logo'
-import { SUPPORT_EMAIL, SUPPORT_PHONE } from '../config'
+import { whatsappUrl } from '../components/ContactOwnerCard'
+import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_WHATSAPP } from '../config'
 import { useLanguage } from '../context/LanguageContext'
 import { LEGAL } from '../i18n/legal'
 
 /** The About us (`page="about"`) and Privacy policy (`page="privacy"`) pages. */
 export default function InfoPage({ page }) {
-  const { lang } = useLanguage()
+  const { lang, t } = useLanguage()
   const content = (LEGAL[lang] ?? LEGAL.en)[page]
 
   useEffect(() => {
@@ -39,10 +40,20 @@ export default function InfoPage({ page }) {
         <section id="contact" className="mt-10 scroll-mt-28 rounded-2xl border border-slate-200 bg-white p-6">
           <h2 className="text-xl font-extrabold text-brand-900">{content.contactHeading}</h2>
           <p className="mt-3 leading-relaxed text-slate-700">{content.contactOwners}</p>
-          {(SUPPORT_EMAIL || SUPPORT_PHONE) && (
+          {(SUPPORT_WHATSAPP || SUPPORT_EMAIL || SUPPORT_PHONE) && (
             <>
               <p className="mt-4 font-bold text-slate-700">{content.contactUs}</p>
-              <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-6">
+              {SUPPORT_WHATSAPP && (
+                <a
+                  href={whatsappUrl(SUPPORT_WHATSAPP)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#1f9d55] px-5 py-3 font-bold text-white shadow-sm transition hover:bg-[#178246]"
+                >
+                  <MessageCircle size={20} /> {t('contact.whatsappUs', { phone: SUPPORT_WHATSAPP })}
+                </a>
+              )}
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:gap-6">
                 {SUPPORT_EMAIL && (
                   <a href={`mailto:${SUPPORT_EMAIL}`} className="inline-flex items-center gap-2 font-bold text-brand-600 hover:underline">
                     <Mail size={18} /> {SUPPORT_EMAIL}

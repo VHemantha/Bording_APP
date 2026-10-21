@@ -3,6 +3,9 @@ import { ArrowLeft, CircleCheck, Loader2, MailCheck, MessageSquareText, X } from
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+import { SUPPORT_WHATSAPP } from '../config'
+import { whatsappUrl } from './ContactOwnerCard'
+
 import { requestPasswordReset, resetPasswordWithPhone, sendPhoneCode } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
 import { useAuthModal } from '../context/AuthModalContext'
@@ -356,9 +359,15 @@ export default function AuthModal() {
             )}
             {isForgot && !codeStep && step !== 'done' && !resetSent && (
               <p className="mt-5 text-center text-sm text-slate-500">
-                <Link to="/about#contact" onClick={closeAuth} className="hover:text-brand-600 hover:underline">
-                  {t('auth.needHelp')}
-                </Link>
+                {SUPPORT_WHATSAPP ? (
+                  <a href={whatsappUrl(SUPPORT_WHATSAPP)} target="_blank" rel="noopener noreferrer" className="hover:text-brand-600 hover:underline">
+                    {t('auth.needHelpWhatsapp', { phone: SUPPORT_WHATSAPP })}
+                  </a>
+                ) : (
+                  <Link to="/about#contact" onClick={closeAuth} className="hover:text-brand-600 hover:underline">
+                    {t('auth.needHelp')}
+                  </Link>
+                )}
               </p>
             )}
 

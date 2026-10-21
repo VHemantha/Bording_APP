@@ -1,4 +1,8 @@
+import { MessageCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
+
+import { SUPPORT_WHATSAPP } from '../config'
+import { whatsappUrl } from './ContactOwnerCard'
 
 import { useLanguage } from '../context/LanguageContext'
 import Logo, { APP_NAME } from './Logo'
@@ -31,6 +35,18 @@ export default function Footer() {
                     <Link to={to} className="transition hover:text-brand-700">{t(label)}</Link>
                   </li>
                 ))}
+                {col.title === 'footer.support' && SUPPORT_WHATSAPP && (
+                  <li>
+                    <a
+                      href={whatsappUrl(SUPPORT_WHATSAPP)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 font-semibold text-[#178246] transition hover:text-[#0f6b38]"
+                    >
+                      <MessageCircle size={16} /> WhatsApp {SUPPORT_WHATSAPP}
+                    </a>
+                  </li>
+                )}
               </ul>
             </div>
           ))}
